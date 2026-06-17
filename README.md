@@ -82,13 +82,13 @@ order_items   (order_item_id PK, order_id FK, product_id FK, quantity, unit_pric
 |-----|---------|---------------|
 | **1** | [What Is a Database?](articles/Day1_Understanding_Databases.md) | Database vs DBMS vs RDBMS · relational vs NoSQL · tables, rows, columns · primary & foreign keys · normalization |
 | **2** | [The SQL Language & Our Example Database](articles/Day2_SQL_Language_and_Database.md) | DDL / DML / DQL / DCL / TCL · data types · NULL · practice environment setup · full schema walkthrough |
-| **3** | [DDL — Building the Structure](articles/Day3_DDL_Building_Structure.md) | `CREATE DATABASE` · `CREATE TABLE` · constraints (PK, FK, NOT NULL, UNIQUE, DEFAULT, CHECK, AUTO_INCREMENT) · `ALTER TABLE` · `DROP` · `TRUNCATE` |
-| **4** | [DML — Bringing Data to Life](articles/Day4_DML_Bringing_Data_to_Life.md) | `INSERT` (single & multi-row) · `UPDATE` · `DELETE` · referential integrity · transactions (`COMMIT` / `ROLLBACK`) |
-| **5** | [DQL I — SELECT, Filtering & Sorting](articles/Day5_DQL_SELECT_Filtering_Sorting.md) | `SELECT` · column aliases · `DISTINCT` · `WHERE` with `=`, `!=`, `>`, `<`, `AND`, `OR`, `NOT`, `BETWEEN`, `IN`, `LIKE`, `IS NULL` · `ORDER BY` · `LIMIT` / `OFFSET` |
-| **6** | [DQL II — Aggregation & Grouping](articles/Day6_DQL_Aggregation_Grouping.md) | `COUNT` · `SUM` · `AVG` · `MIN` · `MAX` · `ROUND` · `GROUP BY` · `HAVING` · `DATE_FORMAT` · `MONTH` / `YEAR` · WHERE vs HAVING · execution order |
-| **7** | [DQL III — Joining Tables](articles/Day7_DQL_Joins.md) | Table aliases · `INNER JOIN` · `LEFT JOIN` · `RIGHT JOIN` · multi-table joins · self-join · cross join · FULL OUTER JOIN workaround · `UNION` / `UNION ALL` · ON vs WHERE with LEFT JOIN |
-| **8** | [DQL IV — Subqueries, CTEs & CASE](articles/Day8_DQL_Subqueries_CTEs_CASE.md) | Scalar subqueries · multi-row subqueries (`IN` / `NOT IN`) · correlated subqueries · `EXISTS` · derived tables · `WITH` (CTE) · multiple CTEs · `CASE` (simple & searched) · `COALESCE` · conditional aggregation |
-| **9** | [DQL V — Window Functions & Capstone](articles/Day9_DQL_Window_Functions_Capstone.md) | `ROW_NUMBER` · `RANK` · `DENSE_RANK` · `LAG` / `LEAD` · `SUM OVER` running totals · `MAX OVER` · percentage share · frame clause · `CREATE VIEW` · best practices · 8-question capstone |
+| **3** | [DDL - Building the Structure](articles/Day3_DDL_Building_Structure.md) | `CREATE DATABASE` · `CREATE TABLE` · constraints (PK, FK, NOT NULL, UNIQUE, DEFAULT, CHECK, AUTO_INCREMENT) · `ALTER TABLE` · `DROP` · `TRUNCATE` |
+| **4** | [DML - Bringing Data to Life](articles/Day4_DML_Bringing_Data_to_Life.md) | `INSERT` (single & multi-row) · `UPDATE` · `DELETE` · referential integrity · transactions (`COMMIT` / `ROLLBACK`) |
+| **5** | [DQL I - SELECT, Filtering & Sorting](articles/Day5_DQL_SELECT_Filtering_Sorting.md) | `SELECT` · column aliases · `DISTINCT` · `WHERE` with `=`, `!=`, `>`, `<`, `AND`, `OR`, `NOT`, `BETWEEN`, `IN`, `LIKE`, `IS NULL` · `ORDER BY` · `LIMIT` / `OFFSET` |
+| **6** | [DQL II - Aggregation & Grouping](articles/Day6_DQL_Aggregation_Grouping.md) | `COUNT` · `SUM` · `AVG` · `MIN` · `MAX` · `ROUND` · `GROUP BY` · `HAVING` · `DATE_FORMAT` · `MONTH` / `YEAR` · WHERE vs HAVING · execution order |
+| **7** | [DQL III - Joining Tables](articles/Day7_DQL_Joins.md) | Table aliases · `INNER JOIN` · `LEFT JOIN` · `RIGHT JOIN` · multi-table joins · self-join · cross join · FULL OUTER JOIN workaround · `UNION` / `UNION ALL` · ON vs WHERE with LEFT JOIN |
+| **8** | [DQL IV - Subqueries, CTEs & CASE](articles/Day8_DQL_Subqueries_CTEs_CASE.md) | Scalar subqueries · multi-row subqueries (`IN` / `NOT IN`) · correlated subqueries · `EXISTS` · derived tables · `WITH` (CTE) · multiple CTEs · `CASE` (simple & searched) · `COALESCE` · conditional aggregation |
+| **9** | [DQL V - Window Functions & Capstone](articles/Day9_DQL_Window_Functions_Capstone.md) | `ROW_NUMBER` · `RANK` · `DENSE_RANK` · `LAG` / `LEAD` · `SUM OVER` running totals · `MAX OVER` · percentage share · frame clause · `CREATE VIEW` · best practices · 8-question capstone |
 
 Each article is available as both a **Markdown file** (for reading in any editor or GitHub) and a **styled HTML page** (for a polished, syntax-highlighted reading experience with copy buttons).
 
@@ -257,7 +257,7 @@ databases-sql-for-analysts/
 </details>
 
 <details>
-<summary><strong>DQL - Data Query Language (Days 5–9)</strong></summary>
+<summary><strong>DQL - Data Query Language (Days 5-9)</strong></summary>
 
 **SELECT fundamentals (Day 5)**
 - `SELECT` specific columns, `SELECT *`
@@ -274,9 +274,9 @@ databases-sql-for-analysts/
 - `COUNT(*)`, `COUNT(column)`, `COUNT(DISTINCT column)`
 - `SUM`, `AVG`, `MIN`, `MAX`
 - `ROUND(value, decimals)`
-- `GROUP BY` — single and multiple columns
+- `GROUP BY` - single and multiple columns
 - The SELECT rule with GROUP BY (`ONLY_FULL_GROUP_BY`)
-- `HAVING` — filtering groups after aggregation
+- `HAVING` - filtering groups after aggregation
 - WHERE vs HAVING — when to use each
 - Date functions: `MONTH()`, `YEAR()`, `DATE_FORMAT()`, `MONTHNAME()`
 - Full execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT
