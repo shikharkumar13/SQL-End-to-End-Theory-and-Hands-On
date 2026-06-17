@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDL: Building the Structure of Our Database — Learn SQL Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+ --bg:#F4F6FB;--white:#FFFFFF;--text:#1C2333;--text-sec:#596880;--border:#DDE3EE;
+ --accent:#1557C0;--accent-lt:#EEF3FF;--accent-bd:#BAD0F8;
+ --amber:#D97706;--amber-lt:#FFFBEB;--amber-bd:#FCD34D;
+ --green:#0A7C4E;--green-lt:#ECFDF5;--green-bd:#6EE7B7;
+ --navy:#0E1829;--navy-mid:#172240;--tbl-hdr:#1C2333;--tbl-alt:#F0F4FA;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:17px;line-height:1.78;color:var(--text);background:var(--bg)}
+#progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--accent);z-index:2000;transition:width .1s linear}
+.top-nav{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;z-index:999}
+.nav-series{font-size:12.5px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.09em}
+.nav-right{display:flex;align-items:center;gap:20px}
+.nav-day{font-size:12.5px;color:var(--text-sec);font-family:'IBM Plex Mono',monospace}
+.nav-dots{display:flex;gap:5px}
+.nav-dot{width:22px;height:4px;border-radius:2px;background:var(--border)}
+.nav-dot.on{background:var(--accent)}
+.hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy-mid) 100%);padding:76px 28px 64px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-inner{position:relative}
+.hero-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:6px 18px;border-radius:100px;margin-bottom:26px}
+.hero h1{font-family:'IBM Plex Serif',serif;font-size:clamp(26px,5vw,44px);font-weight:700;line-height:1.2;color:#fff;max-width:740px;margin:0 auto 18px}
+.hero-subtitle{font-size:17px;color:rgba(255,255,255,.6);font-weight:300;max-width:560px;margin:0 auto 36px;line-height:1.6}
+.hero-meta{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)}
+.hero-meta span{padding:0 14px}
+.hero-meta span+span{border-left:1px solid rgba(255,255,255,.15)}
+.page-wrap{max-width:780px;margin:0 auto;padding:0 24px 96px}
+.article-intro{padding:44px 0 36px;border-bottom:1px solid var(--border);margin-bottom:52px}
+.article-intro p{font-size:19px;line-height:1.72;font-weight:300;color:var(--text);margin-bottom:14px}
+.article-intro p:last-of-type{margin-bottom:0}
+.intro-pill{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--amber-lt);border:1px solid var(--amber-bd);color:#92400E;padding:7px 14px;border-radius:6px}
+.intro-pill.green{background:var(--green-lt);border-color:var(--green-bd);color:#065F46}
+.section{margin-bottom:56px}
+.section-hd{display:flex;align-items:flex-start;gap:18px;margin-bottom:20px}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-lt);border:1px solid var(--accent-bd);padding:4px 10px;border-radius:4px;flex-shrink:0;margin-top:6px;letter-spacing:.04em}
+.section h2{font-family:'IBM Plex Serif',serif;font-size:clamp(19px,3vw,25px);font-weight:700;line-height:1.3;color:var(--text)}
+.section p{margin-bottom:16px}
+.subhead{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:600;color:var(--text);margin:26px 0 12px}
+p code,li code,td code,th code{font-family:'IBM Plex Mono',monospace;font-size:.86em;background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:3px}
+.bullets{list-style:none;padding:0;margin:8px 0 16px;display:flex;flex-direction:column;gap:10px}
+.bullets li{font-size:16px;color:var(--text);padding-left:22px;position:relative;line-height:1.6}
+.bullets li::before{content:'▸';position:absolute;left:2px;color:var(--accent);font-size:13px;top:3px}
+/* callouts */
+.callout{border-left:3px solid var(--accent);background:var(--accent-lt);padding:6px 20px;border-radius:0 6px 6px 0;margin:24px 0}
+.callout p{color:#1A3968;font-size:15.5px;margin:12px 0}
+.callout strong{color:var(--accent)}
+.callout-amber{border-left-color:var(--amber);background:var(--amber-lt)}
+.callout-amber p{color:#78350F}
+.callout-amber strong{color:var(--amber)}
+.callout .code-block{margin:14px 0}
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:22px 0;border-radius:8px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+table.tbl thead tr{background:var(--tbl-hdr)}
+table.tbl thead th{padding:11px 16px;text-align:left;font-weight:600;font-size:13px;letter-spacing:.02em;color:rgba(255,255,255,.92);white-space:nowrap;font-family:'IBM Plex Sans',sans-serif}
+table.tbl tbody tr{border-bottom:1px solid var(--border)}
+table.tbl tbody tr:last-child{border-bottom:none}
+table.tbl tbody tr:nth-child(even){background:var(--tbl-alt)}
+table.tbl tbody td{padding:10px 16px;color:var(--text);vertical-align:top;line-height:1.55}
+table.tbl th code,table.tbl td code{background:rgba(21,87,192,.09)}
+table.tbl.data{font-family:'IBM Plex Mono',monospace;font-size:13.5px}
+table.tbl.data tbody td{font-family:'IBM Plex Mono',monospace}
+table.tbl.data tbody td.c1{color:var(--accent);font-weight:500}
+table.tbl.data thead th{font-family:'IBM Plex Mono',monospace;font-weight:500}
+/* code blocks */
+.code-block{margin:22px 0;border-radius:10px;overflow:hidden;border:1px solid #243049;box-shadow:0 4px 16px rgba(14,24,41,.18)}
+.code-bar{display:flex;align-items:center;gap:12px;background:#0A1322;padding:9px 14px;border-bottom:1px solid #1E2A42}
+.code-bar .dots{display:flex;gap:6px}
+.code-bar .dots i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#33415C}
+.code-bar .dots i:nth-child(1){background:#FF5F56}
+.code-bar .dots i:nth-child(2){background:#FFBD2E}
+.code-bar .dots i:nth-child(3){background:#27C93F}
+.code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#6B7A99;text-transform:uppercase;margin-left:4px}
+.copy-btn{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9FB0CC;background:#1A2742;border:1px solid #2C3A57;padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:#243456;color:#CBD7EC}
+.code-block pre{margin:0;padding:18px 20px;background:#0E1829;overflow-x:auto}
+.code-block code{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.7;color:#D6DEEC;white-space:pre;display:block}
+.code-block .k{color:#7CB4FF;font-weight:500}
+.code-block .t{color:#5FD3B5}
+.code-block .s{color:#F0A868}
+.code-block .n{color:#E5C07B}
+.code-block .c{color:#5B6B8C;font-style:italic}
+/* try box */
+.try-box{background:var(--amber-lt);border:1px solid var(--amber-bd);border-radius:8px;padding:24px 28px;margin:36px 0}
+.try-box h4{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;margin-bottom:10px}
+.try-box p{font-size:15px;color:#78350F;line-height:1.65;margin:0}
+/* recap */
+.recap{background:var(--navy);border-radius:12px;padding:34px 38px;margin:52px 0 36px}
+.recap h3{font-family:'IBM Plex Serif',serif;font-size:19px;color:#fff;margin-bottom:20px}
+.recap ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:13px}
+.recap li{font-size:15px;color:rgba(255,255,255,.8);padding-left:20px;position:relative;line-height:1.62}
+.recap li::before{content:'▸';position:absolute;left:0;color:#FCD34D;font-size:13px;top:2px}
+.recap li strong{color:#fff}
+.recap li code{background:rgba(255,255,255,.1);color:#BAD0F8}
+/* next cta */
+.next-cta{background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:12px;padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:8px}
+.next-cta-text h4{font-size:11.5px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:5px}
+.next-cta-text p{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+.next-cta-text span{font-size:13px;color:var(--text-sec);display:block}
+.next-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.next-btn:hover{background:#1246A0}
+.closing{font-style:italic;text-align:center;color:var(--text-sec);font-size:15px;margin:34px 0 0}
+footer{background:var(--white);border-top:1px solid var(--border);padding:36px 24px;text-align:center}
+.footer-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--accent-lt);color:var(--accent);padding:4px 14px;border-radius:4px;margin-bottom:10px}
+footer p{font-size:13px;color:var(--text-sec)}
+@media(max-width:600px){.hero{padding:56px 20px 48px}.page-wrap{padding:0 18px 72px}.recap{padding:26px 22px}.next-cta{flex-direction:column;align-items:flex-start}.top-nav{padding:12px 18px}.nav-dots{display:none}.section-hd{flex-direction:column;gap:10px}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav class="top-nav">
+  <span class="nav-series">Databases &amp; SQL for Analysts</span>
+  <div class="nav-right">
+    <div class="nav-dots"><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot on"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div></div>
+    <span class="nav-day">Day 03 / 09</span>
+  </div>
+</nav>
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">Day 03 &middot; DDL &middot; Hands-On</div>
+  <h1>DDL: Building the Structure of Our Database</h1>
+  <p class="hero-subtitle">Write your first real SQL &mdash; create the database, all five tables, and the constraints that keep your data trustworthy.</p>
+  <div class="hero-meta"><span>MySQL</span><span>Hands-on</span><span>~18 min read</span></div>
+</div></header>
+<main class="page-wrap">
+  <div class="article-intro"><p>Welcome to Day 3 — the day you write your first real SQL. So far we've built intuition (Day 1) and mapped out the language and our example database (Day 2). Today we use <strong>DDL, the Data Definition Language</strong>, to turn the <code>online_store</code> blueprint into an actual, working structure. By the end of this article you'll have created the database and all five of its tables, complete with the rules that keep the data trustworthy.</p><p>Every query here is written for <strong>MySQL</strong>, so you can run them exactly as shown in MySQL Workbench, the MySQL command line, or any online MySQL playground.</p><p>Let's build.</p><div class="intro-pill green">🐬 &nbsp; Every query is written for MySQL &mdash; run them exactly as shown.</div></div>
+  <div class="section"><div class="section-hd"><span class="sec-num">01</span><h2>What DDL does</h2></div><p><strong>DDL (Data Definition Language)</strong> is the family of SQL commands that define and change the <em>structure</em> of a database — the tables, their columns, their data types, and the rules connecting them. DDL is about the <strong>container</strong>, not the contents. (Putting data <em>into</em> the container is DML, which is tomorrow.)</p><p>There are four DDL commands, and we'll use all of them today:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>CREATE</code></td><td>Makes a new database or table</td></tr><tr><td><code>ALTER</code></td><td>Changes the structure of an existing table</td></tr><tr><td><code>DROP</code></td><td>Permanently deletes a database or table</td></tr><tr><td><code>TRUNCATE</code></td><td>Empties a table of all rows, keeping its structure</td></tr></tbody></table></div><p>A quick habit worth forming now: SQL keywords (<code>CREATE</code>, <code>TABLE</code>, <code>INT</code>…) are <strong>not case-sensitive</strong> — <code>create table</code> works the same as <code>CREATE TABLE</code> — but by convention we write keywords in UPPERCASE and our own names (tables, columns) in lowercase. This makes queries far easier to read. Also, every SQL statement ends with a <strong>semicolon</strong> <code>;</code>.</p></div><div class="section"><div class="section-hd"><span class="sec-num">02</span><h2>Creating the database</h2></div><p>Before we can create tables, we need a database to hold them. In MySQL, that's two short commands:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">DATABASE</span> online_store;
+
+<span class="k">USE</span> online_store;</code></pre></div><p>The first line creates an empty database named <code>online_store</code>. The second, <code>USE</code>, tells MySQL "from now on, run my commands inside this database" — so every table we create next lands in the right place. You only need to run <code>USE</code> once per session.</p><p>If you want to confirm it exists, you can list all databases:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SHOW</span> <span class="k">DATABASES</span>;</code></pre></div><div class="callout"><p><strong>A note on the storage engine.</strong> MySQL tables use a storage engine, and the modern default is <strong>InnoDB</strong>. This matters because InnoDB is the engine that actually enforces foreign keys — the links between our tables. Since it's the default in modern MySQL, you don't need to do anything special, but it's good to know <em>why</em> our relationships will work.</p></div></div><div class="section"><div class="section-hd"><span class="sec-num">03</span><h2>The anatomy of <code>CREATE TABLE</code></h2></div><p>The <code>CREATE TABLE</code> command builds a table by listing its columns, each with a name and a data type, plus any rules. The general shape looks like this:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> table_name (
+    column_name   data_type   [constraints],
+    column_name   data_type   [constraints],
+    ...
+);</code></pre></div><p>Let's make this concrete with the simplest table in our database — **<code>categories</code>**, which has just two columns:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> categories (
+    category_id   <span class="t">INT</span>          <span class="k">AUTO_INCREMENT</span>,
+    category_name <span class="t">VARCHAR</span>(<span class="n">50</span>)  <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">UNIQUE</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (category_id)
+);</code></pre></div><p>Reading this line by line:</p><ul class="bullets"><li><code>category_id INT AUTO_INCREMENT</code> — an integer column that MySQL fills in automatically. **<code>AUTO_INCREMENT</code>** is a handy MySQL feature: each new row gets the next number (1, 2, 3, …) without you supplying it. Perfect for ID columns.</li><li><code>category_name VARCHAR(50) NOT NULL UNIQUE</code> — text up to 50 characters that must always have a value (<code>NOT NULL</code>) and can't be repeated (<code>UNIQUE</code>). Two categories can't both be named "Electronics."</li><li><code>PRIMARY KEY (category_id)</code> — declares <code>category_id</code> as the primary key: the column that uniquely identifies each row.</li></ul><p>That's a complete, valid table. The words like <code>NOT NULL</code>, <code>UNIQUE</code>, and <code>PRIMARY KEY</code> are <strong>constraints</strong> — rules that protect your data. They're so central to good design that they deserve their own section.</p></div><div class="section"><div class="section-hd"><span class="sec-num">04</span><h2>Constraints: the rules that protect your data</h2></div><p>A <strong>constraint</strong> is a rule attached to a column or table that the database enforces automatically. Constraints are what make a database <em>trustworthy</em> — they stop bad data from ever getting in. Here are the ones you'll use constantly:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Constraint</th><th>What it guarantees</th></tr></thead><tbody><tr><td><code>PRIMARY KEY</code></td><td>Uniquely identifies each row; cannot be NULL or duplicated</td></tr><tr><td><code>FOREIGN KEY</code></td><td>Links to a primary key in another table; enforces valid relationships</td></tr><tr><td><code>NOT NULL</code></td><td>The column must always have a value</td></tr><tr><td><code>UNIQUE</code></td><td>No two rows can share the same value in this column</td></tr><tr><td><code>DEFAULT</code></td><td>Supplies a value automatically when none is given</td></tr><tr><td><code>CHECK</code></td><td>The value must satisfy a condition (e.g. price ≥ 0)</td></tr><tr><td><code>AUTO_INCREMENT</code></td><td>(MySQL) Auto-generates the next number for a column</td></tr></tbody></table></div><p>Let's see several of these in action by creating the **<code>customers</code>** table:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> customers (
+    customer_id <span class="t">INT</span>          <span class="k">AUTO_INCREMENT</span>,
+    first_name  <span class="t">VARCHAR</span>(<span class="n">50</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    last_name   <span class="t">VARCHAR</span>(<span class="n">50</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    email       <span class="t">VARCHAR</span>(<span class="n">100</span>) <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">UNIQUE</span>,
+    city        <span class="t">VARCHAR</span>(<span class="n">50</span>),
+    country     <span class="t">VARCHAR</span>(<span class="n">50</span>),
+    signup_date <span class="t">DATE</span>         <span class="k">NOT</span> <span class="k">NULL</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (customer_id)
+);</code></pre></div><p>Notice the design decisions encoded here:</p><ul class="bullets"><li><code>first_name</code>, <code>last_name</code>, and <code>signup_date</code> are **<code>NOT NULL</code>** — we never want a nameless or date-less customer.</li><li><code>email</code> is **<code>NOT NULL UNIQUE</code>** — every customer must have an email, and no two customers can share one.</li><li><code>city</code> and <code>country</code> have <em>no</em> <code>NOT NULL</code>, so they're <strong>optional</strong>. If we don't know a customer's city, that column simply holds <code>NULL</code> ("no value").</li></ul><p>This is the real job of constraints: they let you write down your business rules <em>in the structure itself</em>, so the database guards them on every single insert — no human discipline required.</p><h3 class="subhead">A note on DEFAULT</h3><p>The <code>DEFAULT</code> constraint supplies a value automatically when you don't provide one. We'll use it on the <code>orders</code> table in a moment, where a new order's <code>status</code> should start as <code>'Pending'</code> unless told otherwise. That way, an order created without an explicit status isn't left blank — it sensibly defaults.</p></div><div class="section"><div class="section-hd"><span class="sec-num">05</span><h2>FOREIGN KEY: the relational glue</h2></div><p>Now the most important constraint for a <em>relational</em> database — the <strong>foreign key</strong>, which links one table to another. This is what turns a pile of separate tables into a connected, relational database.</p><p>A crucial rule comes with foreign keys: <strong>the table you reference must already exist.</strong> A foreign key in <code>products</code> that points to <code>categories</code> requires <code>categories</code> to be created first. This is why we build our tables in <strong>dependency order</strong>: tables with no foreign keys first, then the tables that depend on them.</p><p>Our order is: <code>categories</code> and <code>customers</code> first (done), then <code>products</code>, then <code>orders</code>, then <code>order_items</code> last.</p><p>Here's **<code>products</code>**, which references <code>categories</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> products (
+    product_id     <span class="t">INT</span>           <span class="k">AUTO_INCREMENT</span>,
+    product_name   <span class="t">VARCHAR</span>(<span class="n">100</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    category_id    <span class="t">INT</span>,
+    price          <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    stock_quantity <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> <span class="n">0</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (product_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (category_id) <span class="k">REFERENCES</span> categories(category_id),
+    <span class="k">CHECK</span> (price &gt;= <span class="n">0</span>)
+);</code></pre></div><p>The new pieces:</p><ul class="bullets"><li><code>FOREIGN KEY (category_id) REFERENCES categories(category_id)</code> — this says the <code>category_id</code> in <code>products</code> must match a real <code>category_id</code> over in <code>categories</code>. MySQL will now <em>reject</em> any product that points to a category that doesn't exist. That's <strong>referential integrity</strong> — the database guaranteeing your relationships stay valid.</li><li><code>price DECIMAL(10,2)</code> — exact decimal for money, as we discussed on Day 2.</li><li><code>CHECK (price &gt;= 0)</code> — a price can never be negative.</li><li><code>stock_quantity INT NOT NULL DEFAULT 0</code> — if no stock is specified, it starts at zero.</li></ul><p>Next, **<code>orders</code>**, which references <code>customers</code> and shows <code>DEFAULT</code> doing real work:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> orders (
+    order_id    <span class="t">INT</span>          <span class="k">AUTO_INCREMENT</span>,
+    customer_id <span class="t">INT</span>          <span class="k">NOT</span> <span class="k">NULL</span>,
+    order_date  <span class="t">DATE</span>         <span class="k">NOT</span> <span class="k">NULL</span>,
+    status      <span class="t">VARCHAR</span>(<span class="n">20</span>)  <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> <span class="s">'Pending'</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (order_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (customer_id) <span class="k">REFERENCES</span> customers(customer_id)
+);</code></pre></div><p>Here <code>status</code> defaults to <code>'Pending'</code>, and <code>customer_id</code> is both <code>NOT NULL</code> (every order must belong to someone) and a foreign key (that someone must be a real customer).</p><p>Finally, **<code>order_items</code><em>* — the bridge table from Day 2. It carries </em>two* foreign keys, linking each purchase line to both its order and its product:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> order_items (
+    order_item_id <span class="t">INT</span>           <span class="k">AUTO_INCREMENT</span>,
+    order_id      <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    product_id    <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    quantity      <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    unit_price    <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (order_item_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (order_id)   <span class="k">REFERENCES</span> orders(order_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (product_id) <span class="k">REFERENCES</span> products(product_id),
+    <span class="k">CHECK</span> (quantity &gt; <span class="n">0</span>)
+);</code></pre></div><p>With this, all five tables are defined and fully connected.</p><div class="callout callout-amber"><p>**MySQL <code>CHECK</code> caveat.<em>* MySQL only began </em>enforcing* <code>CHECK</code> constraints in <strong>version 8.0.16</strong>. Older versions accept the syntax but silently ignore it. If you're on MySQL 8.0.16 or newer (very common today), your <code>CHECK</code> rules will be enforced. On older versions they're harmless but inactive — your other constraints still work perfectly.</p></div></div><div class="section"><div class="section-hd"><span class="sec-num">06</span><h2>The complete setup script</h2></div><p>Here is everything from above in one runnable block, in the correct dependency order. Running this from top to bottom creates the entire <code>online_store</code> structure from scratch:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">DATABASE</span> online_store;
+<span class="k">USE</span> online_store;
+
+<span class="c">-- 1. Categories (no dependencies)</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> categories (
+    category_id   <span class="t">INT</span>          <span class="k">AUTO_INCREMENT</span>,
+    category_name <span class="t">VARCHAR</span>(<span class="n">50</span>)  <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">UNIQUE</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (category_id)
+);
+
+<span class="c">-- 2. Customers (no dependencies)</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> customers (
+    customer_id <span class="t">INT</span>          <span class="k">AUTO_INCREMENT</span>,
+    first_name  <span class="t">VARCHAR</span>(<span class="n">50</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    last_name   <span class="t">VARCHAR</span>(<span class="n">50</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    email       <span class="t">VARCHAR</span>(<span class="n">100</span>) <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">UNIQUE</span>,
+    city        <span class="t">VARCHAR</span>(<span class="n">50</span>),
+    country     <span class="t">VARCHAR</span>(<span class="n">50</span>),
+    signup_date <span class="t">DATE</span>         <span class="k">NOT</span> <span class="k">NULL</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (customer_id)
+);
+
+<span class="c">-- 3. Products (depends on categories)</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> products (
+    product_id     <span class="t">INT</span>           <span class="k">AUTO_INCREMENT</span>,
+    product_name   <span class="t">VARCHAR</span>(<span class="n">100</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    category_id    <span class="t">INT</span>,
+    price          <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    stock_quantity <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> <span class="n">0</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (product_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (category_id) <span class="k">REFERENCES</span> categories(category_id),
+    <span class="k">CHECK</span> (price &gt;= <span class="n">0</span>)
+);
+
+<span class="c">-- 4. Orders (depends on customers)</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> orders (
+    order_id    <span class="t">INT</span>          <span class="k">AUTO_INCREMENT</span>,
+    customer_id <span class="t">INT</span>          <span class="k">NOT</span> <span class="k">NULL</span>,
+    order_date  <span class="t">DATE</span>         <span class="k">NOT</span> <span class="k">NULL</span>,
+    status      <span class="t">VARCHAR</span>(<span class="n">20</span>)  <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> <span class="s">'Pending'</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (order_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (customer_id) <span class="k">REFERENCES</span> customers(customer_id)
+);
+
+<span class="c">-- 5. Order items (depends on orders AND products)</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> order_items (
+    order_item_id <span class="t">INT</span>           <span class="k">AUTO_INCREMENT</span>,
+    order_id      <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    product_id    <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    quantity      <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    unit_price    <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (order_item_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (order_id)   <span class="k">REFERENCES</span> orders(order_id),
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> (product_id) <span class="k">REFERENCES</span> products(product_id),
+    <span class="k">CHECK</span> (quantity &gt; <span class="n">0</span>)
+);</code></pre></div><p>The lines beginning with <code>--</code> are <strong>comments</strong> — SQL ignores them, but they make a script readable. Get into the habit of commenting your scripts.</p></div><div class="section"><div class="section-hd"><span class="sec-num">07</span><h2>Verifying your work</h2></div><p>After running the script, confirm the structure is there. These MySQL commands let you inspect what you built:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SHOW</span> <span class="k">TABLES</span>;</code></pre></div><p>This lists all five tables. To inspect a single table's columns, types, and keys, use <code>DESCRIBE</code> (or its short form <code>DESC</code>):</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DESCRIBE</span> customers;</code></pre></div><p>You'll see each column with its type, whether it allows <code>NULL</code>, and its key role. And to see the exact statement MySQL stored for a table — useful for checking your constraints landed correctly:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SHOW</span> <span class="k">CREATE</span> <span class="k">TABLE</span> products;</code></pre></div></div><div class="section"><div class="section-hd"><span class="sec-num">08</span><h2>ALTER: changing a table after creation</h2></div><p>Real databases evolve. <code>ALTER TABLE</code> lets you change a table's structure <em>after</em> it exists, without rebuilding it. Here are the operations you'll reach for most, in MySQL syntax.</p><p><strong>Add a new column</strong> — say we want to store a customer's phone number:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">ALTER</span> <span class="k">TABLE</span> customers <span class="k">ADD</span> <span class="k">COLUMN</span> phone <span class="t">VARCHAR</span>(<span class="n">20</span>);</code></pre></div><p><strong>Change an existing column's definition</strong> — MySQL uses <code>MODIFY COLUMN</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">ALTER</span> <span class="k">TABLE</span> customers <span class="k">MODIFY</span> <span class="k">COLUMN</span> phone <span class="t">VARCHAR</span>(<span class="n">15</span>);</code></pre></div><p><strong>Rename a column</strong> (MySQL 8.0+):</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">ALTER</span> <span class="k">TABLE</span> customers <span class="k">RENAME</span> <span class="k">COLUMN</span> phone <span class="k">TO</span> phone_number;</code></pre></div><p><strong>Drop a column</strong> you no longer need:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">ALTER</span> <span class="k">TABLE</span> customers <span class="k">DROP</span> <span class="k">COLUMN</span> phone_number;</code></pre></div><p><strong>Add a constraint to an existing table</strong> — for example, adding a foreign key after the fact:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">ALTER</span> <span class="k">TABLE</span> products
+<span class="k">ADD</span> <span class="k">CONSTRAINT</span> fk_product_category
+<span class="k">FOREIGN</span> <span class="k">KEY</span> (category_id) <span class="k">REFERENCES</span> categories(category_id);</code></pre></div><p>(We named the constraint <code>fk_product_category</code>. Naming constraints is optional but makes them easy to find and remove later.)</p><p><code>ALTER</code> is powerful, so make changes thoughtfully on a database that already holds data — some changes can affect existing rows.</p></div><div class="section"><div class="section-hd"><span class="sec-num">09</span><h2>DROP and TRUNCATE: removing structure and data</h2></div><p>The last two DDL commands <em>remove</em> things. Use them with care — both are difficult to undo.</p><p>**<code>DROP TABLE</code><em>* deletes an entire table — its structure </em>and* all its data — permanently:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DROP</span> <span class="k">TABLE</span> order_items;</code></pre></div><p>Because of foreign keys, you must drop tables in <em>reverse</em> dependency order: a table being referenced by another can't be dropped first. So you'd drop <code>order_items</code> before <code>orders</code> and <code>products</code>. To avoid an error if the table might not exist, add <code>IF EXISTS</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DROP</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">EXISTS</span> order_items;</code></pre></div><p>**<code>DROP DATABASE</code>** removes an entire database and everything in it:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DROP</span> <span class="k">DATABASE</span> online_store;</code></pre></div><p>**<code>TRUNCATE TABLE</code><em>* keeps the table's structure but instantly removes </em>all* its rows:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">TRUNCATE</span> <span class="k">TABLE</span> order_items;</code></pre></div><p><code>TRUNCATE</code> is useful when you want to wipe a table clean and start fresh — it also resets <code>AUTO_INCREMENT</code> back to 1.</p><div class="callout"><p><strong>DROP vs TRUNCATE vs DELETE — a common confusion.</strong> <code>DROP</code> removes the whole table (structure + data). <code>TRUNCATE</code> removes all data but keeps the empty table. <code>DELETE</code> (which is <em>DML</em>, covered tomorrow) also removes rows but lets you target <em>specific</em> rows with a <code>WHERE</code> condition, and can be undone inside a transaction. Rule of thumb: <code>TRUNCATE</code> to empty everything fast; <code>DELETE</code> when you want control over <em>which</em> rows go.</p></div></div><div class="section"><div class="section-hd"><span class="sec-num">10</span><h2>Where we're headed</h2></div><p>You've now done something real: the <code>online_store</code> database exists, with five connected tables and a full set of constraints quietly standing guard over your data quality. The structure is built — but it's empty.</p><p>Tomorrow, <strong>Day 4 (DML)</strong>, we bring it to life. You'll use <code>INSERT</code> to populate every table with realistic sample data — customers, categories, products, orders, and order items — and learn <code>UPDATE</code> and <code>DELETE</code> to modify it. That sample data is what we'll spend Days 5 through 9 querying, so Day 4 sets the stage for all the analysis to come.</p><div class="recap"><h3>Quick Recap — Day 3</h3><ul></ul></div><ul class="bullets"><li><strong>DDL</strong> defines structure. Its four commands: <code>CREATE</code>, <code>ALTER</code>, <code>DROP</code>, <code>TRUNCATE</code>.</li><li><code>CREATE DATABASE</code> + <code>USE</code> set up the database; <code>CREATE TABLE</code> defines each table's columns, types, and rules.</li><li><strong>Constraints</strong> enforce data quality: <code>PRIMARY KEY</code>, <code>FOREIGN KEY</code>, <code>NOT NULL</code>, <code>UNIQUE</code>, <code>DEFAULT</code>, <code>CHECK</code>, plus MySQL's <code>AUTO_INCREMENT</code>.</li><li><strong>Foreign keys</strong> create relationships and require referenced tables to exist first, so tables are built in dependency order.</li><li><code>ALTER TABLE</code> changes structure later (<code>ADD</code>/<code>MODIFY</code>/<code>RENAME</code>/<code>DROP COLUMN</code>, <code>ADD CONSTRAINT</code>).</li><li><code>DROP</code> deletes structure + data; <code>TRUNCATE</code> empties a table; <code>DELETE</code> (DML) removes chosen rows.</li><li>MySQL specifics: <code>AUTO_INCREMENT</code>, the <code>InnoDB</code> engine enforces foreign keys, and <code>CHECK</code> is enforced from version <strong>8.0.16+</strong>.</li></ul><div class="try-box"><h4>✏️ Try this before Day 4</h4><p>Run the complete setup script in your MySQL environment, then run <code>SHOW TABLES;</code> and <code>DESCRIBE order_items;</code>. Can you spot the two foreign keys in the output? As a small challenge, use <code>ALTER TABLE</code> to add an optional <code>discount DECIMAL(5,2)</code> column to <code>order_items</code>, then <code>DESCRIBE</code> it again to confirm the change — and drop the column afterward to restore the original design.</p></div><p class="closing">See you on Day 4, where the database finally fills with data.</p></div>
+  <div class="next-cta">
+    <div class="next-cta-text">
+      <h4>Coming up next</h4>
+      <p>Day 4: DML &mdash; Bringing Data to Life</p>
+      <span>Populate every table &middot; INSERT &middot; UPDATE &middot; DELETE</span>
+    </div>
+    <a href="#" class="next-btn">Day 4 &nbsp;&rarr;</a>
+  </div>
+</main>
+<footer>
+  <div class="footer-tag">Databases &amp; SQL for Analysts — 9-Day Series</div>
+  <p>From first concepts to advanced querying, one article at a time.</p>
+</footer>
+<script>
+const bar=document.getElementById('progress-bar');
+function up(){const s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(h>0?Math.min(s/h*100,100):0)+'%';}
+window.addEventListener('scroll',up,{passive:true});up();
+function copyCode(btn){const c=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(c.innerText).then(()=>{const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1500);});}
+</script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DML: Bringing the Database to Life — Learn SQL Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+ --bg:#F4F6FB;--white:#FFFFFF;--text:#1C2333;--text-sec:#596880;--border:#DDE3EE;
+ --accent:#1557C0;--accent-lt:#EEF3FF;--accent-bd:#BAD0F8;
+ --amber:#D97706;--amber-lt:#FFFBEB;--amber-bd:#FCD34D;
+ --green:#0A7C4E;--green-lt:#ECFDF5;--green-bd:#6EE7B7;
+ --navy:#0E1829;--navy-mid:#172240;--tbl-hdr:#1C2333;--tbl-alt:#F0F4FA;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:17px;line-height:1.78;color:var(--text);background:var(--bg)}
+#progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--accent);z-index:2000;transition:width .1s linear}
+.top-nav{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;z-index:999}
+.nav-series{font-size:12.5px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.09em}
+.nav-right{display:flex;align-items:center;gap:20px}
+.nav-day{font-size:12.5px;color:var(--text-sec);font-family:'IBM Plex Mono',monospace}
+.nav-dots{display:flex;gap:5px}
+.nav-dot{width:22px;height:4px;border-radius:2px;background:var(--border)}
+.nav-dot.on{background:var(--accent)}
+.hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy-mid) 100%);padding:76px 28px 64px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-inner{position:relative}
+.hero-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:6px 18px;border-radius:100px;margin-bottom:26px}
+.hero h1{font-family:'IBM Plex Serif',serif;font-size:clamp(26px,5vw,44px);font-weight:700;line-height:1.2;color:#fff;max-width:740px;margin:0 auto 18px}
+.hero-subtitle{font-size:17px;color:rgba(255,255,255,.6);font-weight:300;max-width:560px;margin:0 auto 36px;line-height:1.6}
+.hero-meta{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)}
+.hero-meta span{padding:0 14px}
+.hero-meta span+span{border-left:1px solid rgba(255,255,255,.15)}
+.page-wrap{max-width:780px;margin:0 auto;padding:0 24px 96px}
+.article-intro{padding:44px 0 36px;border-bottom:1px solid var(--border);margin-bottom:52px}
+.article-intro p{font-size:19px;line-height:1.72;font-weight:300;color:var(--text);margin-bottom:14px}
+.article-intro p:last-of-type{margin-bottom:0}
+.intro-pill{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--amber-lt);border:1px solid var(--amber-bd);color:#92400E;padding:7px 14px;border-radius:6px}
+.intro-pill.green{background:var(--green-lt);border-color:var(--green-bd);color:#065F46}
+.section{margin-bottom:56px}
+.section-hd{display:flex;align-items:flex-start;gap:18px;margin-bottom:20px}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-lt);border:1px solid var(--accent-bd);padding:4px 10px;border-radius:4px;flex-shrink:0;margin-top:6px;letter-spacing:.04em}
+.section h2{font-family:'IBM Plex Serif',serif;font-size:clamp(19px,3vw,25px);font-weight:700;line-height:1.3;color:var(--text)}
+.section p{margin-bottom:16px}
+.subhead{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:600;color:var(--text);margin:26px 0 12px}
+p code,li code,td code,th code{font-family:'IBM Plex Mono',monospace;font-size:.86em;background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:3px}
+.bullets{list-style:none;padding:0;margin:8px 0 16px;display:flex;flex-direction:column;gap:10px}
+.bullets li{font-size:16px;color:var(--text);padding-left:22px;position:relative;line-height:1.6}
+.bullets li::before{content:'▸';position:absolute;left:2px;color:var(--accent);font-size:13px;top:3px}
+/* callouts */
+.callout{border-left:3px solid var(--accent);background:var(--accent-lt);padding:6px 20px;border-radius:0 6px 6px 0;margin:24px 0}
+.callout p{color:#1A3968;font-size:15.5px;margin:12px 0}
+.callout strong{color:var(--accent)}
+.callout-amber{border-left-color:var(--amber);background:var(--amber-lt)}
+.callout-amber p{color:#78350F}
+.callout-amber strong{color:var(--amber)}
+.callout .code-block{margin:14px 0}
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:22px 0;border-radius:8px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+table.tbl thead tr{background:var(--tbl-hdr)}
+table.tbl thead th{padding:11px 16px;text-align:left;font-weight:600;font-size:13px;letter-spacing:.02em;color:rgba(255,255,255,.92);white-space:nowrap;font-family:'IBM Plex Sans',sans-serif}
+table.tbl tbody tr{border-bottom:1px solid var(--border)}
+table.tbl tbody tr:last-child{border-bottom:none}
+table.tbl tbody tr:nth-child(even){background:var(--tbl-alt)}
+table.tbl tbody td{padding:10px 16px;color:var(--text);vertical-align:top;line-height:1.55}
+table.tbl th code,table.tbl td code{background:rgba(21,87,192,.09)}
+table.tbl.data{font-family:'IBM Plex Mono',monospace;font-size:13.5px}
+table.tbl.data tbody td{font-family:'IBM Plex Mono',monospace}
+table.tbl.data tbody td.c1{color:var(--accent);font-weight:500}
+table.tbl.data thead th{font-family:'IBM Plex Mono',monospace;font-weight:500}
+/* code blocks */
+.code-block{margin:22px 0;border-radius:10px;overflow:hidden;border:1px solid #243049;box-shadow:0 4px 16px rgba(14,24,41,.18)}
+.code-bar{display:flex;align-items:center;gap:12px;background:#0A1322;padding:9px 14px;border-bottom:1px solid #1E2A42}
+.code-bar .dots{display:flex;gap:6px}
+.code-bar .dots i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#33415C}
+.code-bar .dots i:nth-child(1){background:#FF5F56}
+.code-bar .dots i:nth-child(2){background:#FFBD2E}
+.code-bar .dots i:nth-child(3){background:#27C93F}
+.code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#6B7A99;text-transform:uppercase;margin-left:4px}
+.copy-btn{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9FB0CC;background:#1A2742;border:1px solid #2C3A57;padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:#243456;color:#CBD7EC}
+.code-block pre{margin:0;padding:18px 20px;background:#0E1829;overflow-x:auto}
+.code-block code{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.7;color:#D6DEEC;white-space:pre;display:block}
+.code-block .k{color:#7CB4FF;font-weight:500}
+.code-block .t{color:#5FD3B5}
+.code-block .s{color:#F0A868}
+.code-block .n{color:#E5C07B}
+.code-block .c{color:#5B6B8C;font-style:italic}
+/* try box */
+.try-box{background:var(--amber-lt);border:1px solid var(--amber-bd);border-radius:8px;padding:24px 28px;margin:36px 0}
+.try-box h4{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;margin-bottom:10px}
+.try-box p{font-size:15px;color:#78350F;line-height:1.65;margin:0}
+/* recap */
+.recap{background:var(--navy);border-radius:12px;padding:34px 38px;margin:52px 0 36px}
+.recap h3{font-family:'IBM Plex Serif',serif;font-size:19px;color:#fff;margin-bottom:20px}
+.recap ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:13px}
+.recap li{font-size:15px;color:rgba(255,255,255,.8);padding-left:20px;position:relative;line-height:1.62}
+.recap li::before{content:'▸';position:absolute;left:0;color:#FCD34D;font-size:13px;top:2px}
+.recap li strong{color:#fff}
+.recap li code{background:rgba(255,255,255,.1);color:#BAD0F8}
+/* next cta */
+.next-cta{background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:12px;padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:8px}
+.next-cta-text h4{font-size:11.5px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:5px}
+.next-cta-text p{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+.next-cta-text span{font-size:13px;color:var(--text-sec);display:block}
+.next-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.next-btn:hover{background:#1246A0}
+.closing{font-style:italic;text-align:center;color:var(--text-sec);font-size:15px;margin:34px 0 0}
+footer{background:var(--white);border-top:1px solid var(--border);padding:36px 24px;text-align:center}
+.footer-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--accent-lt);color:var(--accent);padding:4px 14px;border-radius:4px;margin-bottom:10px}
+footer p{font-size:13px;color:var(--text-sec)}
+@media(max-width:600px){.hero{padding:56px 20px 48px}.page-wrap{padding:0 18px 72px}.recap{padding:26px 22px}.next-cta{flex-direction:column;align-items:flex-start}.top-nav{padding:12px 18px}.nav-dots{display:none}.section-hd{flex-direction:column;gap:10px}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav class="top-nav">
+  <span class="nav-series">Databases &amp; SQL for Analysts</span>
+  <div class="nav-right">
+    <div class="nav-dots"><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot on"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div></div>
+    <span class="nav-day">Day 04 / 09</span>
+  </div>
+</nav>
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">Day 04 &middot; DML &middot; Hands-On</div>
+  <h1>DML: Bringing the Database to Life</h1>
+  <p class="hero-subtitle">Fill every table with realistic data, then learn to change and remove it safely &mdash; the dataset we&rsquo;ll query all series long.</p>
+  <div class="hero-meta"><span>MySQL</span><span>Hands-on</span><span>~16 min read</span></div>
+</div></header>
+<main class="page-wrap">
+  <div class="article-intro"><p>Welcome to Day 4. Yesterday you built the skeleton of <code>online_store</code> — five connected tables, standing empty, guarded by constraints. Today we use <strong>DML, the Data Manipulation Language</strong>, to fill that skeleton with data and learn how to change it. By the end you'll have a fully populated database, and that data is exactly what we'll query for the rest of the series.</p><p>Every query here is written for <strong>MySQL</strong>. If you ran yesterday's setup script, you can run today's straight after it.</p><p>Let's bring it to life.</p><div class="intro-pill green">🐬 &nbsp; Every query is written for MySQL &mdash; run them exactly as shown.</div></div>
+  <div class="section"><div class="section-hd"><span class="sec-num">01</span><h2>What DML does</h2></div><p><strong>DML (Data Manipulation Language)</strong> is the family of commands that work with the <em>data inside</em> your tables — the contents, not the container. There are three:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>INSERT</code></td><td>Adds new rows to a table</td></tr><tr><td><code>UPDATE</code></td><td>Modifies existing rows</td></tr><tr><td><code>DELETE</code></td><td>Removes rows from a table</td></tr></tbody></table></div><p>One warning to keep in mind from the very start: **<code>UPDATE</code> and <code>DELETE</code> act on every row you don't filter out.** A <code>DELETE</code> without a <code>WHERE</code> clause empties the entire table. We'll come back to this — but burn it into memory now, because it's the single most common beginner accident.</p></div><div class="section"><div class="section-hd"><span class="sec-num">02</span><h2>INSERT: adding data</h2></div><p>The <code>INSERT</code> command adds rows. Its standard form names the columns you're filling, then provides the values:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> table_name (column1, column2, ...)
+<span class="k">VALUES</span> (value1, value2, ...);</code></pre></div><p>Let's populate the simplest table, **<code>categories</code><em>*. Notice we </em>don't* supply <code>category_id</code> — that column is <code>AUTO_INCREMENT</code>, so MySQL assigns 1, 2, 3, … automatically:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> categories (category_name)
+<span class="k">VALUES</span> (<span class="s">'Electronics'</span>);</code></pre></div><p>That inserts one row. But you can insert <strong>many rows at once</strong> by separating each set of values with a comma — far more efficient than writing one statement per row:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> categories (category_name) <span class="k">VALUES</span>
+(<span class="s">'Electronics'</span>),
+(<span class="s">'Books'</span>),
+(<span class="s">'Clothing'</span>),
+(<span class="s">'Home &amp; Kitchen'</span>),
+(<span class="s">'Sports'</span>);</code></pre></div><p>After this, our five categories have IDs 1 through 5, assigned in order.</p><p>A few essentials this example already shows:</p><ul class="bullets"><li><strong>Text values go in single quotes</strong> (<code>'Books'</code>), numbers do not.</li><li><strong>Always list your columns</strong> — <code>INSERT INTO categories (category_name)</code>. You <em>can</em> omit the column list, but then you must supply every column in exact table order, which is fragile. Naming columns is clearer and safer; make it a habit.</li><li>**Skip <code>AUTO_INCREMENT</code> columns** — let MySQL fill them.</li></ul></div><div class="section"><div class="section-hd"><span class="sec-num">03</span><h2>Inserting customers: NULLs and dates</h2></div><p>Next, the **<code>customers</code>** table. This one introduces two new ideas: optional columns and dates.</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> customers (first_name, last_name, email, city, country, signup_date) <span class="k">VALUES</span>
+(<span class="s">'Aarav'</span>,  <span class="s">'Sharma'</span>,   <span class="s">'aarav.sharma@email.com'</span>,   <span class="s">'Jaipur'</span>,    <span class="s">'India'</span>,    <span class="s">'2023-01-15'</span>),
+(<span class="s">'Diya'</span>,   <span class="s">'Patel'</span>,    <span class="s">'diya.patel@email.com'</span>,     <span class="s">'Mumbai'</span>,    <span class="s">'India'</span>,    <span class="s">'2023-02-20'</span>),
+(<span class="s">'Rohan'</span>,  <span class="s">'Mehta'</span>,    <span class="s">'rohan.mehta@email.com'</span>,    <span class="s">'Delhi'</span>,     <span class="s">'India'</span>,    <span class="s">'2023-03-10'</span>),
+(<span class="s">'Ananya'</span>, <span class="s">'Reddy'</span>,    <span class="s">'ananya.reddy@email.com'</span>,   <span class="s">'Hyderabad'</span>, <span class="s">'India'</span>,    <span class="s">'2023-05-05'</span>),
+(<span class="s">'Vivaan'</span>, <span class="s">'Singh'</span>,    <span class="s">'vivaan.singh@email.com'</span>,   <span class="s">'Bengaluru'</span>, <span class="s">'India'</span>,    <span class="s">'2023-06-18'</span>),
+(<span class="s">'Ishaan'</span>, <span class="s">'Gupta'</span>,    <span class="s">'ishaan.gupta@email.com'</span>,   <span class="s">'Pune'</span>,      <span class="s">'India'</span>,    <span class="s">'2023-08-22'</span>),
+(<span class="s">'Saanvi'</span>, <span class="s">'Iyer'</span>,     <span class="s">'saanvi.iyer@email.com'</span>,    <span class="s">'Chennai'</span>,   <span class="s">'India'</span>,    <span class="s">'2023-09-30'</span>),
+(<span class="s">'Kabir'</span>,  <span class="s">'Khan'</span>,     <span class="s">'kabir.khan@email.com'</span>,     <span class="s">'Lahore'</span>,    <span class="s">'Pakistan'</span>, <span class="s">'2023-11-12'</span>),
+(<span class="s">'Mia'</span>,    <span class="s">'Williams'</span>, <span class="s">'mia.williams@email.com'</span>,   <span class="s">'London'</span>,    <span class="s">'UK'</span>,       <span class="s">'2024-01-08'</span>),
+(<span class="s">'Noah'</span>,   <span class="s">'Brown'</span>,    <span class="s">'noah.brown@email.com'</span>,     <span class="k">NULL</span>,        <span class="s">'USA'</span>,      <span class="s">'2024-02-14'</span>);</code></pre></div><p>Two things to notice:</p><ul class="bullets"><li>**Dates are written as <code>'YYYY-MM-DD'</code> strings** in single quotes — the format MySQL expects and the one that sorts correctly.</li><li>**The last customer, Noah Brown, has <code>NULL</code> for <code>city</code>.** Because <code>city</code> was defined as optional (no <code>NOT NULL</code>), we can write the keyword <code>NULL</code> to mean "no value." This is deliberate: later in the series we'll use Noah to demonstrate how to find and handle missing data. (Noah will also place <em>no</em> orders — another deliberate choice that becomes useful when we reach joins.)</li></ul><p>Our customers now have IDs 1 through 10, matching the order above.</p></div><div class="section"><div class="section-hd"><span class="sec-num">04</span><h2>Inserting the rest: products, orders, and order items</h2></div><p>The remaining tables contain foreign keys, so <strong>insert order matters</strong> — a product can't reference category 2 unless that category already exists. Since we've loaded <code>categories</code> and <code>customers</code>, we can now add <code>products</code>, then <code>orders</code>, then <code>order_items</code> (which depends on both).</p><p><strong>Products</strong> — fifteen items across our five categories. The <code>category_id</code> values point to the categories we just created (1 = Electronics, 2 = Books, and so on):</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> products (product_name, category_id, price, stock_quantity) <span class="k">VALUES</span>
+(<span class="s">'Wireless Mouse'</span>,                <span class="n">1</span>,  <span class="n">799.00</span>, <span class="n">150</span>),
+(<span class="s">'Mechanical Keyboard'</span>,           <span class="n">1</span>, <span class="n">2499.00</span>,  <span class="n">80</span>),
+(<span class="s">'USB-C Hub'</span>,                     <span class="n">1</span>, <span class="n">1299.00</span>,  <span class="n">60</span>),
+(<span class="s">'Noise-Cancelling Headphones'</span>,   <span class="n">1</span>, <span class="n">7999.00</span>,  <span class="n">40</span>),
+(<span class="s">'SQL Fundamentals'</span>,              <span class="n">2</span>,  <span class="n">599.00</span>, <span class="n">200</span>),
+(<span class="s">'Data Science Handbook'</span>,         <span class="n">2</span>, <span class="n">1199.00</span>, <span class="n">120</span>),
+(<span class="s">'The Pragmatic Programmer'</span>,      <span class="n">2</span>,  <span class="n">899.00</span>,  <span class="n">90</span>),
+(<span class="s">'Cotton T-Shirt'</span>,                <span class="n">3</span>,  <span class="n">499.00</span>, <span class="n">300</span>),
+(<span class="s">'Denim Jeans'</span>,                   <span class="n">3</span>, <span class="n">1799.00</span>, <span class="n">110</span>),
+(<span class="s">'Hooded Sweatshirt'</span>,             <span class="n">3</span>, <span class="n">1499.00</span>,  <span class="n">75</span>),
+(<span class="s">'Stainless Steel Water Bottle'</span>,  <span class="n">4</span>,  <span class="n">699.00</span>, <span class="n">250</span>),
+(<span class="s">'Ceramic Coffee Mug'</span>,            <span class="n">4</span>,  <span class="n">349.00</span>, <span class="n">180</span>),
+(<span class="s">'Non-Stick Frying Pan'</span>,          <span class="n">4</span>, <span class="n">1599.00</span>,  <span class="n">50</span>),
+(<span class="s">'Yoga Mat'</span>,                      <span class="n">5</span>,  <span class="n">999.00</span>, <span class="n">130</span>),
+(<span class="s">'Resistance Bands Set'</span>,          <span class="n">5</span>,  <span class="n">599.00</span>,   <span class="n">0</span>);</code></pre></div><p>(Notice the <em>Resistance Bands Set</em> has <code>0</code> stock — out of stock — and the <em>Non-Stick Frying Pan</em> will never appear in any order. Both are intentional, giving us realistic edge cases to query later.)</p><p><strong>Orders</strong> — fifteen orders placed by various customers, spread across the first half of 2024 so we can analyze trends over time, with a mix of statuses:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> orders (customer_id, order_date, status) <span class="k">VALUES</span>
+(<span class="n">1</span>, <span class="s">'2024-01-10'</span>, <span class="s">'Completed'</span>),
+(<span class="n">2</span>, <span class="s">'2024-01-15'</span>, <span class="s">'Completed'</span>),
+(<span class="n">3</span>, <span class="s">'2024-02-03'</span>, <span class="s">'Completed'</span>),
+(<span class="n">1</span>, <span class="s">'2024-02-20'</span>, <span class="s">'Completed'</span>),
+(<span class="n">4</span>, <span class="s">'2024-02-28'</span>, <span class="s">'Pending'</span>),
+(<span class="n">5</span>, <span class="s">'2024-03-05'</span>, <span class="s">'Completed'</span>),
+(<span class="n">2</span>, <span class="s">'2024-03-12'</span>, <span class="s">'Cancelled'</span>),
+(<span class="n">6</span>, <span class="s">'2024-03-25'</span>, <span class="s">'Completed'</span>),
+(<span class="n">7</span>, <span class="s">'2024-04-02'</span>, <span class="s">'Completed'</span>),
+(<span class="n">3</span>, <span class="s">'2024-04-18'</span>, <span class="s">'Completed'</span>),
+(<span class="n">8</span>, <span class="s">'2024-04-30'</span>, <span class="s">'Pending'</span>),
+(<span class="n">1</span>, <span class="s">'2024-05-07'</span>, <span class="s">'Completed'</span>),
+(<span class="n">9</span>, <span class="s">'2024-05-19'</span>, <span class="s">'Completed'</span>),
+(<span class="n">5</span>, <span class="s">'2024-06-01'</span>, <span class="s">'Cancelled'</span>),
+(<span class="n">4</span>, <span class="s">'2024-06-15'</span>, <span class="s">'Completed'</span>);</code></pre></div><p>(Customer 1 places three orders — our best repeat customer — while customer 10, Noah, places none.)</p><p><strong>Order items</strong> — the individual product lines within each order. Each row links an order to a product, with a quantity and the price paid per unit at the time:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">INSERT</span> <span class="k">INTO</span> order_items (order_id, product_id, quantity, unit_price) <span class="k">VALUES</span>
+(<span class="n">1</span>,  <span class="n">1</span>, <span class="n">2</span>,  <span class="n">799.00</span>),
+(<span class="n">1</span>,  <span class="n">5</span>, <span class="n">1</span>,  <span class="n">599.00</span>),
+(<span class="n">2</span>,  <span class="n">4</span>, <span class="n">1</span>, <span class="n">7999.00</span>),
+(<span class="n">3</span>,  <span class="n">8</span>, <span class="n">3</span>,  <span class="n">499.00</span>),
+(<span class="n">3</span>,  <span class="n">9</span>, <span class="n">1</span>, <span class="n">1799.00</span>),
+(<span class="n">4</span>,  <span class="n">2</span>, <span class="n">1</span>, <span class="n">2499.00</span>),
+(<span class="n">4</span>,  <span class="n">3</span>, <span class="n">1</span>, <span class="n">1299.00</span>),
+(<span class="n">5</span>,  <span class="n">6</span>, <span class="n">2</span>, <span class="n">1199.00</span>),
+(<span class="n">6</span>, <span class="n">14</span>, <span class="n">1</span>,  <span class="n">999.00</span>),
+(<span class="n">6</span>, <span class="n">15</span>, <span class="n">2</span>,  <span class="n">599.00</span>),
+(<span class="n">7</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">1499.00</span>),
+(<span class="n">8</span>, <span class="n">11</span>, <span class="n">2</span>,  <span class="n">699.00</span>),
+(<span class="n">8</span>, <span class="n">12</span>, <span class="n">4</span>,  <span class="n">349.00</span>),
+(<span class="n">9</span>,  <span class="n">5</span>, <span class="n">1</span>,  <span class="n">599.00</span>),
+(<span class="n">9</span>,  <span class="n">7</span>, <span class="n">1</span>,  <span class="n">899.00</span>),
+(<span class="n">10</span>, <span class="n">1</span>, <span class="n">1</span>,  <span class="n">799.00</span>),
+(<span class="n">10</span>, <span class="n">2</span>, <span class="n">1</span>, <span class="n">2499.00</span>),
+(<span class="n">11</span>, <span class="n">9</span>, <span class="n">2</span>, <span class="n">1799.00</span>),
+(<span class="n">12</span>, <span class="n">4</span>, <span class="n">1</span>, <span class="n">7999.00</span>),
+(<span class="n">12</span>, <span class="n">6</span>, <span class="n">1</span>, <span class="n">1199.00</span>),
+(<span class="n">13</span>, <span class="n">8</span>, <span class="n">2</span>,  <span class="n">499.00</span>),
+(<span class="n">14</span>,<span class="n">14</span>, <span class="n">1</span>,  <span class="n">999.00</span>),
+(<span class="n">15</span>, <span class="n">1</span>, <span class="n">1</span>,  <span class="n">799.00</span>),
+(<span class="n">15</span>, <span class="n">5</span>, <span class="n">2</span>,  <span class="n">599.00</span>),
+(<span class="n">15</span>,<span class="n">11</span>, <span class="n">1</span>,  <span class="n">699.00</span>);</code></pre></div><p>That's it — the database is now full. We've stored each fact once and connected everything through keys, exactly as Day 1's normalization lesson promised.</p><div class="callout"><p>**Why store <code>unit_price</code> here when <code>products</code> already has a <code>price</code>?<em>* Because prices change over time, and an order must remember what was actually charged </em>then*. The <code>unit_price</code> in <code>order_items</code> is a frozen historical record; the <code>price</code> in <code>products</code> is today's price. They happen to match in our sample data, but in the real world they drift apart — and your revenue reports must use the price that was actually paid.</p></div></div><div class="section"><div class="section-hd"><span class="sec-num">05</span><h2>Verifying the data (a peek at Day 5)</h2></div><p>Let's confirm the data landed. The <code>SELECT</code> command reads data — it's the entire focus of the coming days, but here's the simplest possible taste. <code>SELECT *</code> means "all columns":</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> * <span class="k">FROM</span> categories;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> customers;</code></pre></div><p>To count how many rows a table holds:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> order_items;</code></pre></div><p>That should return 25 — the number of order-item rows we inserted. If your counts match (5 categories, 10 customers, 15 products, 15 orders, 25 order items), your database is ready for analysis.</p></div><div class="section"><div class="section-hd"><span class="sec-num">06</span><h2>UPDATE: changing existing data</h2></div><p><code>UPDATE</code> modifies rows that already exist. Its form is:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">UPDATE</span> table_name
+<span class="k">SET</span> column1 = value1, column2 = value2, ...
+<span class="k">WHERE</span> condition;</code></pre></div><p>The <code>WHERE</code> clause decides <em>which</em> rows change. Suppose order 5 has shipped and we want to mark it completed:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">UPDATE</span> orders
+<span class="k">SET</span> status = <span class="s">'Completed'</span>
+<span class="k">WHERE</span> order_id = <span class="n">5</span>;</code></pre></div><p>Only the row where <code>order_id = 5</code> is affected. You can change <strong>several columns at once</strong> by separating them with commas — say a product's price rises and stock is restocked:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">UPDATE</span> products
+<span class="k">SET</span> price = <span class="n">6999.00</span>, stock_quantity = <span class="n">60</span>
+<span class="k">WHERE</span> product_id = <span class="n">4</span>;</code></pre></div><p>You can also update <em>many rows</em> with one statement. To give every product in the Books category (category 2) a price increase, you'd target them all with the <code>WHERE</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">UPDATE</span> products
+<span class="k">SET</span> price = price * <span class="n">1.10</span>
+<span class="k">WHERE</span> category_id = <span class="n">2</span>;</code></pre></div><p>Here <code>price = price * 1.10</code> raises each matching price by 10% — SQL can calculate the new value from the old one.</p><div class="callout callout-amber"><p>**⚠️ The most important rule of <code>UPDATE</code>.** If you forget the <code>WHERE</code> clause, <em>every row in the table changes</em>. This:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">UPDATE</span> products <span class="k">SET</span> price = <span class="n">0</span>;</code></pre></div><p>would set <strong>every</strong> product's price to zero. Always write your <code>WHERE</code> first, and consider running a <code>SELECT</code> with the same condition beforehand to preview exactly which rows you're about to touch. MySQL Workbench even has a "safe update mode" that blocks <code>UPDATE</code>/<code>DELETE</code> without a key-based <code>WHERE</code> — a helpful guardrail for beginners.</p></div><p>*(If you ran the two example <code>UPDATE</code>s above and want to follow the rest of the series with the original numbers, simply re-run the relevant inserts or reset those values back.)*</p></div><div class="section"><div class="section-hd"><span class="sec-num">07</span><h2>DELETE: removing data</h2></div><p><code>DELETE</code> removes whole rows. Its form is short — and that's exactly why it's dangerous:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DELETE</span> <span class="k">FROM</span> table_name
+<span class="k">WHERE</span> condition;</code></pre></div><p>To cancel and remove a specific order item — say the line with <code>order_item_id = 25</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DELETE</span> <span class="k">FROM</span> order_items
+<span class="k">WHERE</span> order_item_id = <span class="n">25</span>;</code></pre></div><p>The same life-or-death rule applies: **<code>DELETE FROM order_items;</code> with no <code>WHERE</code> deletes every row.** Always filter.</p><h3 class="subhead">Foreign keys protect you here too</h3><p>Try to delete a customer who has placed orders, and MySQL will <em>stop you</em>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">DELETE</span> <span class="k">FROM</span> customers
+<span class="k">WHERE</span> customer_id = <span class="n">1</span>;</code></pre></div><p>This fails, because orders reference customer 1 through a foreign key. Deleting the customer would leave those orders pointing at someone who no longer exists — an "orphaned" record. This is <strong>referential integrity</strong> doing its job: the database refuses to let your relationships break. (To remove such a customer you'd first delete their dependent rows, or design the foreign key with <code>ON DELETE CASCADE</code> so children are removed automatically — a choice to make carefully.)</p><div class="callout"><p>**<code>DELETE</code> vs <code>TRUNCATE</code> (from Day 3).** <code>DELETE</code> removes <em>chosen</em> rows via <code>WHERE</code> and can be undone inside a transaction. <code>TRUNCATE</code> instantly wipes <em>all</em> rows and resets <code>AUTO_INCREMENT</code>, but can't target specific rows. Use <code>DELETE</code> for surgical removal, <code>TRUNCATE</code> to empty a whole table fast.</p></div></div><div class="section"><div class="section-hd"><span class="sec-num">08</span><h2>A safety net: transactions</h2></div><p>Because <code>UPDATE</code> and <code>DELETE</code> can do irreversible damage, MySQL (using the InnoDB engine) lets you wrap changes in a <strong>transaction</strong> — a group of changes you can review before saving, or undo entirely. This is the <strong>TCL</strong> family we previewed on Day 2.</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+
+<span class="k">UPDATE</span> products <span class="k">SET</span> price = price * <span class="n">1.10</span> <span class="k">WHERE</span> category_id = <span class="n">2</span>;
+
+<span class="c">-- Inspect the result. Happy with it?</span>
+<span class="k">COMMIT</span>;     <span class="c">-- permanently save the changes</span>
+
+<span class="c">-- Changed your mind instead?</span>
+<span class="k">ROLLBACK</span>;   <span class="c">-- undo everything since START TRANSACTION</span></code></pre></div><p><code>COMMIT</code> makes the changes permanent; <code>ROLLBACK</code> discards them as if they never happened. For risky bulk changes, this is your seatbelt — start a transaction, run the change, check the data, and only then commit. We won't lean on transactions heavily in this analysis-focused series, but knowing they exist will one day save you from a painful mistake.</p></div><div class="section"><div class="section-hd"><span class="sec-num">09</span><h2>Where we're headed</h2></div><p>The <code>online_store</code> database is now alive: real customers, products, orders, and order items, all consistently linked. Everything from here on is about <em>asking questions</em> of this data — which is what analysts actually do all day.</p><p>Tomorrow, <strong>Day 5</strong>, we begin <strong>DQL</strong> — the heart of the series. You'll meet <code>SELECT</code> properly and learn to retrieve exactly the data you want: choosing columns, filtering rows with <code>WHERE</code>, sorting results, and more. From there, each day adds a new layer of analytical power, all on the very dataset you just built.</p><div class="recap"><h3>Quick Recap — Day 4</h3><ul></ul></div><ul class="bullets"><li><strong>DML</strong> manipulates the data inside tables: <code>INSERT</code> (add), <code>UPDATE</code> (change), <code>DELETE</code> (remove).</li><li><code>INSERT</code> adds one or many rows; name your columns, quote text and dates, and skip <code>AUTO_INCREMENT</code> IDs. Use <code>NULL</code> for missing optional values.</li><li>Insert in <strong>dependency order</strong> so foreign keys resolve: categories and customers, then products, orders, and finally order_items.</li><li><code>UPDATE ... SET ... WHERE</code> changes rows; <code>DELETE FROM ... WHERE</code> removes them. **A missing <code>WHERE</code> affects every row** — always filter.</li><li><strong>Foreign keys</strong> block deletes that would orphan related rows, protecting referential integrity.</li><li><strong>Transactions</strong> (<code>START TRANSACTION</code> / <code>COMMIT</code> / <code>ROLLBACK</code>) let you undo risky changes.</li></ul><div class="try-box"><h4>✏️ Try this before Day 5</h4><p>Run the full set of inserts above so your database is populated, then verify with a <code>SELECT COUNT(*)</code> on each table (expect 5, 10, 15, 15, 25). For practice, add yourself as an 11th customer with a single <code>INSERT</code>, then use <code>UPDATE</code> to change your own city, and confirm the change with <code>SELECT * FROM customers WHERE email = 'your@email.com';</code>. You've now done the full create-read-update cycle by hand.</p></div><p class="closing">See you on Day 5 — where we finally start asking the data real questions.</p></div>
+  <div class="next-cta">
+    <div class="next-cta-text">
+      <h4>Coming up next</h4>
+      <p>Day 5: DQL &mdash; SELECT, Filtering &amp; Sorting</p>
+      <span>The heart of the series begins &middot; SELECT &middot; WHERE &middot; ORDER BY</span>
+    </div>
+    <a href="#" class="next-btn">Day 5 &nbsp;&rarr;</a>
+  </div>
+</main>
+<footer>
+  <div class="footer-tag">Databases &amp; SQL for Analysts — 9-Day Series</div>
+  <p>From first concepts to advanced querying, one article at a time.</p>
+</footer>
+<script>
+const bar=document.getElementById('progress-bar');
+function up(){const s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(h>0?Math.min(s/h*100,100):0)+'%';}
+window.addEventListener('scroll',up,{passive:true});up();
+function copyCode(btn){const c=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(c.innerText).then(()=>{const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1500);});}
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DQL Part 2: Aggregation and Grouping — Learn SQL Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+ --bg:#F4F6FB;--white:#FFFFFF;--text:#1C2333;--text-sec:#596880;--border:#DDE3EE;
+ --accent:#1557C0;--accent-lt:#EEF3FF;--accent-bd:#BAD0F8;
+ --amber:#D97706;--amber-lt:#FFFBEB;--amber-bd:#FCD34D;
+ --green:#0A7C4E;--green-lt:#ECFDF5;--green-bd:#6EE7B7;
+ --navy:#0E1829;--navy-mid:#172240;--tbl-hdr:#1C2333;--tbl-alt:#F0F4FA;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:17px;line-height:1.78;color:var(--text);background:var(--bg)}
+#progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--accent);z-index:2000;transition:width .1s linear}
+.top-nav{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;z-index:999}
+.nav-series{font-size:12.5px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.09em}
+.nav-right{display:flex;align-items:center;gap:20px}
+.nav-day{font-size:12.5px;color:var(--text-sec);font-family:'IBM Plex Mono',monospace}
+.nav-dots{display:flex;gap:5px}
+.nav-dot{width:22px;height:4px;border-radius:2px;background:var(--border)}
+.nav-dot.on{background:var(--accent)}
+.hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy-mid) 100%);padding:76px 28px 64px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-inner{position:relative}
+.hero-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:6px 18px;border-radius:100px;margin-bottom:26px}
+.hero h1{font-family:'IBM Plex Serif',serif;font-size:clamp(26px,5vw,44px);font-weight:700;line-height:1.2;color:#fff;max-width:740px;margin:0 auto 18px}
+.hero-subtitle{font-size:17px;color:rgba(255,255,255,.6);font-weight:300;max-width:560px;margin:0 auto 36px;line-height:1.6}
+.hero-meta{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)}
+.hero-meta span{padding:0 14px}
+.hero-meta span+span{border-left:1px solid rgba(255,255,255,.15)}
+.page-wrap{max-width:780px;margin:0 auto;padding:0 24px 96px}
+.article-intro{padding:44px 0 36px;border-bottom:1px solid var(--border);margin-bottom:52px}
+.article-intro p{font-size:19px;line-height:1.72;font-weight:300;color:var(--text);margin-bottom:14px}
+.article-intro p:last-of-type{margin-bottom:0}
+.intro-pill{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--amber-lt);border:1px solid var(--amber-bd);color:#92400E;padding:7px 14px;border-radius:6px}
+.intro-pill.green{background:var(--green-lt);border-color:var(--green-bd);color:#065F46}
+.section{margin-bottom:56px}
+.section-hd{display:flex;align-items:flex-start;gap:18px;margin-bottom:20px}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-lt);border:1px solid var(--accent-bd);padding:4px 10px;border-radius:4px;flex-shrink:0;margin-top:6px;letter-spacing:.04em}
+.section h2{font-family:'IBM Plex Serif',serif;font-size:clamp(19px,3vw,25px);font-weight:700;line-height:1.3;color:var(--text)}
+.section p{margin-bottom:16px}
+.subhead{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:600;color:var(--text);margin:26px 0 12px}
+p code,li code,td code,th code{font-family:'IBM Plex Mono',monospace;font-size:.86em;background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:3px}
+.bullets{list-style:none;padding:0;margin:8px 0 16px;display:flex;flex-direction:column;gap:10px}
+.bullets li{font-size:16px;color:var(--text);padding-left:22px;position:relative;line-height:1.6}
+.bullets li::before{content:'▸';position:absolute;left:2px;color:var(--accent);font-size:13px;top:3px}
+/* callouts */
+.callout{border-left:3px solid var(--accent);background:var(--accent-lt);padding:6px 20px;border-radius:0 6px 6px 0;margin:24px 0}
+.callout p{color:#1A3968;font-size:15.5px;margin:12px 0}
+.callout strong{color:var(--accent)}
+.callout-amber{border-left-color:var(--amber);background:var(--amber-lt)}
+.callout-amber p{color:#78350F}
+.callout-amber strong{color:var(--amber)}
+.callout .code-block{margin:14px 0}
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:22px 0;border-radius:8px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+table.tbl thead tr{background:var(--tbl-hdr)}
+table.tbl thead th{padding:11px 16px;text-align:left;font-weight:600;font-size:13px;letter-spacing:.02em;color:rgba(255,255,255,.92);white-space:nowrap;font-family:'IBM Plex Sans',sans-serif}
+table.tbl tbody tr{border-bottom:1px solid var(--border)}
+table.tbl tbody tr:last-child{border-bottom:none}
+table.tbl tbody tr:nth-child(even){background:var(--tbl-alt)}
+table.tbl tbody td{padding:10px 16px;color:var(--text);vertical-align:top;line-height:1.55}
+table.tbl th code,table.tbl td code{background:rgba(21,87,192,.09)}
+table.tbl.data{font-family:'IBM Plex Mono',monospace;font-size:13.5px}
+table.tbl.data tbody td{font-family:'IBM Plex Mono',monospace}
+table.tbl.data tbody td.c1{color:var(--accent);font-weight:500}
+table.tbl.data thead th{font-family:'IBM Plex Mono',monospace;font-weight:500}
+/* code blocks */
+.code-block{margin:22px 0;border-radius:10px;overflow:hidden;border:1px solid #243049;box-shadow:0 4px 16px rgba(14,24,41,.18)}
+.code-bar{display:flex;align-items:center;gap:12px;background:#0A1322;padding:9px 14px;border-bottom:1px solid #1E2A42}
+.code-bar .dots{display:flex;gap:6px}
+.code-bar .dots i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#33415C}
+.code-bar .dots i:nth-child(1){background:#FF5F56}
+.code-bar .dots i:nth-child(2){background:#FFBD2E}
+.code-bar .dots i:nth-child(3){background:#27C93F}
+.code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#6B7A99;text-transform:uppercase;margin-left:4px}
+.copy-btn{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9FB0CC;background:#1A2742;border:1px solid #2C3A57;padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:#243456;color:#CBD7EC}
+.code-block pre{margin:0;padding:18px 20px;background:#0E1829;overflow-x:auto}
+.code-block code{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.7;color:#D6DEEC;white-space:pre;display:block}
+.code-block .k{color:#7CB4FF;font-weight:500}
+.code-block .t{color:#5FD3B5}
+.code-block .s{color:#F0A868}
+.code-block .n{color:#E5C07B}
+.code-block .c{color:#5B6B8C;font-style:italic}
+/* try box */
+.try-box{background:var(--amber-lt);border:1px solid var(--amber-bd);border-radius:8px;padding:24px 28px;margin:36px 0}
+.try-box h4{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;margin-bottom:10px}
+.try-box p{font-size:15px;color:#78350F;line-height:1.65;margin:0}
+/* recap */
+.recap{background:var(--navy);border-radius:12px;padding:34px 38px;margin:52px 0 36px}
+.recap h3{font-family:'IBM Plex Serif',serif;font-size:19px;color:#fff;margin-bottom:20px}
+.recap ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:13px}
+.recap li{font-size:15px;color:rgba(255,255,255,.8);padding-left:20px;position:relative;line-height:1.62}
+.recap li::before{content:'▸';position:absolute;left:0;color:#FCD34D;font-size:13px;top:2px}
+.recap li strong{color:#fff}
+.recap li code{background:rgba(255,255,255,.1);color:#BAD0F8}
+/* next cta */
+.next-cta{background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:12px;padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:8px}
+.next-cta-text h4{font-size:11.5px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:5px}
+.next-cta-text p{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+.next-cta-text span{font-size:13px;color:var(--text-sec);display:block}
+.next-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.next-btn:hover{background:#1246A0}
+.closing{font-style:italic;text-align:center;color:var(--text-sec);font-size:15px;margin:34px 0 0}
+footer{background:var(--white);border-top:1px solid var(--border);padding:36px 24px;text-align:center}
+.footer-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--accent-lt);color:var(--accent);padding:4px 14px;border-radius:4px;margin-bottom:10px}
+footer p{font-size:13px;color:var(--text-sec)}
+@media(max-width:600px){.hero{padding:56px 20px 48px}.page-wrap{padding:0 18px 72px}.recap{padding:26px 22px}.next-cta{flex-direction:column;align-items:flex-start}.top-nav{padding:12px 18px}.nav-dots{display:none}.section-hd{flex-direction:column;gap:10px}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav class="top-nav">
+  <span class="nav-series">Databases &amp; SQL for Analysts</span>
+  <div class="nav-right">
+    <div class="nav-dots"><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot on"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div></div>
+    <span class="nav-day">Day 06 / 09</span>
+  </div>
+</nav>
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">Day 06 &middot; DQL &middot; Aggregation</div>
+  <h1>DQL Part 2: Aggregation and Grouping</h1>
+  <p class="hero-subtitle">Collapse rows into computed summaries with COUNT, SUM, AVG, MIN, MAX &mdash; then group and filter them to answer real analytical questions.</p>
+  <div class="hero-meta"><span>MySQL</span><span>Hands-on</span><span>~20 min read</span></div>
+</div></header>
+<main class="page-wrap">
+  <div class="article-intro"><p>Welcome to Day 6. Yesterday you learned to retrieve and filter rows. That's reading data. Today you learn to <em>summarise</em> it — to collapse many rows into computed results that tell you something meaningful. How many orders did each customer place? What's the total revenue? Which product category has the highest average price? These are the questions that drive real analysis, and they all rely on <strong>aggregation</strong>.</p><p>By the end of today you'll know the five aggregate functions, how to group data into categories with <code>GROUP BY</code>, and how to filter those groups with <code>HAVING</code> — the one clause that trips up almost every beginner until it clicks. When it does, an entire class of analytical questions becomes straightforward to write.</p><p>All queries run on the <code>online_store</code> database from Days 3 and 4, in MySQL.</p><div class="intro-pill green">🐬 &nbsp; Every query runs on the online_store database we built on Days 3 &amp; 4.</div></div>
+  <div class="section"><div class="section-hd"><span class="sec-num">01</span><h2>The shift from reading rows to computing across them</h2></div><p>On Day 5, every query returned one output row per input row (possibly filtered down). <code>SELECT product_name, price FROM products WHERE price &gt; 1000</code> returns seven rows — one per matching product. The shape of the output mirrors the shape of the input.</p><p>Aggregation breaks that one-to-one mapping. An <strong>aggregate function</strong> takes a whole column's worth of values (or a group of them) and computes a single result:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> orders;</code></pre></div><p>The <code>orders</code> table has 15 rows, but this query returns exactly <strong>one</strong> row: the number 15. Many rows collapsed into one computed value. That is aggregation.</p><p>The five aggregate functions in SQL cover almost every summary an analyst needs:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Function</th><th>What it computes</th></tr></thead><tbody><tr><td><code>COUNT()</code></td><td>Number of rows</td></tr><tr><td><code>SUM()</code></td><td>Total of all values</td></tr><tr><td><code>AVG()</code></td><td>Mean (average) of all values</td></tr><tr><td><code>MIN()</code></td><td>Smallest value</td></tr><tr><td><code>MAX()</code></td><td>Largest value</td></tr></tbody></table></div><p>We'll cover each one, then learn how to compute them per group — which is where they become truly powerful.</p></div><div class="section"><div class="section-hd"><span class="sec-num">02</span><h2>COUNT — counting rows</h2></div><p><code>COUNT</code> is the most-used aggregate in SQL. It comes in three flavours that behave differently, and understanding the difference matters.</p><p>**<code>COUNT(*)</code>** counts every row in the result, including rows with <code>NULL</code> values:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> total_customers
+<span class="k">FROM</span> customers;</code></pre></div><p>Returns <strong>10</strong> — all ten rows in the customers table, regardless of what any column contains.</p><p>**<code>COUNT(column)</code><strong> counts only the rows where that specific column is </strong>not** <code>NULL</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(city) <span class="k">AS</span> customers_with_city
+<span class="k">FROM</span> customers;</code></pre></div><p>Returns <strong>9</strong> — Noah Brown's city is <code>NULL</code>, so his row is excluded. This is the <code>NULL</code> awareness built into every aggregate function: <code>NULL</code> values are silently skipped in all aggregate calculations. This is often exactly what you want (don't count unknowns), but it's essential to know it's happening.</p><p>To see both side by side and understand the difference immediately:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    <span class="k">COUNT</span>(*)    <span class="k">AS</span> total_customers,
+    <span class="k">COUNT</span>(city) <span class="k">AS</span> customers_with_city
+<span class="k">FROM</span> customers;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>total_customers</th><th>customers_with_city</th></tr></thead><tbody><tr><td class="c1">10</td><td>9</td></tr></tbody></table></div><p>The gap between these two numbers tells you how many rows have a <code>NULL</code> city — a useful data-quality check.</p><p>**<code>COUNT(DISTINCT column)</code>** counts only unique non-NULL values:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> country) <span class="k">AS</span> unique_countries
+<span class="k">FROM</span> customers;</code></pre></div><p>Returns <strong>4</strong> — India, Pakistan, UK, and USA. Even though India appears seven times in the customers table, it's counted once.</p></div><div class="section"><div class="section-hd"><span class="sec-num">03</span><h2>SUM, AVG, MIN, MAX</h2></div><p>The remaining four aggregates work on numeric (or date) columns and follow the same <code>NULL</code>-skipping rule.</p><p>**<code>SUM</code>** adds all values in a column. This is how you calculate total revenue from the <code>order_items</code> table. Revenue per line is <code>quantity × unit_price</code>, and <code>SUM</code> adds them all up:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> SUM(quantity * unit_price) <span class="k">AS</span> total_revenue
+<span class="k">FROM</span> order_items;</code></pre></div><p>Returns <strong>₹48,463</strong> — the total value of all 25 order-item rows across our 15 orders. Note that you can pass an expression like <code>quantity * unit_price</code> directly into an aggregate; you don't need to store the computed value first.</p><p>**<code>AVG</code>** computes the mean. The average price across all 15 of our products:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> AVG(price) <span class="k">AS</span> avg_product_price
+<span class="k">FROM</span> products;</code></pre></div><p>Returns <strong>₹1,555.67</strong>. MySQL's <code>AVG</code> returns a precise decimal.</p><p>**<code>MIN</code> and <code>MAX</code>** return the smallest and largest values. On numbers, that's intuitive:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    MIN(price) <span class="k">AS</span> cheapest,
+    MAX(price) <span class="k">AS</span> most_expensive
+<span class="k">FROM</span> products;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>cheapest</th><th>most_expensive</th></tr></thead><tbody><tr><td class="c1">349.00</td><td>7999.00</td></tr></tbody></table></div><p>The Ceramic Coffee Mug (₹349) is cheapest; the Noise-Cancelling Headphones (₹7,999) are most expensive.</p><p><code>MIN</code> and <code>MAX</code> work on dates too — a very useful fact. The earliest and latest orders placed in our database:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    MIN(order_date) <span class="k">AS</span> first_order,
+    MAX(order_date) <span class="k">AS</span> last_order
+<span class="k">FROM</span> orders;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>first_order</th><th>last_order</th></tr></thead><tbody><tr><td class="c1">2024-01-10</td><td>2024-06-15</td></tr></tbody></table></div><p>Our data spans exactly six months of orders.</p><p><strong>Multiple aggregates in one query.</strong> You can combine as many as you need in a single <code>SELECT</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    <span class="k">COUNT</span>(*)            <span class="k">AS</span> total_products,
+    <span class="k">ROUND</span>(AVG(price),<span class="n">2</span>) <span class="k">AS</span> avg_price,
+    MIN(price)          <span class="k">AS</span> min_price,
+    MAX(price)          <span class="k">AS</span> max_price,
+    SUM(stock_quantity) <span class="k">AS</span> total_units_in_stock
+<span class="k">FROM</span> products;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>total_products</th><th>avg_price</th><th>min_price</th><th>max_price</th><th>total_units_in_stock</th></tr></thead><tbody><tr><td class="c1">15</td><td>1555.67</td><td>349.00</td><td>7999.00</td><td>1908</td></tr></tbody></table></div><p><code>ROUND(AVG(price), 2)</code> rounds the average to two decimal places — a practical touch for displaying currency. <code>ROUND(value, decimal_places)</code> is one of the MySQL numeric functions you'll use constantly.</p></div><div class="section"><div class="section-hd"><span class="sec-num">04</span><h2>GROUP BY — computing per group</h2></div><p>All the queries above collapse the entire table into a single summary row. Useful, but limited. The real power comes from computing aggregates <em>per group</em> — one summary row per category, per customer, per status, per month. That's what <code>GROUP BY</code> does.</p><p><code>GROUP BY</code> splits the rows into groups based on one (or more) columns, and then an aggregate function is applied to each group separately.</p><p><strong>How many orders has each customer placed?</strong> Group the <code>orders</code> table by <code>customer_id</code> and count the rows in each group:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    customer_id,
+    <span class="k">COUNT</span>(*) <span class="k">AS</span> orders_placed
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> customer_id
+<span class="k">ORDER</span> <span class="k">BY</span> orders_placed <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>customer_id</th><th>orders_placed</th></tr></thead><tbody><tr><td class="c1">1</td><td>3</td></tr><tr><td class="c1">2</td><td>2</td></tr><tr><td class="c1">3</td><td>2</td></tr><tr><td class="c1">4</td><td>2</td></tr><tr><td class="c1">5</td><td>2</td></tr><tr><td class="c1">6</td><td>1</td></tr><tr><td class="c1">7</td><td>1</td></tr><tr><td class="c1">8</td><td>1</td></tr><tr><td class="c1">9</td><td>1</td></tr></tbody></table></div><p>Customer 1 placed 3 orders — our most active customer. Note that <code>customer_id 10</code> (Noah Brown) doesn't appear at all — he placed no orders, so there's no row in <code>orders</code> to count. We'll handle absent rows like Noah's when we reach <code>LEFT JOIN</code> on Day 7.</p><p><strong>Count orders by status</strong> — how many orders are in each state?</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    status,
+    <span class="k">COUNT</span>(*) <span class="k">AS</span> order_count
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> status;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>status</th><th>order_count</th></tr></thead><tbody><tr><td class="c1">Completed</td><td>11</td></tr><tr><td class="c1">Pending</td><td>2</td></tr><tr><td class="c1">Cancelled</td><td>2</td></tr></tbody></table></div><p><strong>How many products fall in each category?</strong> And what's the average price per category?</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    category_id,
+    <span class="k">COUNT</span>(*)           <span class="k">AS</span> product_count,
+    <span class="k">ROUND</span>(AVG(price),<span class="n">2</span>) <span class="k">AS</span> avg_price,
+    MIN(price)         <span class="k">AS</span> min_price,
+    MAX(price)         <span class="k">AS</span> max_price
+<span class="k">FROM</span> products
+<span class="k">GROUP</span> <span class="k">BY</span> category_id
+<span class="k">ORDER</span> <span class="k">BY</span> avg_price <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>category_id</th><th>product_count</th><th>avg_price</th><th>min_price</th><th>max_price</th></tr></thead><tbody><tr><td class="c1">1</td><td>4</td><td>3149.00</td><td>799.00</td><td>7999.00</td></tr><tr><td class="c1">3</td><td>3</td><td>1265.67</td><td>499.00</td><td>1799.00</td></tr><tr><td class="c1">4</td><td>3</td><td>882.33</td><td>349.00</td><td>1599.00</td></tr><tr><td class="c1">2</td><td>3</td><td>899.00</td><td>599.00</td><td>1199.00</td></tr><tr><td class="c1">5</td><td>2</td><td>799.00</td><td>599.00</td><td>999.00</td></tr></tbody></table></div><p>Electronics (category 1) has an average price of ₹3,149 — driven up by the Headphones. Sports (category 5) is the most affordable on average.</p><p><strong>Revenue and items per order</strong> — using <code>order_items</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    order_id,
+    <span class="k">COUNT</span>(*)                        <span class="k">AS</span> line_items,
+    SUM(quantity)                   <span class="k">AS</span> total_units,
+    SUM(quantity * unit_price)      <span class="k">AS</span> order_total
+<span class="k">FROM</span> order_items
+<span class="k">GROUP</span> <span class="k">BY</span> order_id
+<span class="k">ORDER</span> <span class="k">BY</span> order_total <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>order_id</th><th>line_items</th><th>total_units</th><th>order_total</th></tr></thead><tbody><tr><td class="c1">12</td><td>2</td><td>2</td><td>9198.00</td></tr><tr><td class="c1">2</td><td>1</td><td>1</td><td>7999.00</td></tr><tr><td class="c1">4</td><td>2</td><td>2</td><td>3798.00</td></tr><tr><td class="c1">11</td><td>1</td><td>2</td><td>3598.00</td></tr><tr><td class="c1">10</td><td>2</td><td>2</td><td>3298.00</td></tr></tbody></table></div><p>Order 12 is our highest-value order at ₹9,198, containing a Headphones and a Data Science Handbook.</p></div><div class="section"><div class="section-hd"><span class="sec-num">05</span><h2>The SELECT rule with GROUP BY</h2></div><p>Here is the single most important technical rule of <code>GROUP BY</code>, the one that causes the most beginner errors:</p><div class="callout"><p>**Every column in your <code>SELECT</code> must either appear in the <code>GROUP BY</code> clause, or be wrapped inside an aggregate function.**</p></div><p>This rule exists for a logical reason. When MySQL groups rows, it collapses many rows into one. A <code>GROUP BY category_id</code> might collapse 4 products into 1 group row. For <code>category_id</code>, it's clear what to show — every row in the group has the same <code>category_id</code>. But what about <code>product_name</code>? That column has <em>four different values</em> in the Electronics group. MySQL can't decide which one to show. The rule stops you from asking an unanswerable question.</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="c">-- ✕ WRONG — product_name is not in GROUP BY and not aggregated</span>
+<span class="k">SELECT</span> category_id, product_name, <span class="k">COUNT</span>(*)
+<span class="k">FROM</span> products
+<span class="k">GROUP</span> <span class="k">BY</span> category_id;
+
+<span class="c">-- ✓ RIGHT — aggregate product_name instead</span>
+<span class="k">SELECT</span> category_id, <span class="k">COUNT</span>(*) <span class="k">AS</span> product_count
+<span class="k">FROM</span> products
+<span class="k">GROUP</span> <span class="k">BY</span> category_id;
+
+<span class="c">-- ✓ RIGHT — add product_name to GROUP BY (groups by both columns)</span>
+<span class="k">SELECT</span> category_id, product_name, <span class="k">COUNT</span>(*)
+<span class="k">FROM</span> products
+<span class="k">GROUP</span> <span class="k">BY</span> category_id, product_name;</code></pre></div><p>MySQL 8's default <code>sql_mode</code> includes <code>ONLY_FULL_GROUP_BY</code>, which enforces this rule strictly and throws an error if you violate it. This is correct behaviour — it protects you from ambiguous, unpredictable results.</p></div><div class="section"><div class="section-hd"><span class="sec-num">06</span><h2>GROUP BY with multiple columns</h2></div><p>You can group by more than one column. MySQL creates one group per unique <em>combination</em> of all the listed columns.</p><p>Count the number of orders by status and by the month they were placed:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    <span class="k">MONTH</span>(order_date)     <span class="k">AS</span> order_month,
+    status,
+    <span class="k">COUNT</span>(*)              <span class="k">AS</span> order_count
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> <span class="k">MONTH</span>(order_date), status
+<span class="k">ORDER</span> <span class="k">BY</span> order_month, status;</code></pre></div><p><code>MONTH()</code> is a MySQL date function that extracts the month number from a date. This query produces a breakdown of every status that appeared in each month of our data:</p><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>order_month</th><th>status</th><th>order_count</th></tr></thead><tbody><tr><td class="c1">1</td><td>Completed</td><td>2</td></tr><tr><td class="c1">2</td><td>Completed</td><td>2</td></tr><tr><td class="c1">2</td><td>Pending</td><td>1</td></tr><tr><td class="c1">3</td><td>Cancelled</td><td>1</td></tr><tr><td class="c1">3</td><td>Completed</td><td>2</td></tr><tr><td class="c1">4</td><td>Completed</td><td>2</td></tr><tr><td class="c1">4</td><td>Pending</td><td>1</td></tr><tr><td class="c1">5</td><td>Completed</td><td>2</td></tr><tr><td class="c1">6</td><td>Cancelled</td><td>1</td></tr><tr><td class="c1">6</td><td>Completed</td><td>1</td></tr></tbody></table></div><p>You can see January had 2 completed orders, March had 1 cancelled and 2 completed, and so on. This kind of breakdown — metric by time and category — is the structure behind almost every business dashboard.</p><p>MySQL's date functions you'll use most often in <code>GROUP BY</code>:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Function</th><th>Returns</th><th>Example result</th></tr></thead><tbody><tr><td><code>MONTH(date)</code></td><td>Month number 1–12</td><td><code>3</code></td></tr><tr><td><code>YEAR(date)</code></td><td>Four-digit year</td><td><code>2024</code></td></tr><tr><td><code>MONTHNAME(date)</code></td><td>Month name</td><td><code>'March'</code></td></tr><tr><td><code>DAYNAME(date)</code></td><td>Day of week</td><td><code>'Tuesday'</code></td></tr><tr><td><code>QUARTER(date)</code></td><td>Quarter 1–4</td><td><code>1</code></td></tr><tr><td><code>DATE_FORMAT(date, fmt)</code></td><td>Formatted string</td><td><code>'2024-03'</code></td></tr></tbody></table></div><p>The most flexible is <code>DATE_FORMAT</code>. To group orders by year and month as a readable label:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    <span class="k">DATE_FORMAT</span>(order_date, <span class="s">'%Y-%m'</span>) <span class="k">AS</span> year_month,
+    <span class="k">COUNT</span>(*)                          <span class="k">AS</span> orders_placed
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> <span class="k">DATE_FORMAT</span>(order_date, <span class="s">'%Y-%m'</span>)
+<span class="k">ORDER</span> <span class="k">BY</span> year_month;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>year_month</th><th>orders_placed</th></tr></thead><tbody><tr><td class="c1">2024-01</td><td>2</td></tr><tr><td class="c1">2024-02</td><td>3</td></tr><tr><td class="c1">2024-03</td><td>3</td></tr><tr><td class="c1">2024-04</td><td>3</td></tr><tr><td class="c1">2024-05</td><td>2</td></tr><tr><td class="c1">2024-06</td><td>2</td></tr></tbody></table></div><p>Month-by-month order counts — the kind of trend table that goes straight into a management report.</p></div><div class="section"><div class="section-hd"><span class="sec-num">07</span><h2>HAVING — filtering groups</h2></div><p><code>WHERE</code> filters individual rows before grouping. But what if you want to filter based on the result of an aggregate — for example, "show me only customers who placed more than one order"? You can't use <code>WHERE</code> for that, because <code>COUNT(*)</code> doesn't exist yet when <code>WHERE</code> runs. That's what **<code>HAVING</code>** is for.</p><p><code>HAVING</code> filters <em>groups</em> after the aggregate has been computed. It is to <code>GROUP BY</code> what <code>WHERE</code> is to <code>FROM</code>.</p><p><strong>Find customers who placed more than one order:</strong></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    customer_id,
+    <span class="k">COUNT</span>(*) <span class="k">AS</span> orders_placed
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> customer_id
+<span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt; <span class="n">1</span>
+<span class="k">ORDER</span> <span class="k">BY</span> orders_placed <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>customer_id</th><th>orders_placed</th></tr></thead><tbody><tr><td class="c1">1</td><td>3</td></tr><tr><td class="c1">2</td><td>2</td></tr><tr><td class="c1">3</td><td>2</td></tr><tr><td class="c1">4</td><td>2</td></tr><tr><td class="c1">5</td><td>2</td></tr></tbody></table></div><p>Five customers have ordered more than once. The four customers with only one order, and Noah with none, are excluded.</p><p><strong>Find product categories whose average price exceeds ₹1,000:</strong></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    category_id,
+    <span class="k">ROUND</span>(AVG(price), <span class="n">2</span>) <span class="k">AS</span> avg_price
+<span class="k">FROM</span> products
+<span class="k">GROUP</span> <span class="k">BY</span> category_id
+<span class="k">HAVING</span> AVG(price) &gt; <span class="n">1000</span>
+<span class="k">ORDER</span> <span class="k">BY</span> avg_price <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>category_id</th><th>avg_price</th></tr></thead><tbody><tr><td class="c1">1</td><td>3149.00</td></tr><tr><td class="c1">3</td><td>1265.67</td></tr></tbody></table></div><p>Only Electronics (₹3,149 average) and Clothing (₹1,265.67 average) pass the threshold. Books, Home &amp; Kitchen, and Sports all have averages below ₹1,000.</p><p><strong>Find orders whose total value exceeds ₹3,000:</strong></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    order_id,
+    SUM(quantity * unit_price) <span class="k">AS</span> order_total
+<span class="k">FROM</span> order_items
+<span class="k">GROUP</span> <span class="k">BY</span> order_id
+<span class="k">HAVING</span> SUM(quantity * unit_price) &gt; <span class="n">3000</span>
+<span class="k">ORDER</span> <span class="k">BY</span> order_total <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>order_id</th><th>order_total</th></tr></thead><tbody><tr><td class="c1">12</td><td>9198.00</td></tr><tr><td class="c1">2</td><td>7999.00</td></tr><tr><td class="c1">4</td><td>3798.00</td></tr><tr><td class="c1">11</td><td>3598.00</td></tr><tr><td class="c1">10</td><td>3298.00</td></tr></tbody></table></div><p>Five of our 15 orders exceed ₹3,000 in value.</p></div><div class="section"><div class="section-hd"><span class="sec-num">08</span><h2>WHERE vs HAVING — the crucial distinction</h2></div><p>This is the concept that trips up almost every SQL beginner, so let's be precise.</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th></th><th>WHERE</th><th>HAVING</th></tr></thead><tbody><tr><td><strong>Filters</strong></td><td>Individual rows</td><td>Groups of rows</td></tr><tr><td><strong>Runs</strong></td><td>Before <code>GROUP BY</code></td><td>After <code>GROUP BY</code></td></tr><tr><td><strong>Can use aggregates?</strong></td><td>No</td><td>Yes</td></tr><tr><td><strong>Can use plain columns?</strong></td><td>Yes</td><td>Yes</td></tr></tbody></table></div><p>The updated execution order with all today's clauses added:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">FROM</span> → <span class="k">WHERE</span> → <span class="k">GROUP</span> <span class="k">BY</span> → <span class="k">HAVING</span> → <span class="k">SELECT</span> → <span class="k">ORDER</span> <span class="k">BY</span> → <span class="k">LIMIT</span></code></pre></div><p><code>WHERE</code> runs early — it narrows the rows that enter the grouping step. <code>HAVING</code> runs late — it trims the groups that come out of it. They filter at different points in the pipeline.</p><p><strong>You can and often should use both together.</strong> Here's a query that asks: <em>"Among completed orders only, which customers placed more than one?"</em></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    customer_id,
+    <span class="k">COUNT</span>(*) <span class="k">AS</span> completed_orders
+<span class="k">FROM</span> orders
+<span class="k">WHERE</span> status = <span class="s">'Completed'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> customer_id
+<span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt; <span class="n">1</span>
+<span class="k">ORDER</span> <span class="k">BY</span> completed_orders <span class="k">DESC</span>;</code></pre></div><p>Step by step through the execution order:</p><p>1. <strong>FROM</strong> — start with all 15 rows from <code>orders</code>.</p><p>2. <strong>WHERE</strong> <code>status = 'Completed'</code> — keep only the 11 completed orders (4 cancelled/pending are removed before grouping).</p><p>3. <strong>GROUP BY</strong> <code>customer_id</code> — group the 11 remaining rows by customer.</p><p>4. <strong>HAVING</strong> <code>COUNT(*) &gt; 1</code> — keep only groups with more than one row.</p><p>5. <strong>SELECT</strong> — return <code>customer_id</code> and the count.</p><p>6. <strong>ORDER BY</strong> — sort descending.</p><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>customer_id</th><th>completed_orders</th></tr></thead><tbody><tr><td class="c1">1</td><td>3</td></tr><tr><td class="c1">3</td><td>2</td></tr></tbody></table></div><p>Only customers 1 and 3 have more than one <em>completed</em> order. Customer 2 has two orders total, but one is cancelled — so it's filtered out by <code>WHERE status = 'Completed'</code> before grouping, leaving customer 2 with only one completed order.</p><p>This is the <code>WHERE</code> vs <code>HAVING</code> distinction made concrete: <code>WHERE</code> filters <em>before</em> the counts happen; <code>HAVING</code> filters <em>after</em>. Same-looking words, completely different points in the pipeline.</p><div class="callout"><p><strong>A practical rule of thumb.</strong> If your filter condition doesn't involve an aggregate function, use <code>WHERE</code> — it's more efficient because it reduces the rows that need to be grouped. If your condition <em>does</em> involve an aggregate (<code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, etc.), you must use <code>HAVING</code>.</p></div></div><div class="section"><div class="section-hd"><span class="sec-num">09</span><h2>Putting it all together — a real analyst query</h2></div><p>Let's close with a query that combines everything from today. The question:</p><div class="callout"><p><em>"For each product, how many times has it been ordered, and what is its total revenue? Show only products that have appeared in at least 2 order lines, ranked by total revenue."</em></p></div><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    product_id,
+    <span class="k">COUNT</span>(*)                     <span class="k">AS</span> times_ordered,
+    SUM(quantity)                <span class="k">AS</span> total_units_sold,
+    SUM(quantity * unit_price)   <span class="k">AS</span> total_revenue
+<span class="k">FROM</span> order_items
+<span class="k">GROUP</span> <span class="k">BY</span> product_id
+<span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt;= <span class="n">2</span>
+<span class="k">ORDER</span> <span class="k">BY</span> total_revenue <span class="k">DESC</span>;</code></pre></div><p>Let's trace the execution:</p><p>1. <strong>FROM</strong> <code>order_items</code> — 25 rows.</p><p>2. <strong>GROUP BY</strong> <code>product_id</code> — groups collapse into one row per product (15 distinct products appear).</p><p>3. <strong>HAVING</strong> <code>COUNT(*) &gt;= 2</code> — keep only products that appear in 2 or more order lines.</p><p>4. <strong>SELECT</strong> — compute the four columns for each surviving group.</p><p>5. <strong>ORDER BY</strong> <code>total_revenue DESC</code> — sort highest revenue first.</p><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>product_id</th><th>times_ordered</th><th>total_units_sold</th><th>total_revenue</th></tr></thead><tbody><tr><td class="c1">4</td><td>2</td><td>2</td><td>15998.00</td></tr><tr><td class="c1">1</td><td>3</td><td>4</td><td>3197.00</td></tr><tr><td class="c1">5</td><td>3</td><td>4</td><td>2397.00</td></tr><tr><td class="c1">8</td><td>2</td><td>5</td><td>2495.00</td></tr><tr><td class="c1">9</td><td>2</td><td>3</td><td>5397.00</td></tr><tr><td class="c1">2</td><td>2</td><td>2</td><td>4998.00</td></tr><tr><td class="c1">6</td><td>2</td><td>3</td><td>2398.00</td></tr><tr><td class="c1">11</td><td>2</td><td>3</td><td>2097.00</td></tr><tr><td class="c1">14</td><td>2</td><td>2</td><td>1998.00</td></tr></tbody></table></div><p>Product 4 (Noise-Cancelling Headphones) tops the revenue chart at ₹15,998 — two orders but at ₹7,999 each, it generates more revenue than anything else. Product 1 (Wireless Mouse) appeared in 3 separate order lines — the most frequently ordered item. Products 13 (Non-Stick Frying Pan) and 15 (Resistance Bands Set) don't appear here at all: the Frying Pan was never ordered, and the Bands Set appears in only one order line — filtered out by <code>HAVING COUNT(*) &gt;= 2</code>.</p><p>This kind of product performance table — sorted by revenue, with frequency and volume alongside — is a staple of e-commerce analytics, and you've just built it from scratch.</p></div><div class="section"><div class="section-hd"><h2>Where we're headed</h2></div><p>Today you learned to compute across rows. But all our queries so far draw from a single table. The real analytical questions in <code>online_store</code> span multiple tables at once: which <em>category name</em> (not ID) has the highest revenue? What are the names of customers who placed the most orders? Which products have never been sold?</p><p>These questions require combining data from two or more tables in a single query — and that's exactly what <strong>Day 7</strong> covers: <code>JOIN</code>. Joins are the most transformative concept in SQL, and because you now understand keys (Day 1), schema design (Day 2), and aggregation (today), they'll land clearly.</p><div class="recap"><h3>Quick Recap — Day 6</h3><ul></ul></div><ul class="bullets"><li><strong>Aggregate functions</strong> collapse many rows into one computed value: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>.</li><li><code>COUNT(*)</code> counts all rows; <code>COUNT(column)</code> skips <code>NULL</code>s; <code>COUNT(DISTINCT col)</code> counts unique values.</li><li>All aggregates skip <code>NULL</code> values — know when this matters.</li><li><code>ROUND(value, n)</code> rounds to <code>n</code> decimal places; pair it with <code>AVG</code> for clean output.</li><li>**<code>GROUP BY</code>** splits rows into groups and applies the aggregate to each group separately.</li><li>Every column in <code>SELECT</code> must be in <code>GROUP BY</code> or wrapped in an aggregate — no exceptions.</li><li>MySQL date functions <code>MONTH()</code>, <code>YEAR()</code>, <code>DATE_FORMAT()</code> let you group by time periods.</li><li>**<code>HAVING</code>** filters groups after aggregation — it's the only place to use aggregate conditions.</li><li><code>WHERE</code> filters rows <em>before</em> grouping (no aggregates allowed); <code>HAVING</code> filters groups <em>after</em> (aggregates required for the filter itself). Use both together when you need to.</li><li>Execution order: <code>FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT</code>.</li></ul><div class="try-box"><h4>✏️ Try this before Day 7</h4><p>Write two queries using today's tools. First: <em>"For each order status, what is the total number of orders and the most recent order date in that status?"</em> Second: <em>"Which months in 2024 had more than 2 orders placed? Show the month name and the count."</em> Both are solvable with a single table and what you've learned today.</p></div><p class="closing">See you on Day 7, where we finally break across table boundaries with JOIN.</p></div>
+  <div class="next-cta">
+    <div class="next-cta-text">
+      <h4>Coming up next</h4>
+      <p>Day 7: DQL &mdash; Joins</p>
+      <span>INNER, LEFT, RIGHT &amp; FULL JOIN &middot; UNION &middot; cross-table queries</span>
+    </div>
+    <a href="#" class="next-btn">Day 7 &nbsp;&rarr;</a>
+  </div>
+</main>
+<footer>
+  <div class="footer-tag">Databases &amp; SQL for Analysts — 9-Day Series</div>
+  <p>From first concepts to advanced querying, one article at a time.</p>
+</footer>
+<script>
+const bar=document.getElementById('progress-bar');
+function up(){const s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(h>0?Math.min(s/h*100,100):0)+'%';}
+window.addEventListener('scroll',up,{passive:true});up();
+function copyCode(btn){const c=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(c.innerText).then(()=>{const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1500);});}
+</script>
+</body>
+</html>

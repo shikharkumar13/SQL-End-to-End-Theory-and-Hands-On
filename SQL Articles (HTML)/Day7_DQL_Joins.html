@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DQL Part 3: Joining Tables — Learn SQL Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+ --bg:#F4F6FB;--white:#FFFFFF;--text:#1C2333;--text-sec:#596880;--border:#DDE3EE;
+ --accent:#1557C0;--accent-lt:#EEF3FF;--accent-bd:#BAD0F8;
+ --amber:#D97706;--amber-lt:#FFFBEB;--amber-bd:#FCD34D;
+ --green:#0A7C4E;--green-lt:#ECFDF5;--green-bd:#6EE7B7;
+ --navy:#0E1829;--navy-mid:#172240;--tbl-hdr:#1C2333;--tbl-alt:#F0F4FA;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:17px;line-height:1.78;color:var(--text);background:var(--bg)}
+#progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--accent);z-index:2000;transition:width .1s linear}
+.top-nav{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;z-index:999}
+.nav-series{font-size:12.5px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.09em}
+.nav-right{display:flex;align-items:center;gap:20px}
+.nav-day{font-size:12.5px;color:var(--text-sec);font-family:'IBM Plex Mono',monospace}
+.nav-dots{display:flex;gap:5px}
+.nav-dot{width:22px;height:4px;border-radius:2px;background:var(--border)}
+.nav-dot.on{background:var(--accent)}
+.hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy-mid) 100%);padding:76px 28px 64px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-inner{position:relative}
+.hero-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:6px 18px;border-radius:100px;margin-bottom:26px}
+.hero h1{font-family:'IBM Plex Serif',serif;font-size:clamp(26px,5vw,44px);font-weight:700;line-height:1.2;color:#fff;max-width:740px;margin:0 auto 18px}
+.hero-subtitle{font-size:17px;color:rgba(255,255,255,.6);font-weight:300;max-width:560px;margin:0 auto 36px;line-height:1.6}
+.hero-meta{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)}
+.hero-meta span{padding:0 14px}
+.hero-meta span+span{border-left:1px solid rgba(255,255,255,.15)}
+.page-wrap{max-width:780px;margin:0 auto;padding:0 24px 96px}
+.article-intro{padding:44px 0 36px;border-bottom:1px solid var(--border);margin-bottom:52px}
+.article-intro p{font-size:19px;line-height:1.72;font-weight:300;color:var(--text);margin-bottom:14px}
+.article-intro p:last-of-type{margin-bottom:0}
+.intro-pill{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--amber-lt);border:1px solid var(--amber-bd);color:#92400E;padding:7px 14px;border-radius:6px}
+.intro-pill.green{background:var(--green-lt);border-color:var(--green-bd);color:#065F46}
+.section{margin-bottom:56px}
+.section-hd{display:flex;align-items:flex-start;gap:18px;margin-bottom:20px}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-lt);border:1px solid var(--accent-bd);padding:4px 10px;border-radius:4px;flex-shrink:0;margin-top:6px;letter-spacing:.04em}
+.section h2{font-family:'IBM Plex Serif',serif;font-size:clamp(19px,3vw,25px);font-weight:700;line-height:1.3;color:var(--text)}
+.section p{margin-bottom:16px}
+.subhead{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:600;color:var(--text);margin:26px 0 12px}
+p code,li code,td code,th code{font-family:'IBM Plex Mono',monospace;font-size:.86em;background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:3px}
+.bullets{list-style:none;padding:0;margin:8px 0 16px;display:flex;flex-direction:column;gap:10px}
+.bullets li{font-size:16px;color:var(--text);padding-left:22px;position:relative;line-height:1.6}
+.bullets li::before{content:'▸';position:absolute;left:2px;color:var(--accent);font-size:13px;top:3px}
+/* callouts */
+.callout{border-left:3px solid var(--accent);background:var(--accent-lt);padding:6px 20px;border-radius:0 6px 6px 0;margin:24px 0}
+.callout p{color:#1A3968;font-size:15.5px;margin:12px 0}
+.callout strong{color:var(--accent)}
+.callout-amber{border-left-color:var(--amber);background:var(--amber-lt)}
+.callout-amber p{color:#78350F}
+.callout-amber strong{color:var(--amber)}
+.callout .code-block{margin:14px 0}
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:22px 0;border-radius:8px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+table.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+table.tbl thead tr{background:var(--tbl-hdr)}
+table.tbl thead th{padding:11px 16px;text-align:left;font-weight:600;font-size:13px;letter-spacing:.02em;color:rgba(255,255,255,.92);white-space:nowrap;font-family:'IBM Plex Sans',sans-serif}
+table.tbl tbody tr{border-bottom:1px solid var(--border)}
+table.tbl tbody tr:last-child{border-bottom:none}
+table.tbl tbody tr:nth-child(even){background:var(--tbl-alt)}
+table.tbl tbody td{padding:10px 16px;color:var(--text);vertical-align:top;line-height:1.55}
+table.tbl th code,table.tbl td code{background:rgba(21,87,192,.09)}
+table.tbl.data{font-family:'IBM Plex Mono',monospace;font-size:13.5px}
+table.tbl.data tbody td{font-family:'IBM Plex Mono',monospace}
+table.tbl.data tbody td.c1{color:var(--accent);font-weight:500}
+table.tbl.data thead th{font-family:'IBM Plex Mono',monospace;font-weight:500}
+/* code blocks */
+.code-block{margin:22px 0;border-radius:10px;overflow:hidden;border:1px solid #243049;box-shadow:0 4px 16px rgba(14,24,41,.18)}
+.code-bar{display:flex;align-items:center;gap:12px;background:#0A1322;padding:9px 14px;border-bottom:1px solid #1E2A42}
+.code-bar .dots{display:flex;gap:6px}
+.code-bar .dots i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#33415C}
+.code-bar .dots i:nth-child(1){background:#FF5F56}
+.code-bar .dots i:nth-child(2){background:#FFBD2E}
+.code-bar .dots i:nth-child(3){background:#27C93F}
+.code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#6B7A99;text-transform:uppercase;margin-left:4px}
+.copy-btn{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9FB0CC;background:#1A2742;border:1px solid #2C3A57;padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:#243456;color:#CBD7EC}
+.code-block pre{margin:0;padding:18px 20px;background:#0E1829;overflow-x:auto}
+.code-block code{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.7;color:#D6DEEC;white-space:pre;display:block}
+.code-block .k{color:#7CB4FF;font-weight:500}
+.code-block .t{color:#5FD3B5}
+.code-block .s{color:#F0A868}
+.code-block .n{color:#E5C07B}
+.code-block .c{color:#5B6B8C;font-style:italic}
+/* try box */
+.try-box{background:var(--amber-lt);border:1px solid var(--amber-bd);border-radius:8px;padding:24px 28px;margin:36px 0}
+.try-box h4{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#92400E;margin-bottom:10px}
+.try-box p{font-size:15px;color:#78350F;line-height:1.65;margin:0}
+/* recap */
+.recap{background:var(--navy);border-radius:12px;padding:34px 38px;margin:52px 0 36px}
+.recap h3{font-family:'IBM Plex Serif',serif;font-size:19px;color:#fff;margin-bottom:20px}
+.recap ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:13px}
+.recap li{font-size:15px;color:rgba(255,255,255,.8);padding-left:20px;position:relative;line-height:1.62}
+.recap li::before{content:'▸';position:absolute;left:0;color:#FCD34D;font-size:13px;top:2px}
+.recap li strong{color:#fff}
+.recap li code{background:rgba(255,255,255,.1);color:#BAD0F8}
+/* next cta */
+.next-cta{background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:12px;padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:8px}
+.next-cta-text h4{font-size:11.5px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:5px}
+.next-cta-text p{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+.next-cta-text span{font-size:13px;color:var(--text-sec);display:block}
+.next-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.next-btn:hover{background:#1246A0}
+.closing{font-style:italic;text-align:center;color:var(--text-sec);font-size:15px;margin:34px 0 0}
+footer{background:var(--white);border-top:1px solid var(--border);padding:36px 24px;text-align:center}
+.footer-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--accent-lt);color:var(--accent);padding:4px 14px;border-radius:4px;margin-bottom:10px}
+footer p{font-size:13px;color:var(--text-sec)}
+@media(max-width:600px){.hero{padding:56px 20px 48px}.page-wrap{padding:0 18px 72px}.recap{padding:26px 22px}.next-cta{flex-direction:column;align-items:flex-start}.top-nav{padding:12px 18px}.nav-dots{display:none}.section-hd{flex-direction:column;gap:10px}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav class="top-nav">
+  <span class="nav-series">Databases &amp; SQL for Analysts</span>
+  <div class="nav-right">
+    <div class="nav-dots"><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot"></div><div class="nav-dot on"></div><div class="nav-dot"></div><div class="nav-dot"></div></div>
+    <span class="nav-day">Day 07 / 09</span>
+  </div>
+</nav>
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">Day 07 &middot; DQL &middot; Joins</div>
+  <h1>DQL Part 3: Joining Tables</h1>
+  <p class="hero-subtitle">Cross table boundaries for the first time &mdash; INNER, LEFT, RIGHT, SELF, and more &mdash; to answer the analytical questions that live across multiple tables at once.</p>
+  <div class="hero-meta"><span>MySQL</span><span>Hands-on</span><span>~22 min read</span></div>
+</div></header>
+<main class="page-wrap">
+  <div class="article-intro"><p>Welcome to Day 7 — the most transformative day in the series. Every query so far has drawn from a single table. The real analytical questions in <code>online_store</code> cut across multiple tables at once: <em>What is the revenue per category — by name, not by ID? Which customers spent the most? Which products have never been sold?</em> These questions live across the boundaries between tables, and **<code>JOIN</code>** is how you cross them.</p><p>Joins are where the "relational" in relational database finally pays off. All the work on Day 1 (primary keys, foreign keys, relationships) and Day 2 (the five-table schema) was building toward this moment. If you understand keys, you already understand the logic of joins — today is just learning the syntax for what you already know conceptually.</p><p>All queries are MySQL-compatible and run on the <code>online_store</code> database from Day 4.</p><div class="intro-pill green">🐬 &nbsp; Every query runs on the online_store database we built on Days 3 &amp; 4.</div></div>
+  <div class="section"><div class="section-hd"><span class="sec-num">01</span><h2>What is a join?</h2></div><p>A <strong>join</strong> combines rows from two or more tables into a single result, based on a matching condition — almost always the foreign-key relationship between them.</p><p>On their own, our tables give us IDs, not names. The <code>orders</code> table knows <code>customer_id = 1</code>, but not that customer 1 is Aarav Sharma. The <code>order_items</code> table knows <code>product_id = 4</code>, but not that it's Noise-Cancelling Headphones costing ₹7,999. A join brings those tables together so you see the complete picture in one result.</p><p>The matching condition is written in an <code>ON</code> clause and almost always uses an <code>=</code> between a foreign key in one table and the primary key it references in the other:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="c">-- General shape</span>
+<span class="k">SELECT</span> ...
+<span class="k">FROM</span>   table_a
+<span class="k">JOIN</span>   table_b <span class="k">ON</span> table_a.foreign_key = table_b.primary_key;</code></pre></div><p>There are five kinds of join, and they differ in <em>which rows survive when there is no match</em>:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Join type</th><th>Rows returned</th></tr></thead><tbody><tr><td><code>INNER JOIN</code></td><td>Only rows where the condition matches in <strong>both</strong> tables</td></tr><tr><td><code>LEFT JOIN</code></td><td>All rows from the <strong>left</strong> table; <code>NULL</code> where the right has no match</td></tr><tr><td><code>RIGHT JOIN</code></td><td>All rows from the <strong>right</strong> table; <code>NULL</code> where the left has no match</td></tr><tr><td><code>CROSS JOIN</code></td><td>Every possible combination of rows from both tables</td></tr><tr><td><code>SELF JOIN</code></td><td>A table joined to itself using two aliases</td></tr></tbody></table></div><p>MySQL does not support <code>FULL OUTER JOIN</code> directly — we'll cover the workaround later.</p></div><div class="section"><div class="section-hd"><span class="sec-num">02</span><h2>Table aliases — essential notation</h2></div><p>When querying multiple tables, column names can clash (<code>both customers and orders have customer_id</code>) and long table names repeated throughout a query become tedious. <strong>Table aliases</strong> solve both problems by giving each table a short nickname for the duration of the query:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> c.first_name, o.order_date
+<span class="k">FROM</span>   customers c
+<span class="k">JOIN</span>   orders    o <span class="k">ON</span> c.customer_id = o.customer_id;</code></pre></div><p>Here <code>c</code> is the alias for <code>customers</code> and <code>o</code> for <code>orders</code>. The dot notation <code>c.first_name</code> means "the <code>first_name</code> column from the table aliased <code>c</code>." You don't need <code>AS</code> for table aliases — just write the alias after the table name.</p><p>From this point on, every multi-table query uses aliases. Get comfortable with them quickly — a single-letter or two-letter alias per table is the standard style:</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Table</th><th>Alias used in this series</th></tr></thead><tbody><tr><td><code>customers</code></td><td><code>c</code></td></tr><tr><td><code>categories</code></td><td><code>cat</code></td></tr><tr><td><code>products</code></td><td><code>p</code></td></tr><tr><td><code>orders</code></td><td><code>o</code></td></tr><tr><td><code>order_items</code></td><td><code>oi</code></td></tr></tbody></table></div></div><div class="section"><div class="section-hd"><span class="sec-num">03</span><h2>INNER JOIN — matching rows from both tables</h2></div><p><code>INNER JOIN</code> (often written as just <code>JOIN</code>, the two are identical) returns only rows where the <code>ON</code> condition finds a match in <strong>both</strong> tables. Rows from either table that have no counterpart in the other are excluded.</p><p><strong>Show products with their category names.</strong> On their own, <code>products</code> only stores <code>category_id</code>. Joining with <code>categories</code> replaces the number with a readable name:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    p.product_id,
+    p.product_name,
+    cat.category_name,
+    p.price
+<span class="k">FROM</span> products p
+<span class="k">INNER</span> <span class="k">JOIN</span> categories cat <span class="k">ON</span> p.category_id = cat.category_id
+<span class="k">ORDER</span> <span class="k">BY</span> cat.category_name, p.price;</code></pre></div><p>All 15 products return, each now labelled with their category name — "Books", "Clothing", "Electronics" — instead of 1, 2, 3. Every product has a valid <code>category_id</code>, so nothing is excluded.</p><p><strong>Show customers alongside their orders.</strong> Joining <code>customers</code> to <code>orders</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.first_name,
+    c.last_name,
+    o.order_id,
+    o.order_date,
+    o.status
+<span class="k">FROM</span> customers c
+<span class="k">INNER</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">ORDER</span> <span class="k">BY</span> c.last_name, o.order_date;</code></pre></div><p>This returns <strong>15 rows</strong> — one per order. Notice that customer 10, Noah Brown, does not appear at all. He has placed no orders, so there is no matching row in <code>orders</code> for him — <code>INNER JOIN</code> excludes him entirely. This is the defining behaviour of <code>INNER JOIN</code>: if a row has no match on the other side, it vanishes from the result.</p><p><strong>Connect order items to the product they represent:</strong></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    oi.order_id,
+    p.product_name,
+    oi.quantity,
+    oi.unit_price,
+    oi.quantity * oi.unit_price <span class="k">AS</span> line_total
+<span class="k">FROM</span> order_items oi
+<span class="k">INNER</span> <span class="k">JOIN</span> products p <span class="k">ON</span> oi.product_id = p.product_id
+<span class="k">ORDER</span> <span class="k">BY</span> oi.order_id;</code></pre></div><p>Returns all 25 order-item rows, now with the product name instead of <code>product_id = 4</code>. The calculated column <code>line_total</code> works just as it did on a single table — <code>SELECT</code> can compute expressions from any column in any of the joined tables.</p></div><div class="section"><div class="section-hd"><span class="sec-num">04</span><h2>LEFT JOIN — all rows from the left table</h2></div><p><code>LEFT JOIN</code> keeps every row from the <strong>left table</strong> (the one in the <code>FROM</code> clause), regardless of whether a match exists in the right table. Where there is no match, all right-table columns return <code>NULL</code>.</p><p>This makes <code>LEFT JOIN</code> the join you reach for when you need to include rows even if they have no corresponding entry on the other side.</p><p><strong>All customers with their order count — including customers who ordered nothing:</strong></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    <span class="k">COUNT</span>(o.order_id) <span class="k">AS</span> orders_placed
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">GROUP</span> <span class="k">BY</span> c.customer_id, c.first_name, c.last_name
+<span class="k">ORDER</span> <span class="k">BY</span> orders_placed <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>customer_id</th><th>first_name</th><th>last_name</th><th>orders_placed</th></tr></thead><tbody><tr><td class="c1">1</td><td>Aarav</td><td>Sharma</td><td>3</td></tr><tr><td class="c1">2</td><td>Diya</td><td>Patel</td><td>2</td></tr><tr><td class="c1">3</td><td>Rohan</td><td>Mehta</td><td>2</td></tr><tr><td class="c1">4</td><td>Ananya</td><td>Reddy</td><td>2</td></tr><tr><td class="c1">5</td><td>Vivaan</td><td>Singh</td><td>2</td></tr><tr><td class="c1">6</td><td>Ishaan</td><td>Gupta</td><td>1</td></tr><tr><td class="c1">7</td><td>Saanvi</td><td>Iyer</td><td>1</td></tr><tr><td class="c1">8</td><td>Kabir</td><td>Khan</td><td>1</td></tr><tr><td class="c1">9</td><td>Mia</td><td>Williams</td><td>1</td></tr><tr><td class="c1">10</td><td>Noah</td><td>Brown</td><td>0</td></tr></tbody></table></div><p>All 10 customers appear. Noah is there, showing 0 orders. This is the crucial difference from <code>INNER JOIN</code>, which would have returned only 9 rows and left Noah completely invisible.</p><p>A key subtlety: <code>COUNT(o.order_id)</code> — not <code>COUNT(*)</code> — correctly returns 0 for Noah. When there is no matching order, all <code>o.*</code> columns are <code>NULL</code>. <code>COUNT(o.order_id)</code> skips <code>NULL</code> values, so it counts zero. <code>COUNT(*)</code> would count the row itself and return 1, which would be wrong. When using <code>COUNT</code> with a <code>LEFT JOIN</code>, always count a column from the right table, not <code>*</code>.</p><p><strong>The "find non-matching rows" pattern — LEFT JOIN's killer use case.</strong></p><p>One of the most useful analytical patterns in SQL: find rows in table A that have <em>no corresponding row</em> in table B. You do this by joining with <code>LEFT JOIN</code> and then filtering for <code>NULL</code> in the right table's column.</p><p><em>Find customers who have never placed any order:</em></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.customer_id,
+    c.first_name,
+    c.last_name
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">WHERE</span> o.order_id <span class="k">IS</span> <span class="k">NULL</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>customer_id</th><th>first_name</th><th>last_name</th></tr></thead><tbody><tr><td class="c1">10</td><td>Noah</td><td>Brown</td></tr></tbody></table></div><p>Only Noah. The <code>WHERE o.order_id IS NULL</code> condition keeps only the rows where the right table had no match — exactly the "has no orders" case we want.</p><p><em>Find products that have never been ordered:</em></p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    p.product_id,
+    p.product_name,
+    cat.category_name,
+    p.price
+<span class="k">FROM</span> products p
+<span class="k">LEFT</span> <span class="k">JOIN</span> order_items oi  <span class="k">ON</span> p.product_id   = oi.product_id
+<span class="k">INNER</span> <span class="k">JOIN</span> categories cat <span class="k">ON</span> p.category_id  = cat.category_id
+<span class="k">WHERE</span> oi.order_item_id <span class="k">IS</span> <span class="k">NULL</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>product_id</th><th>product_name</th><th>category_name</th><th>price</th></tr></thead><tbody><tr><td class="c1">13</td><td>Non-Stick Frying Pan</td><td>Home &amp; Kitchen</td><td>1599.00</td></tr></tbody></table></div><p>The Non-Stick Frying Pan is the only product that appears in no order lines. We can now see it by name, in its category, with its price — something impossible from <code>order_items</code> alone, since a never-ordered product leaves no trace there.</p><h3 class="subhead">The ON vs WHERE trap with LEFT JOIN</h3><p>This is the most important subtlety of <code>LEFT JOIN</code>, and it causes real bugs in production code.</p><p>When you add a filter in a <code>WHERE</code> clause to a <code>LEFT JOIN</code>, it can accidentally turn the left join into an inner join by eliminating <code>NULL</code> rows. Consider:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="c">-- WRONG: intends to show all customers, but only their completed orders</span>
+<span class="k">SELECT</span> c.first_name, c.last_name, o.order_date
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">WHERE</span> o.status = <span class="s">'Completed'</span>;</code></pre></div><p>This returns only 9 customers because <code>WHERE o.status = 'Completed'</code> runs after the join and excludes rows where <code>o.status</code> is <code>NULL</code> — exactly the rows for customers with no orders (like Noah) or customers whose orders aren't completed. You've accidentally lost the "left" behaviour.</p><p>The fix: put the condition in the <code>ON</code> clause instead of <code>WHERE</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="c">-- RIGHT: all customers shown, only completed orders joined alongside them</span>
+<span class="k">SELECT</span> c.first_name, c.last_name, o.order_date
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o
+    <span class="k">ON</span>  c.customer_id = o.customer_id
+    <span class="k">AND</span> o.status = <span class="s">'Completed'</span>;</code></pre></div><p>Now <code>o.status = 'Completed'</code> is part of the join condition, not a post-join filter. Customers with no completed orders still appear — they just get <code>NULL</code> for <code>order_date</code>. The rule to remember: **filter conditions that should preserve unmatched rows belong in <code>ON</code>; conditions that should remove rows from the final result belong in <code>WHERE</code>.**</p></div><div class="section"><div class="section-hd"><span class="sec-num">05</span><h2>RIGHT JOIN — the mirror image</h2></div><p><code>RIGHT JOIN</code> is the exact mirror of <code>LEFT JOIN</code>: it keeps every row from the <strong>right</strong> table, regardless of whether a match exists in the left table.</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.first_name,
+    c.last_name,
+    o.order_id,
+    o.order_date
+<span class="k">FROM</span> customers c
+<span class="k">RIGHT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id;</code></pre></div><p>In practice, <code>RIGHT JOIN</code> is rarely used. Any <code>RIGHT JOIN</code> can be rewritten as a <code>LEFT JOIN</code> by swapping the table order, which is always clearer to read. If you find yourself reaching for <code>RIGHT JOIN</code>, flip the tables and use <code>LEFT JOIN</code> instead.</p></div><div class="section"><div class="section-hd"><span class="sec-num">06</span><h2>Joining three or more tables</h2></div><p>Joins chain. You can join as many tables as you need, and each new <code>JOIN ... ON</code> clause links one more table into the result. MySQL evaluates them left to right.</p><p>The grand join of <code>online_store</code> — all five tables in one query, showing the full purchase journey from customer name to product and category:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.first_name                     <span class="k">AS</span> customer,
+    o.order_id,
+    o.order_date,
+    o.status,
+    p.product_name                   <span class="k">AS</span> product,
+    cat.category_name                <span class="k">AS</span> category,
+    oi.quantity,
+    oi.unit_price,
+    oi.quantity * oi.unit_price      <span class="k">AS</span> line_total
+<span class="k">FROM</span> customers c
+<span class="k">INNER</span> <span class="k">JOIN</span> orders      o   <span class="k">ON</span> c.customer_id  = o.customer_id
+<span class="k">INNER</span> <span class="k">JOIN</span> order_items oi  <span class="k">ON</span> o.order_id     = oi.order_id
+<span class="k">INNER</span> <span class="k">JOIN</span> products    p   <span class="k">ON</span> oi.product_id  = p.product_id
+<span class="k">INNER</span> <span class="k">JOIN</span> categories  cat <span class="k">ON</span> p.category_id  = cat.category_id
+<span class="k">ORDER</span> <span class="k">BY</span> o.order_date, o.order_id;</code></pre></div><p>This returns all <strong>25 rows</strong> from <code>order_items</code>, now enriched with the customer's name, the order date and status, the product name, and its category — pulling from all five tables in one readable result. This is the query that turns a database into an analyst's workspace.</p><p>When reading a multi-join query, trace the chain of foreign keys: <code>customers</code> → (via <code>customer_id</code>) → <code>orders</code> → (via <code>order_id</code>) → <code>order_items</code> → (via <code>product_id</code>) → <code>products</code> → (via <code>category_id</code>) → <code>categories</code>. Each <code>ON</code> clause is one step along that chain.</p></div><div class="section"><div class="section-hd"><span class="sec-num">07</span><h2>JOIN with GROUP BY — the analytical powerhouse</h2></div><p>The most useful pattern in analytical SQL is combining <code>JOIN</code> with <code>GROUP BY</code>. Joins bring the right columns together across tables; <code>GROUP BY</code> then summarises them. Together, they answer the richest questions.</p><p><strong>Revenue by category name.</strong> On Day 6 we computed revenue grouped by <code>category_id</code>. Now we can show the actual names:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    cat.category_name,
+    <span class="k">COUNT</span>(<span class="k">DISTINCT</span> o.order_id)          <span class="k">AS</span> total_orders,
+    SUM(oi.quantity)                    <span class="k">AS</span> units_sold,
+    SUM(oi.quantity * oi.unit_price)    <span class="k">AS</span> total_revenue
+<span class="k">FROM</span> categories cat
+<span class="k">INNER</span> <span class="k">JOIN</span> products    p   <span class="k">ON</span> cat.category_id = p.category_id
+<span class="k">INNER</span> <span class="k">JOIN</span> order_items oi  <span class="k">ON</span> p.product_id    = oi.product_id
+<span class="k">INNER</span> <span class="k">JOIN</span> orders      o   <span class="k">ON</span> oi.order_id     = o.order_id
+<span class="k">GROUP</span> <span class="k">BY</span> cat.category_id, cat.category_name
+<span class="k">ORDER</span> <span class="k">BY</span> total_revenue <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>category_name</th><th>total_orders</th><th>units_sold</th><th>total_revenue</th></tr></thead><tbody><tr><td class="c1">Electronics</td><td>8</td><td>12</td><td>25491.00</td></tr><tr><td class="c1">Clothing</td><td>6</td><td>12</td><td>9391.00</td></tr><tr><td class="c1">Books</td><td>8</td><td>11</td><td>6892.00</td></tr><tr><td class="c1">Home &amp; Kitchen</td><td>4</td><td>10</td><td>3493.00</td></tr><tr><td class="c1">Sports</td><td>3</td><td>6</td><td>3196.00</td></tr></tbody></table></div><p>Electronics accounts for over half the total revenue despite having the same number of orders as Books — driven by the high price of the Headphones. This is exactly the kind of insight a business would act on.</p><p><strong>Top customers by total spend.</strong> The customer-level version, showing names and amounts:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.first_name,
+    c.last_name,
+    <span class="k">COUNT</span>(<span class="k">DISTINCT</span> o.order_id)          <span class="k">AS</span> orders_placed,
+    SUM(oi.quantity * oi.unit_price)    <span class="k">AS</span> total_spent
+<span class="k">FROM</span> customers c
+<span class="k">INNER</span> <span class="k">JOIN</span> orders      o  <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">INNER</span> <span class="k">JOIN</span> order_items oi <span class="k">ON</span> o.order_id    = oi.order_id
+<span class="k">GROUP</span> <span class="k">BY</span> c.customer_id, c.first_name, c.last_name
+<span class="k">ORDER</span> <span class="k">BY</span> total_spent <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>first_name</th><th>last_name</th><th>orders_placed</th><th>total_spent</th></tr></thead><tbody><tr><td class="c1">Aarav</td><td>Sharma</td><td>3</td><td>15193.00</td></tr><tr><td class="c1">Diya</td><td>Patel</td><td>2</td><td>9498.00</td></tr><tr><td class="c1">Rohan</td><td>Mehta</td><td>2</td><td>6594.00</td></tr><tr><td class="c1">Ananya</td><td>Reddy</td><td>2</td><td>5094.00</td></tr><tr><td class="c1">Kabir</td><td>Khan</td><td>1</td><td>3598.00</td></tr><tr><td class="c1">Vivaan</td><td>Singh</td><td>2</td><td>3196.00</td></tr><tr><td class="c1">Ishaan</td><td>Gupta</td><td>1</td><td>2794.00</td></tr><tr><td class="c1">Saanvi</td><td>Iyer</td><td>1</td><td>1498.00</td></tr><tr><td class="c1">Mia</td><td>Williams</td><td>1</td><td>998.00</td></tr></tbody></table></div><p>Noah Brown doesn't appear — he placed no orders, so there are no <code>order_items</code> rows to join to him. If you needed him in the list with a ₹0, replace the first <code>INNER JOIN</code> with a <code>LEFT JOIN</code>. The column totals sum to ₹48,463 — the same grand total we computed on Day 6, now attributed to individual customers by name.</p></div><div class="section"><div class="section-hd"><span class="sec-num">08</span><h2>SELF JOIN — a table joined to itself</h2></div><p>A <strong>self join</strong> joins a table to a copy of itself. You give it two different aliases so MySQL can distinguish the two "copies." The classic use case is hierarchical data (employees and their managers in the same table), but it's useful any time you want to compare rows within the same table.</p><p>In our database, we can use it to find products that have at least one cheaper sibling in the same category — products that are not the lowest-priced in their group:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">DISTINCT</span>
+    p1.product_name     <span class="k">AS</span> product,
+    p1.price,
+    cat.category_name
+<span class="k">FROM</span> products p1
+<span class="k">INNER</span> <span class="k">JOIN</span> products    p2  <span class="k">ON</span> p1.category_id = p2.category_id
+                          <span class="k">AND</span> p1.price &gt; p2.price
+<span class="k">INNER</span> <span class="k">JOIN</span> categories  cat <span class="k">ON</span> p1.category_id = cat.category_id
+<span class="k">ORDER</span> <span class="k">BY</span> cat.category_name, p1.price;</code></pre></div><p><code>p1</code> and <code>p2</code> are two aliases for the same <code>products</code> table. The <code>ON</code> condition matches a product in <code>p1</code> to any product in <code>p2</code> that shares its category but has a lower price. The result is the 10 products that are not the cheapest in their own category — verified against each category's price range.</p><p>The key technique in any self join: add a condition on the joining column (here <code>AND p1.price &gt; p2.price</code>) to avoid a product matching itself, and use <code>DISTINCT</code> if the same row could appear multiple times due to multiple cheaper siblings.</p></div><div class="section"><div class="section-hd"><span class="sec-num">09</span><h2>CROSS JOIN and FULL OUTER JOIN</h2></div><p><strong>CROSS JOIN</strong> produces every possible combination of rows from two tables with no <code>ON</code> condition. Five categories crossed with 15 products returns 75 rows. It is rarely used in analysis (though useful in some advanced scenarios like generating date ranges), so we won't explore it further here.</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="c">-- Every possible category-product pairing (75 rows)</span>
+<span class="k">SELECT</span> cat.category_name, p.product_name
+<span class="k">FROM</span> categories cat
+<span class="k">CROSS</span> <span class="k">JOIN</span> products p;</code></pre></div><p><strong>FULL OUTER JOIN</strong> returns all rows from <em>both</em> tables, using <code>NULL</code> where there is no match on either side. MySQL does not have a <code>FULL OUTER JOIN</code> keyword. The standard workaround is combining a <code>LEFT JOIN</code> and a <code>RIGHT JOIN</code> with <code>UNION</code>:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span> c.customer_id, c.first_name, o.order_id
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id
+
+<span class="k">UNION</span>
+
+<span class="k">SELECT</span> c.customer_id, c.first_name, o.order_id
+<span class="k">FROM</span> customers c
+<span class="k">RIGHT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">WHERE</span> c.customer_id <span class="k">IS</span> <span class="k">NULL</span>;</code></pre></div><p>In our database, every order has a valid customer (because of the foreign key constraint), so a full outer join would return the same result as a left join. Full outer joins are most useful when both tables can have unmatched rows — in our design, the foreign key prevents that from happening on the orders side.</p></div><div class="section"><div class="section-hd"><span class="sec-num">10</span><h2>UNION and UNION ALL — stacking result sets</h2></div><p>While joins combine tables <em>horizontally</em> (adding columns), **<code>UNION</code><em>* combines result sets </em>vertically* (adding rows). Both queries must return the same number of columns, in compatible data types.</p><p>A practical use: compare two time periods in a single readable table. Revenue in Q1 vs Q2 2024:</p><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    <span class="s">'Q1 2024'</span>                           <span class="k">AS</span> period,
+    <span class="k">COUNT</span>(<span class="k">DISTINCT</span> o.order_id)          <span class="k">AS</span> orders_placed,
+    SUM(oi.quantity * oi.unit_price)    <span class="k">AS</span> revenue
+<span class="k">FROM</span> orders o
+<span class="k">JOIN</span> order_items oi <span class="k">ON</span> o.order_id = oi.order_id
+<span class="k">WHERE</span> o.order_date <span class="k">BETWEEN</span> <span class="s">'2024-01-01'</span> <span class="k">AND</span> <span class="s">'2024-03-31'</span>
+
+<span class="k">UNION</span> ALL
+
+<span class="k">SELECT</span>
+    <span class="s">'Q2 2024'</span>,
+    <span class="k">COUNT</span>(<span class="k">DISTINCT</span> o.order_id),
+    SUM(oi.quantity * oi.unit_price)
+<span class="k">FROM</span> orders o
+<span class="k">JOIN</span> order_items oi <span class="k">ON</span> o.order_id = oi.order_id
+<span class="k">WHERE</span> o.order_date <span class="k">BETWEEN</span> <span class="s">'2024-04-01'</span> <span class="k">AND</span> <span class="s">'2024-06-30'</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>period</th><th>orders_placed</th><th>revenue</th></tr></thead><tbody><tr><td class="c1">Q1 2024</td><td>8</td><td>26178.00</td></tr><tr><td class="c1">Q2 2024</td><td>7</td><td>22285.00</td></tr></tbody></table></div><p>**<code>UNION</code> vs <code>UNION ALL</code>:** <code>UNION</code> removes duplicate rows (running a deduplication step, which is expensive on large data); <code>UNION ALL</code> keeps all rows, including duplicates, and is significantly faster. In most analytical contexts — combining two different time periods, two different statuses, two separate reports — there are no duplicates to remove, and <code>UNION ALL</code> is the right choice. Use plain <code>UNION</code> only when you specifically need deduplication.</p></div><div class="section"><div class="section-hd"><span class="sec-num">11</span><h2>Putting it all together — the five-table capstone</h2></div><p>Let's close with a query that answers a precise business question using every skill from Days 5, 6, and 7:</p><div class="callout"><p><em>"Which customers bought Electronics products in completed orders? Show their name, how many Electronics orders they placed, how many units they bought, and their total Electronics spend — ranked by spend."</em></p></div><div class="code-block"><div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="code-lang">SQL · MySQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code><span class="k">SELECT</span>
+    c.first_name,
+    c.last_name,
+    <span class="k">COUNT</span>(<span class="k">DISTINCT</span> o.order_id)          <span class="k">AS</span> electronics_orders,
+    SUM(oi.quantity)                    <span class="k">AS</span> units_bought,
+    SUM(oi.quantity * oi.unit_price)    <span class="k">AS</span> electronics_spend
+<span class="k">FROM</span> customers c
+<span class="k">INNER</span> <span class="k">JOIN</span> orders      o   <span class="k">ON</span> c.customer_id  = o.customer_id
+<span class="k">INNER</span> <span class="k">JOIN</span> order_items oi  <span class="k">ON</span> o.order_id     = oi.order_id
+<span class="k">INNER</span> <span class="k">JOIN</span> products    p   <span class="k">ON</span> oi.product_id  = p.product_id
+<span class="k">INNER</span> <span class="k">JOIN</span> categories  cat <span class="k">ON</span> p.category_id  = cat.category_id
+<span class="k">WHERE</span> o.status          = <span class="s">'Completed'</span>
+  <span class="k">AND</span> cat.category_name = <span class="s">'Electronics'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> c.customer_id, c.first_name, c.last_name
+<span class="k">ORDER</span> <span class="k">BY</span> electronics_spend <span class="k">DESC</span>;</code></pre></div><div class="tbl-wrap"><table class="tbl data"><thead><tr><th>first_name</th><th>last_name</th><th>electronics_orders</th><th>units_bought</th><th>electronics_spend</th></tr></thead><tbody><tr><td class="c1">Aarav</td><td>Sharma</td><td>3</td><td>5</td><td>13395.00</td></tr><tr><td class="c1">Diya</td><td>Patel</td><td>1</td><td>1</td><td>7999.00</td></tr><tr><td class="c1">Rohan</td><td>Mehta</td><td>1</td><td>2</td><td>3298.00</td></tr><tr><td class="c1">Ananya</td><td>Reddy</td><td>1</td><td>1</td><td>799.00</td></tr></tbody></table></div><p>The total Electronics spend across completed orders is ₹25,491 — which matches the category-revenue number we computed earlier, confirming the data is consistent.</p><p>Let's trace the full execution for this query:</p><p>1. <strong>FROM / JOINs</strong> — build the wide result by chaining all five tables together: 10 customers × 15 orders × 25 order-item lines × 15 products × 5 categories.</p><p>2. <strong>WHERE</strong> — filter down to rows where the order is Completed and the category is Electronics. This leaves only order-item lines for Electronics products in completed orders.</p><p>3. <strong>GROUP BY</strong> — collapse to one row per customer.</p><p>4. <strong>SELECT</strong> — compute the three aggregates for each customer group.</p><p>5. <strong>ORDER BY</strong> — rank by electronics spend.</p><p>Notice that customers who ordered Electronics in non-completed orders (like Kabir Khan, whose Pending order had Clothing) don't appear. Customers who ordered only non-Electronics products in completed orders (like Saanvi Iyer and Mia Williams) don't appear either. Only the four who have at least one Electronics line item in a completed order make the cut.</p></div><div class="section"><div class="section-hd"><h2>Where we're headed</h2></div><p>You can now query across the entire <code>online_store</code> schema — joining tables, filtering, aggregating, and ranking results. The analytical toolkit is nearly complete.</p><p><strong>Day 8</strong> adds two more layers of power to that toolkit: <strong>subqueries</strong> (embedding one query inside another, to filter by computed results or build reusable intermediate results) and <strong>CTEs</strong> (Common Table Expressions — naming those sub-results for clarity), plus <strong>CASE</strong> expressions for conditional column values. These let you express business logic directly in SQL, without pre-processing the data elsewhere.</p><div class="recap"><h3>Quick Recap — Day 7</h3><ul></ul></div><ul class="bullets"><li>A <strong>join</strong> combines rows from two or more tables based on a matching condition, almost always a primary-key / foreign-key pair.</li><li>Use <strong>table aliases</strong> (<code>customers c</code>, <code>orders o</code>) and <strong>dot notation</strong> (<code>c.first_name</code>) to avoid ambiguity in multi-table queries.</li><li>**<code>INNER JOIN</code>** returns only rows with a match in both tables — unmatched rows are excluded.</li><li>**<code>LEFT JOIN</code>** returns all rows from the left table; unmatched right-table columns become <code>NULL</code>. Use <code>COUNT(right_table_column)</code> — not <code>COUNT(*)</code> — to count correctly across a left join.</li><li>The **<code>LEFT JOIN</code> + <code>IS NULL</code>** pattern finds rows in one table that have no corresponding row in another ("never ordered", "never sold").</li><li>**Filter placement matters with <code>LEFT JOIN</code>**: conditions that preserve unmatched rows go in <code>ON</code>; conditions that remove rows go in <code>WHERE</code>.</li><li>**<code>RIGHT JOIN</code>** is the mirror of <code>LEFT JOIN</code> — rewrite as <code>LEFT JOIN</code> by swapping table order.</li><li>Chain <code>JOIN</code> clauses to query three or more tables; each <code>ON</code> is one step along the foreign-key chain.</li><li>**<code>JOIN</code> + <code>GROUP BY</code>** is the most powerful analytical pattern in SQL — cross-table joins bring the right columns together, aggregation summarises them.</li><li>A <strong>self join</strong> uses two aliases on the same table to compare rows within it.</li><li>**<code>UNION ALL</code>** stacks result sets vertically (rows); prefer it over <code>UNION</code> unless deduplication is specifically needed.</li></ul><div class="try-box"><h4>✏️ Try this before Day 8</h4><p>Write two queries of your own. First: <em>"List every category name alongside the number of distinct products in it and the total stock quantity across those products — ordered by total stock descending."</em> Second: *"Using a <code>LEFT JOIN</code>, find all products that exist in the <code>products</code> table but have not yet been ordered — show the product name, category name, and price."* Both should run cleanly with what you've learned today.</p></div><p class="closing">See you on Day 8, where we embed queries inside queries — and teach SQL to answer questions about its own answers.</p></div>
+  <div class="next-cta">
+    <div class="next-cta-text">
+      <h4>Coming up next</h4>
+      <p>Day 8: DQL &mdash; Subqueries, CTEs &amp; CASE</p>
+      <span>Embed queries inside queries &middot; WITH clause &middot; conditional logic</span>
+    </div>
+    <a href="#" class="next-btn">Day 8 &nbsp;&rarr;</a>
+  </div>
+</main>
+<footer>
+  <div class="footer-tag">Databases &amp; SQL for Analysts — 9-Day Series</div>
+  <p>From first concepts to advanced querying, one article at a time.</p>
+</footer>
+<script>
+const bar=document.getElementById('progress-bar');
+function up(){const s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(h>0?Math.min(s/h*100,100):0)+'%';}
+window.addEventListener('scroll',up,{passive:true});up();
+function copyCode(btn){const c=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(c.innerText).then(()=>{const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1500);});}
+</script>
+</body>
+</html>
