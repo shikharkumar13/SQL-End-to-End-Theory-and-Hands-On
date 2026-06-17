@@ -80,7 +80,7 @@ order_items   (order_item_id PK, order_id FK, product_id FK, quantity, unit_pric
 
 | Day | Article | Topics Covered |
 |-----|---------|---------------|
-| **1** | [What Is a Database?](articles/Day1_Understanding_Databases.md) | Database vs DBMS vs RDBMS · relational vs NoSQL · tables, rows, columns · primary & foreign keys · normalization |
+| **1** | [What Is a Database?](SQL article markdowns/3. DDL_Building_Database_Structure.md) | Database vs DBMS vs RDBMS · relational vs NoSQL · tables, rows, columns · primary & foreign keys · normalization |
 | **2** | [The SQL Language & Our Example Database](articles/Day2_SQL_Language_and_Database.md) | DDL / DML / DQL / DCL / TCL · data types · NULL · practice environment setup · full schema walkthrough |
 | **3** | [DDL - Building the Structure](articles/Day3_DDL_Building_Structure.md) | `CREATE DATABASE` · `CREATE TABLE` · constraints (PK, FK, NOT NULL, UNIQUE, DEFAULT, CHECK, AUTO_INCREMENT) · `ALTER TABLE` · `DROP` · `TRUNCATE` |
 | **4** | [DML - Bringing Data to Life](articles/Day4_DML_Bringing_Data_to_Life.md) | `INSERT` (single & multi-row) · `UPDATE` · `DELETE` · referential integrity · transactions (`COMMIT` / `ROLLBACK`) |
