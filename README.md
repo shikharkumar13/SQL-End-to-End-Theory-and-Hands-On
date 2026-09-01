@@ -80,7 +80,7 @@ order_items   (order_item_id PK, order_id FK, product_id FK, quantity, unit_pric
 
 | Day | Article | Topics Covered |
 |-----|---------|---------------|
-| **1** | ![Understanding Databases](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/1_Understanding_Databases.html) | Database vs DBMS vs RDBMS · relational vs NoSQL · tables, rows, columns · primary & foreign keys · normalization |
+| **1** | [Understanding Databases](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/1_Understanding_Databases.html) | Database vs DBMS vs RDBMS · relational vs NoSQL · tables, rows, columns · primary & foreign keys · normalization |
 | **2** | The SQL Language and Our Example Database | DDL / DML / DQL / DCL / TCL · data types · NULL · practice environment setup · full schema walkthrough |
 | **3** | DDL - Building the Structure of Our Database | `CREATE DATABASE` · `CREATE TABLE` · constraints (PK, FK, NOT NULL, UNIQUE, DEFAULT, CHECK, AUTO_INCREMENT) · `ALTER TABLE` · `DROP` · `TRUNCATE` |
 | **4** | DML - Bringing the Database to Life | `INSERT` (single & multi-row) · `UPDATE` · `DELETE` · referential integrity · transactions (`COMMIT` / `ROLLBACK`) |
