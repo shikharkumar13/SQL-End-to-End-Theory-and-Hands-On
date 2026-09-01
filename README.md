@@ -164,46 +164,7 @@ SELECT COUNT(*) FROM order_items;  -- 25
 
 ### 5. Read the articles in order
 
-Start with [Day 1](articles/Day1_Understanding_Databases.md). Each article ends with a "Try this before Day N" exercise that reinforces the concepts before you move on.
-
----
-
-## 📁 File Structure
-
-```
-databases-sql-for-analysts/
-│
-├── articles/                          # Markdown articles (9 files)
-│   ├── Day1_Understanding_Databases.md
-│   ├── Day2_SQL_Language_and_Database.md
-│   ├── Day3_DDL_Building_Structure.md
-│   ├── Day4_DML_Bringing_Data_to_Life.md
-│   ├── Day5_DQL_SELECT_Filtering_Sorting.md
-│   ├── Day6_DQL_Aggregation_Grouping.md
-│   ├── Day7_DQL_Joins.md
-│   ├── Day8_DQL_Subqueries_CTEs_CASE.md
-│   └── Day9_DQL_Window_Functions_Capstone.md
-│
-├── html/                              # Styled HTML versions (9 files)
-│   ├── Day1_Understanding_Databases.html
-│   ├── Day2_SQL_Language_and_Database.html
-│   ├── Day3_DDL_Building_Structure.html
-│   ├── Day4_DML_Bringing_Data_to_Life.html
-│   ├── Day5_DQL_SELECT_Filtering_Sorting.html
-│   ├── Day6_DQL_Aggregation_Grouping.html
-│   ├── Day7_DQL_Joins.html
-│   ├── Day8_DQL_Subqueries_CTEs_CASE.html
-│   └── Day9_DQL_Window_Functions_Capstone.html
-│
-├── sql/                               # Standalone SQL scripts
-│   ├── 01_schema.sql                  # CREATE DATABASE + all 5 tables (from Day 3)
-│   ├── 02_sample_data.sql             # All INSERT statements (from Day 4)
-│   └── complete_setup.sql             # Schema + data in one file
-│
-└── README.md
-```
-
-> **HTML pages** use the IBM Plex type family (Serif / Sans / Mono), syntax-highlighted SQL code blocks with copy buttons, a reading-progress bar, and a 9-dot series-progress indicator in the sticky nav. They require no build step — open any `.html` file directly in a browser.
+Start with 1_Understanding_Databases and go till 9_DQL_Window_Functions. Each article ends with a "Try this before Day N" exercise that reinforces the concepts before you move on.
 
 ---
 
