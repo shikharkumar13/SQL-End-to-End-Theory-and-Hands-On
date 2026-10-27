@@ -1,1086 +1,681 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Day 1: What Is a Database · Learn SQL Series</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1: What Is a Database | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
 
-    :root {
-      --bg:           #F4F6FB;
-      --white:        #FFFFFF;
-      --text:         #1C2333;
-      --text-sec:     #596880;
-      --border:       #DDE3EE;
-      --accent:       #1557C0;
-      --accent-lt:    #EEF3FF;
-      --accent-bd:    #BAD0F8;
-      --amber:        #D97706;
-      --amber-lt:     #FFFBEB;
-      --amber-bd:     #FCD34D;
-      --green:        #0A7C4E;
-      --green-lt:     #ECFDF5;
-      --green-bd:     #6EE7B7;
-      --red:          #C81E1E;
-      --red-lt:       #FEF2F2;
-      --red-bd:       #FCA5A5;
-      --navy:         #0E1829;
-      --navy-mid:     #172240;
-      --tbl-hdr:      #1C2333;
-      --tbl-alt:      #F0F4FA;
-      --fk-blue:      #2563EB;
-      --fk-blue-lt:   #EFF6FF;
-    }
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
 
-    html { scroll-behavior: smooth; }
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
 
-    body {
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 17px;
-      line-height: 1.78;
-      color: var(--text);
-      background: var(--bg);
-    }
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
 
-    /* ── Reading progress bar ── */
-    #progress-bar {
-      position: fixed;
-      top: 0; left: 0;
-      height: 3px;
-      width: 0%;
-      background: var(--accent);
-      z-index: 2000;
-      transition: width 0.1s linear;
-    }
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
 
-    /* ── Sticky top nav ── */
-    .top-nav {
-      position: sticky;
-      top: 0;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
-      padding: 13px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      z-index: 999;
-    }
-    .nav-series {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-    }
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    .nav-day {
-      font-size: 12.5px;
-      color: var(--text-sec);
-      font-family: 'IBM Plex Mono', monospace;
-    }
-    .nav-dots {
-      display: flex;
-      gap: 5px;
-    }
-    .nav-dot {
-      width: 22px;
-      height: 4px;
-      border-radius: 2px;
-      background: var(--border);
-    }
-    .nav-dot.on { background: var(--accent); }
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
 
-    /* ── Hero ── */
-    .hero {
-      background: linear-gradient(150deg, var(--navy) 0%, var(--navy-mid) 100%);
-      padding: 76px 28px 64px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    /* subtle grid texture on hero */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
-    .hero-inner { position: relative; }
-    .hero-badge {
-      display: inline-block;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11.5px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.7);
-      padding: 6px 18px;
-      border-radius: 100px;
-      margin-bottom: 26px;
-    }
-    .hero h1 {
-      font-family: 'IBM Plex Serif', serif;
-      font-size: clamp(26px, 5vw, 46px);
-      font-weight: 700;
-      line-height: 1.2;
-      color: #FFFFFF;
-      max-width: 720px;
-      margin: 0 auto 18px;
-    }
-    .hero-subtitle {
-      font-size: 17px;
-      color: rgba(255,255,255,0.6);
-      font-weight: 300;
-      max-width: 520px;
-      margin: 0 auto 36px;
-      line-height: 1.6;
-    }
-    .hero-meta {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      font-size: 12.5px;
-      font-family: 'IBM Plex Mono', monospace;
-      color: rgba(255,255,255,0.4);
-    }
-    .hero-meta span { padding: 0 14px; }
-    .hero-meta span + span { border-left: 1px solid rgba(255,255,255,0.15); }
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
 
-    /* ── Wrapper ── */
-    .page-wrap {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 0 24px 96px;
-    }
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
 
-    /* ── Article intro ── */
-    .article-intro {
-      padding: 44px 0 36px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 52px;
-    }
-    .article-intro p {
-      font-size: 19.5px;
-      line-height: 1.72;
-      font-weight: 300;
-      color: var(--text);
-    }
-    .no-code-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 20px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12.5px;
-      background: var(--amber-lt);
-      border: 1px solid var(--amber-bd);
-      color: #92400E;
-      padding: 7px 14px;
-      border-radius: 6px;
-    }
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
 
-    /* ── Section ── */
-    .section { margin-bottom: 60px; }
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
 
-    .section-hd {
-      display: flex;
-      align-items: flex-start;
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-    .sec-num {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--accent);
-      background: var(--accent-lt);
-      border: 1px solid var(--accent-bd);
-      padding: 4px 10px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      margin-top: 5px;
-      letter-spacing: 0.04em;
-    }
-    .section h2 {
-      font-family: 'IBM Plex Serif', serif;
-      font-size: clamp(19px, 3vw, 25px);
-      font-weight: 700;
-      line-height: 1.3;
-      color: var(--text);
-    }
-    .section p { margin-bottom: 16px; }
-    .section p:last-child { margin-bottom: 0; }
-    .section em { font-style: italic; }
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
 
-    /* ── Callout boxes ── */
-    .callout {
-      border-left: 3px solid var(--accent);
-      background: var(--accent-lt);
-      padding: 15px 20px;
-      border-radius: 0 6px 6px 0;
-      margin: 24px 0;
-    }
-    .callout p { color: #1A3968; font-size: 15.5px; margin-bottom: 0; }
-    .callout strong { color: var(--accent); }
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
 
-    .callout-amber {
-      border-left-color: var(--amber);
-      background: var(--amber-lt);
-    }
-    .callout-amber p { color: #78350F; }
-    .callout-amber strong { color: var(--amber); }
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
 
-    .callout-green {
-      border-left-color: var(--green);
-      background: var(--green-lt);
-    }
-    .callout-green p { color: #064E3B; }
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
 
-    /* ── Deep dive / bonus box ── */
-    .deepdive {
-      border: 1px solid #DDD6FE;
-      background: linear-gradient(135deg, #F5F3FF 0%, #FAF9FF 100%);
-      border-radius: 10px;
-      padding: 22px 24px;
-      margin: 28px 0;
-    }
-    .deepdive-hd {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #5B21B6;
-      margin-bottom: 14px;
-    }
-    .deepdive p { font-size: 15px; line-height: 1.68; color: #3B2A5C; margin-bottom: 14px; }
-    .deepdive p:last-child { margin-bottom: 0; }
-    .deepdive code { background: #EDE9FE; color: #5B21B6; }
-    .acid-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin: 4px 0 18px;
-    }
-    @media (max-width: 640px) { .acid-grid { grid-template-columns: 1fr 1fr; } }
-    .acid-card {
-      background: white;
-      border: 1px solid #E9E3FB;
-      border-radius: 8px;
-      padding: 14px 12px;
-      text-align: center;
-    }
-    .acid-letter {
-      font-family: 'IBM Plex Serif', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: #5B21B6;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-    .acid-word {
-      font-size: 11px;
-      font-weight: 600;
-      color: #3B2A5C;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      margin-bottom: 6px;
-    }
-    .acid-desc { font-size: 12.5px; color: #6B5B95; line-height: 1.5; }
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
 
-    /* ── Three-card row for DB/DBMS/RDBMS ── */
-    .three-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin: 24px 0;
-    }
-    @media (max-width: 640px) {
-      .three-cards { grid-template-columns: 1fr; }
-    }
-    .tri-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .tri-card-hd {
-      padding: 12px 16px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 13px;
-      font-weight: 500;
-      color: white;
-      letter-spacing: 0.05em;
-    }
-    .tri-card-hd.c1 { background: #1557C0; }
-    .tri-card-hd.c2 { background: #5B21B6; }
-    .tri-card-hd.c3 { background: #0A7C4E; }
-    .tri-card-body {
-      padding: 14px 16px;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-sec);
-    }
-    .tri-card-body strong { color: var(--text); }
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
 
-    /* ── Reasons list ── */
-    .reasons { display: flex; flex-direction: column; gap: 14px; margin: 24px 0; }
-    .reason {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 18px 20px;
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-    .reason-icon { font-size: 21px; flex-shrink: 0; margin-top: 1px; }
-    .reason-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; color: var(--text); }
-    .reason-body { font-size: 14.5px; color: var(--text-sec); line-height: 1.62; }
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
 
-    /* ── Comparison grid ── */
-    .cmp-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin: 24px 0;
-    }
-    @media (max-width: 560px) { .cmp-grid { grid-template-columns: 1fr; } }
-    .cmp-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .cmp-hd {
-      padding: 13px 18px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    .cmp-hd.rel { background: var(--accent); color: white; }
-    .cmp-hd.nosql { background: #374151; color: white; }
-    .cmp-body { padding: 16px 18px; }
-    .cmp-body ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-    .cmp-body li {
-      font-size: 14px;
-      color: var(--text);
-      padding-left: 18px;
-      position: relative;
-      line-height: 1.5;
-    }
-    .cmp-body li::before {
-      content: '→';
-      position: absolute;
-      left: 0;
-      color: var(--text-sec);
-      font-size: 12px;
-      top: 2px;
-    }
-    .cmp-examples {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11.5px;
-      color: var(--text-sec);
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
 
-    /* ── Database-style tables (SIGNATURE ELEMENT) ── */
-    .db-wrap {
-      overflow-x: auto;
-      margin: 22px 0;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .db-label {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      color: var(--text-sec);
-      padding: 9px 16px 8px;
-      background: #F8FAFD;
-      border-bottom: 1px solid var(--border);
-      letter-spacing: 0.04em;
-    }
-    .db-label strong { color: var(--text); font-weight: 500; }
-    table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; }
-    thead tr { background: var(--tbl-hdr); }
-    thead th {
-      padding: 11px 16px;
-      text-align: left;
-      font-weight: 500;
-      font-size: 12.5px;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.85);
-      white-space: nowrap;
-    }
-    thead th.pk-col { color: #FCD34D; }
-    thead th.fk-col { color: #93C5FD; }
-    tbody tr { border-bottom: 1px solid var(--border); }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:nth-child(even) { background: var(--tbl-alt); }
-    tbody td { padding: 10px 16px; color: var(--text); }
-    td.pk-val { color: var(--accent); font-weight: 500; }
-    td.fk-val { color: var(--fk-blue); }
-    td.bad-val { color: var(--red); }
-    td.good-val { color: var(--green); }
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
 
-    /* ── Vocab cards ── */
-    .vocab-stack { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
-    .vocab-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--accent);
-      border-radius: 0 8px 8px 0;
-      padding: 18px 22px;
-    }
-    .vocab-term {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 14.5px;
-      font-weight: 500;
-      color: var(--accent);
-      margin-bottom: 7px;
-    }
-    .vocab-card p { font-size: 15px; line-height: 1.65; color: var(--text); margin-bottom: 0; }
-    code {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 13px;
-      background: var(--accent-lt);
-      color: var(--accent);
-      padding: 1px 6px;
-      border-radius: 3px;
-    }
-
-    /* ── Normalization comparison ── */
-    .norm-block { margin: 24px 0; }
-    .norm-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 11.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      padding: 4px 12px;
-      border-radius: 4px;
-      margin-bottom: 12px;
-    }
-    .norm-badge.bad {
-      background: var(--red-lt);
-      color: var(--red);
-      border: 1px solid var(--red-bd);
-    }
-    .norm-badge.good {
-      background: var(--green-lt);
-      color: var(--green);
-      border: 1px solid var(--green-bd);
-    }
-    .problem-list, .solution-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      margin-top: 14px;
-    }
-    .prob, .sol {
-      font-size: 14px;
-      line-height: 1.55;
-      padding-left: 22px;
-      position: relative;
-    }
-    .prob { color: var(--red); }
-    .sol  { color: var(--green); }
-    .prob::before { content: '✕'; position: absolute; left: 0; font-weight: 700; font-size: 12px; top: 2px; }
-    .sol::before  { content: '✓'; position: absolute; left: 0; font-weight: 700; font-size: 13px; top: 1px; }
-    .sol code { background: var(--green-lt); color: var(--green); }
-
-    /* ── Try this box ── */
-    .try-box {
-      background: var(--amber-lt);
-      border: 1px solid var(--amber-bd);
-      border-radius: 8px;
-      padding: 24px 28px;
-      margin: 36px 0;
-    }
-    .try-box h4 {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #92400E;
-      margin-bottom: 10px;
-    }
-    .try-box p { font-size: 15px; color: #78350F; line-height: 1.65; margin-bottom: 0; }
-
-    /* ── Recap box ── */
-    .recap {
-      background: var(--navy);
-      border-radius: 12px;
-      padding: 34px 38px;
-      margin: 52px 0 36px;
-    }
-    .recap h3 {
-      font-family: 'IBM Plex Serif', serif;
-      font-size: 19px;
-      color: white;
-      margin-bottom: 20px;
-    }
-    .recap ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 13px; }
-    .recap li {
-      font-size: 15px;
-      color: rgba(255,255,255,0.8);
-      padding-left: 20px;
-      position: relative;
-      line-height: 1.62;
-    }
-    .recap li::before {
-      content: '▸';
-      position: absolute;
-      left: 0;
-      color: #FCD34D;
-      font-size: 13px;
-      top: 2px;
-    }
-    .recap li strong { color: white; }
-
-    /* ── Next day CTA ── */
-    .next-cta {
-      background: var(--accent-lt);
-      border: 1px solid var(--accent-bd);
-      border-radius: 12px;
-      padding: 26px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-    .next-cta-text h4 {
-      font-size: 11.5px;
-      font-family: 'IBM Plex Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--accent);
-      margin-bottom: 5px;
-    }
-    .next-cta-text p {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .next-cta-text span {
-      font-size: 13px;
-      color: var(--text-sec);
-      display: block;
-    }
-    .next-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--accent);
-      color: white;
-      padding: 12px 22px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: background 0.15s;
-    }
-    .next-btn:hover { background: #1246A0; }
-
-    /* ── Divider ── */
-    hr { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
-
-    /* ── Footer ── */
-    footer {
-      background: var(--white);
-      border-top: 1px solid var(--border);
-      padding: 36px 24px;
-      text-align: center;
-    }
-    .footer-tag {
-      display: inline-block;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      background: var(--accent-lt);
-      color: var(--accent);
-      padding: 4px 14px;
-      border-radius: 4px;
-      margin-bottom: 10px;
-    }
-    footer p { font-size: 13px; color: var(--text-sec); }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      .hero { padding: 56px 20px 48px; }
-      .page-wrap { padding: 0 18px 72px; }
-      .recap { padding: 26px 22px; }
-      .next-cta { flex-direction: column; align-items: flex-start; }
-      .section-hd { flex-direction: column; gap: 10px; }
-      .top-nav { padding: 12px 18px; }
-      .nav-dots { display: none; }
-    }
-  </style>
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+</style>
 </head>
 <body>
 
-<!-- Reading progress bar -->
-<div id="progress-bar"></div>
-
-<!-- Sticky nav -->
-<nav class="top-nav">
-  <span class="nav-series">Databases &amp; SQL for Analysts</span>
-  <div class="nav-right">
-    <div class="nav-dots">
-      <div class="nav-dot on"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-      <div class="nav-dot"></div>
-    </div>
-    <span class="nav-day">Day 01 / 09</span>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 1 of 23</span><span class="part-pill">Foundations</span></div>
   </div>
-</nav>
-
-<!-- Hero -->
-<header class="hero">
-  <div class="hero-inner">
-    <div class="hero-badge">Day 01 &nbsp;·&nbsp; Concepts &amp; Vocabulary</div>
-    <h1>What Is a Database, and the Language of Data</h1>
-    <p class="hero-subtitle">A beginner's guide to databases for aspiring data analysts and data scientists</p>
-    <div class="hero-meta">
-      <span>Foundation</span>
-      <span>No code yet</span>
-      <span>~13 min read</span>
-    </div>
-  </div>
+  <div id="progress"></div>
 </header>
 
-<!-- Article body -->
-<main class="page-wrap">
-
-  <!-- Intro -->
-  <div class="article-intro">
-    <p>Before we write a single line of SQL, we need a clear mental model of what a database actually is and why it sits at the center of almost every data job. If you understand the ideas in this article well, every command you learn later will feel <em>logical</em> rather than memorized.</p>
-    <div class="no-code-pill">📋 &nbsp; Today is all concepts and vocabulary, no code.</div>
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>What is a database, and the language of data</h1>
+      <p class="hero-sub">A beginner's guide to databases for people who want to work as data analysts or data scientists.</p>
+      <div class="facts">
+        <span class="fact">16 minute read</span>
+        <span class="fact hl">No code today</span>
+      </div>
+    </div>
+    <svg class="er" viewBox="0 0 480 330" role="img" aria-label="Diagram: the customers table and the orders table, linked by customer_id">
+      <!-- customers -->
+      <rect x="8" y="16" width="214" height="162" rx="14" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M8 30a14 14 0 0 1 14-14h186a14 14 0 0 1 14 14v26H8z" fill="#0B8A7A"/>
+      <text class="tname" x="24" y="42">customers</text>
+      <rect x="9" y="56" width="212" height="38" fill="#FFF5D6"/>
+      <text class="col pk" x="24" y="80">🔑 customer_id</text>
+      <line x1="9" y1="94" x2="221" y2="94" stroke="#EBF0EF"/>
+      <text class="col" x="24" y="118">first_name</text>
+      <line x1="9" y1="132" x2="221" y2="132" stroke="#EBF0EF"/>
+      <text class="col" x="24" y="156">city</text>
+      <!-- orders -->
+      <rect x="258" y="150" width="214" height="162" rx="14" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M258 164a14 14 0 0 1 14-14h186a14 14 0 0 1 14 14v26H258z" fill="#3D3A9E"/>
+      <text class="tname" x="274" y="176">orders</text>
+      <rect x="259" y="190" width="212" height="38" fill="#FFF5D6"/>
+      <text class="col pk" x="274" y="214">🔑 order_id</text>
+      <rect x="259" y="228" width="212" height="38" fill="#EEEDFA"/>
+      <text class="col fk" x="274" y="252">🔗 customer_id</text>
+      <line x1="259" y1="266" x2="471" y2="266" stroke="#EBF0EF"/>
+      <text class="col" x="274" y="290">product</text>
+      <!-- link -->
+      <path class="link" d="M222 75 C 252 75, 228 247, 258 247"/>
+      <circle class="end" cx="222" cy="75" r="5" fill="#3D3A9E"/>
+      <circle class="end" cx="258" cy="247" r="5" fill="#3D3A9E"/>
+      <text class="tag end" x="232" y="64" fill="#3D3A9E">one customer</text>
+      <text class="tag end" x="246" y="284" text-anchor="end" fill="#3D3A9E">many orders</text>
+    </svg>
   </div>
+</div>
 
-  <!-- ── Section 1 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">01</span>
-      <h2>What is a database?</h2>
-    </div>
-    <p>A <strong>database</strong> is an organized collection of data that is stored so it can be easily accessed, managed, and updated.</p>
-    <p>That definition sounds abstract, so here is a comparison you already understand. Think of a well-organized library. Books are not thrown into a pile. They are arranged on labeled shelves, grouped by subject, and tracked in a catalog so any book can be found in seconds. A database does the same thing for data: it keeps information in a structured form so a computer (and you) can find exactly what you need without searching through everything.</p>
-    <p>You interact with databases constantly without noticing. When you check your bank balance, scroll a social media feed, track a delivery, or look at your messages, a database is quietly storing and serving that information behind the scenes.</p>
-    <div class="callout">
-      <p>The key word is <strong>organized</strong>. A pile of spreadsheets scattered across folders is data, but it is not a database. The organization is what gives a database its power.</p>
-    </div>
-  </div>
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>What is a database?</a></li>
+      <li><a href="#s2"><span class="n">2</span>Database, DBMS, RDBMS</a></li>
+      <li><a href="#s3"><span class="n">3</span>Why analysts care</a></li>
+      <li><a href="#s4"><span class="n">4</span>Relational vs NoSQL</a></li>
+      <li><a href="#s5"><span class="n">5</span>Core vocabulary</a></li>
+      <li><a href="#s6"><span class="n">6</span>Normalization</a></li>
+      <li><a href="#s7"><span class="n">7</span>Putting it together</a></li>
+      <li class="gap"></li>
+      <li><a href="#try"><span class="n"></span>Try this</a></li>
+      <li><a href="#interview"><span class="n"></span>Interview corner</a></li>
+      <li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
 
-  <!-- ── Section 2 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">02</span>
-      <h2>Database vs. DBMS vs. RDBMS</h2>
-    </div>
-    <p>These three terms are often used loosely, and the confusion trips up many beginners. Let's separate them cleanly.</p>
-    <div class="three-cards">
-      <div class="tri-card">
-        <div class="tri-card-hd c1">DATABASE</div>
-        <div class="tri-card-body">The actual collection of organized data: the information itself. Think of it as the <strong>content</strong>.</div>
-      </div>
-      <div class="tri-card">
-        <div class="tri-card-hd c2">DBMS</div>
-        <div class="tri-card-body"><strong>Database Management System.</strong> The software you use to create, read, update, and manage that data. You never touch raw files directly; the DBMS handles access, consistency, backups, and concurrency for you.</div>
-      </div>
-      <div class="tri-card">
-        <div class="tri-card-hd c3">RDBMS</div>
-        <div class="tri-card-body"><strong>Relational DBMS.</strong> A DBMS that organizes data into <strong>tables that relate to one another</strong>. The "R" stands for relational, and that idea is the foundation of everything in this series. SQL is the language for RDBMS.</div>
-      </div>
-    </div>
-    <p>A simple way to hold these apart: the database is the <em>data</em>, the DBMS is the <em>software</em> managing it, and an RDBMS is a DBMS that uses the relational, table-based model.</p>
-    <div class="callout">
-      <p>Popular RDBMS software you will encounter: <strong>MySQL, PostgreSQL, Microsoft SQL Server, Oracle Database, SQLite.</strong> They differ in details, but all speak SQL and share the same core ideas. What you learn here transfers across all of them.</p>
+  <article>
+    <p class="lede">Before we write any SQL, we need to understand what a database is and why almost every data job depends on one. If these ideas are clear, the SQL you learn later will make sense, instead of feeling like a list of commands to memorize.</p>
+
+    <div class="track">
+      <h3>How this series is organized</h3>
+      <p>The series has 23 days in four parts. The order is planned so you can stop at the end of any part and still use what you learned on real work.</p>
+      <ol class="steps">
+        <li class="step now"><span class="dot">1</span><b>Foundations</b><span class="days">Days 1 to 4</span><p>What databases are, and how to build one and fill it with data.</p></li>
+        <li class="step"><span class="dot">2</span><b>Must-haves</b><span class="days">Days 5 to 15</span><p>Querying, cleaning real data, dates, common analyses and interview basics.</p></li>
+        <li class="step"><span class="dot">3</span><b>Good-to-haves</b><span class="days">Days 16 to 20</span><p>Advanced patterns, database design, query speed, harder interviews.</p></li>
+        <li class="step"><span class="dot">4</span><b>Case studies</b><span class="days">Days 21 to 23</span><p>Three full projects, done the way an analyst does them at work.</p></li>
+      </ol>
+      <p class="after">After Day 9 you can do a simple project. After Day 15 you are ready for analyst work. Every day ends with an exercise (with a sample answer) and an Interview corner.</p>
     </div>
 
-    <div class="deepdive">
-      <div class="deepdive-hd">🔍 &nbsp; Going Deeper — ACID Properties</div>
-      <p>Here's a question worth sitting with: when your bank processes a transfer, what stops your money from vanishing if the transfer fails halfway — debited from your account but never credited to the other? The answer is four guarantees every RDBMS is built to enforce, known by the acronym <strong>ACID</strong>.</p>
-      <div class="acid-grid">
-        <div class="acid-card">
-          <div class="acid-letter">A</div>
-          <div class="acid-word">Atomicity</div>
-          <div class="acid-desc">Each operation fully happens, or doesn't happen at all — never half-done.</div>
-        </div>
-        <div class="acid-card">
-          <div class="acid-letter">C</div>
-          <div class="acid-word">Consistency</div>
-          <div class="acid-desc">Every change leaves the data obeying all the rules you've defined.</div>
-        </div>
-        <div class="acid-card">
-          <div class="acid-letter">I</div>
-          <div class="acid-word">Isolation</div>
-          <div class="acid-desc">Simultaneous operations don't interfere — each runs as if it were alone.</div>
-        </div>
-        <div class="acid-card">
-          <div class="acid-letter">D</div>
-          <div class="acid-word">Durability</div>
-          <div class="acid-desc">Once confirmed, a change survives — even a crash right afterward.</div>
-        </div>
-      </div>
-      <p>These four guarantees are why businesses trust relational databases with money, medical records, and inventory — data where "probably correct" isn't good enough. You'll put this into practice yourself with the commands <code>COMMIT</code> and <code>ROLLBACK</code> when we cover DML on Day 4.</p>
-    </div>
-  </div>
+    <!-- 1 -->
+    <section id="s1">
+      <h2><span class="n">1</span>What is a database?</h2>
+      <p>A <strong>database</strong> is a collection of data stored in an organized way, so you can easily find it, change it and keep it safe.</p>
+      <p>Think of a library. Books are not thrown into a pile. They sit on labeled shelves, grouped by subject, and a catalog tells you where each one is. Because of this, you can find any book in a few seconds. A database does the same job for data.</p>
+      <p>You use databases every day without noticing. Your bank balance, your chat messages and the status of your food order all come from a database.</p>
+      <div class="note"><p>The important word is <strong>organized</strong>. A folder full of random spreadsheets holds data, but it is not a database. The organization is what makes a database useful.</p></div>
+    </section>
 
-  <!-- ── Section 3 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">03</span>
-      <h2>Why should a data analyst or data scientist care?</h2>
-    </div>
-    <p>You might wonder: I can already open data in Excel or a Python notebook, so why bother with databases at all? Here is why this skill is non-negotiable in data roles.</p>
-    <div class="reasons">
-      <div class="reason">
-        <div class="reason-icon">🏛️</div>
-        <div>
-          <div class="reason-title">Real data lives in databases</div>
-          <div class="reason-body">In almost every company, customer records, sales transactions, website events, and product information sit in databases — not in a spreadsheet on someone's laptop. If you want to analyze real business data, you must be able to retrieve it from where it lives.</div>
-        </div>
+    <!-- 2 -->
+    <section id="s2">
+      <h2><span class="n">2</span>Database vs. DBMS vs. RDBMS</h2>
+      <p>People often mix up these three terms. Here is the difference.</p>
+      <div class="defs">
+        <div class="def"><div class="term">Database</div><p>The data itself, stored in an organized way. Think of it as the <strong>content</strong>.</p></div>
+        <div class="def"><div class="term">DBMS</div><p><strong>Database Management System.</strong> The software you use to create, read, change and manage the data. You never open the raw data files yourself. The DBMS does that for you. It also controls who can see the data, keeps backups and lets many people use the data at the same time.</p></div>
+        <div class="def"><div class="term">RDBMS</div><p><strong>Relational DBMS.</strong> A DBMS that stores data in <strong>tables that are linked to each other</strong>. SQL is the language we use to talk to an RDBMS. This whole series is about this type.</p></div>
       </div>
-      <div class="reason">
-        <div class="reason-icon">📈</div>
-        <div>
-          <div class="reason-title">Scale</div>
-          <div class="reason-body">A spreadsheet struggles at a few hundred thousand rows and crashes before a few million. Databases routinely handle millions or billions of rows and return answers in seconds. Real-world data is simply too big for spreadsheets.</div>
-        </div>
-      </div>
-      <div class="reason">
-        <div class="reason-icon">⚡</div>
-        <div>
-          <div class="reason-title">Speed and precision</div>
-          <div class="reason-body">Instead of manually filtering and scrolling, you write one precise query and the database returns exactly the slice of data you asked for. "Show me total revenue per category for last quarter, sorted highest to lowest" becomes a few lines of SQL that run in moments.</div>
-        </div>
-      </div>
-      <div class="reason">
-        <div class="reason-icon">🔬</div>
-        <div>
-          <div class="reason-title">It is where analysis begins</div>
-          <div class="reason-body">Before you build a chart, train a model, or write a report, you need clean, correct data. Pulling and shaping that data with SQL is usually the very first step of any analysis — this is why SQL is one of the most requested skills in data roles, often listed right alongside Python and statistics.</div>
-        </div>
-      </div>
-    </div>
-    <div class="callout callout-amber">
-      <p>In short: <strong>SQL is how you get the data.</strong> Everything else you do as an analyst depends on getting that part right.</p>
-    </div>
-  </div>
+      <p>Short version: the database is the <em>data</em>, the DBMS is the <em>software</em>, and an RDBMS is a DBMS that uses linked tables.</p>
+      <div class="note"><p>Common RDBMS software: <strong>MySQL, PostgreSQL, Microsoft SQL Server, Oracle and SQLite.</strong> They have small differences, but they all use SQL, so what you learn here works on all of them. In this series we use MySQL.</p></div>
 
-  <!-- ── Section 4 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">04</span>
-      <h2>Relational vs. non-relational databases</h2>
-    </div>
-    <p>Databases come in two broad families. You will spend almost all of your time in the first one, but it helps to know both exist.</p>
-    <div class="cmp-grid">
-      <div class="cmp-card">
-        <div class="cmp-hd rel">🔗 &nbsp; Relational (SQL)</div>
-        <div class="cmp-body">
+      <div class="deeper">
+        <h3>Going deeper: ACID properties</h3>
+        <p>Think about sending ₹5,000 from your bank account to a friend. Two things must happen: the money leaves your account, and the money reaches your friend's account. What if the system crashes after the first step? A good RDBMS makes sure this never leaves things half-done. It follows four rules, known as <strong>ACID</strong>:</p>
+        <div class="acid">
+          <div><b>A</b><span>Atomicity</span><em>All steps happen, or none of them happen. No half-done work.</em></div>
+          <div><b>C</b><span>Consistency</span><em>After any change, the data still follows every rule you set.</em></div>
+          <div><b>I</b><span>Isolation</span><em>When many people change data at the same time, they don't mess up each other's work.</em></div>
+          <div><b>D</b><span>Durability</span><em>Once a change is saved, it stays saved, even if the system crashes right after.</em></div>
+        </div>
+        <p>Because of these rules, banks, hospitals and shops trust relational databases with important data. On Day 4 you will use two commands linked to this: <code>COMMIT</code> and <code>ROLLBACK</code>.</p>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <h2><span class="n">3</span>Why should a data analyst or data scientist care?</h2>
+      <p>You may ask: I can already open data in Excel or Python, so why learn databases? Here are the reasons.</p>
+      <div class="reasons">
+        <div class="reason"><div class="ic">🏛️</div><h3>Real data lives in databases</h3><p>In most companies, customer details, sales, website activity and product data are stored in databases, not in Excel files. To analyze real company data, you first have to get it out of the database.</p></div>
+        <div class="reason"><div class="ic">📈</div><h3>Size</h3><p>An Excel sheet can hold about one million rows at most, and it gets slow long before that. Databases can hold millions or even billions of rows and still answer quickly.</p></div>
+        <div class="reason"><div class="ic">⚡</div><h3>Speed and accuracy</h3><p>Instead of filtering and scrolling by hand, you write one query and get exactly the data you asked for. "Total sales per category last quarter, highest first" takes only a few lines of SQL.</p></div>
+        <div class="reason"><div class="ic">🔬</div><h3>It is the first step of analysis</h3><p>Before you make a chart, train a model or write a report, you need the right data. Getting it with SQL is usually the first step, which is why SQL appears in almost every analyst and data scientist job post.</p></div>
+      </div>
+      <div class="note sun"><p>In short: <strong>SQL is how you get the data.</strong> Everything else you do as an analyst depends on it.</p></div>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <h2><span class="n">4</span>Relational vs. non-relational databases</h2>
+      <p>There are two main families of databases. You will use the first one most of the time, but you should know that both exist.</p>
+      <div class="pair">
+        <div class="side">
+          <h3>Relational (SQL)</h3>
           <ul>
-            <li>Data stored in tables — rows and columns</li>
-            <li>Tables linked through shared values (keys)</li>
-            <li>Excellent for structured, consistent data</li>
-            <li>Best for: customers, orders, products, payments</li>
-            <li>Covers the vast majority of business data</li>
+            <li>Data is stored in tables (rows and columns)</li>
+            <li>Tables are linked using keys</li>
+            <li>Works best when the data has a fixed, clear structure</li>
+            <li>Good for customers, orders, products and payments</li>
+            <li>Most business data is stored this way</li>
           </ul>
-          <div class="cmp-examples">Examples: MySQL · PostgreSQL · SQL Server · Oracle · SQLite</div>
+          <div class="eg">Examples: MySQL, PostgreSQL, SQL Server, Oracle, SQLite</div>
         </div>
-      </div>
-      <div class="cmp-card">
-        <div class="cmp-hd nosql">📄 &nbsp; Non-Relational (NoSQL)</div>
-        <div class="cmp-body">
+        <div class="side alt">
+          <h3>Non-relational (NoSQL)</h3>
           <ul>
-            <li>Flexible formats: documents, key-value, graphs</li>
-            <li>No rigid table structure required</li>
-            <li>Great when data shape changes frequently</li>
-            <li>Best for: social posts, sensor readings, evolving app data</li>
-            <li>Specialized scaling for certain workloads</li>
+            <li>Data is stored as documents, key-value pairs or graphs</li>
+            <li>No fixed table structure</li>
+            <li>Works well when the shape of the data keeps changing</li>
+            <li>Good for social media posts, sensor readings and app data that changes often</li>
+            <li>Built to grow easily for some kinds of workloads</li>
           </ul>
-          <div class="cmp-examples">Examples: MongoDB · Redis · Cassandra · DynamoDB</div>
+          <div class="eg">Examples: MongoDB, Redis, Cassandra, DynamoDB</div>
         </div>
       </div>
-    </div>
-    <div class="callout callout-green">
-      <p>Neither type is "better" — they solve different problems. For data analysis, the relational model and SQL are the essential foundation. From here on, when we say "database," we mean a relational one.</p>
-    </div>
-  </div>
+      <div class="note"><p>Neither one is better than the other. They are built for different jobs. For data analysis, relational databases and SQL are what you need first. In this series, "database" always means a relational database.</p></div>
+    </section>
 
-  <!-- ── Section 5 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">05</span>
-      <h2>The core vocabulary you must know</h2>
-    </div>
-    <p>This is the most important section of Day 1. These terms will appear in every article that follows. We'll anchor each definition to a small example — a <em>customers</em> table:</p>
+    <!-- 5 -->
+    <section id="s5">
+      <h2><span class="n">5</span>The core vocabulary you must know</h2>
+      <p>This is the most important part of today. You will see these words in every article from now on. We will use this small <em>customers</em> table to explain each one:</p>
 
-    <div class="db-wrap">
-      <div class="db-label">TABLE: <strong>customers</strong></div>
-      <table>
-        <thead>
-          <tr>
-            <th class="pk-col">customer_id &nbsp;🔑</th>
-            <th>first_name</th>
-            <th>last_name</th>
-            <th>city</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="pk-val">1</td><td>Aarav</td><td>Sharma</td><td>Jaipur</td></tr>
-          <tr><td class="pk-val">2</td><td>Diya</td><td>Patel</td><td>Mumbai</td></tr>
-          <tr><td class="pk-val">3</td><td>Rohan</td><td>Mehta</td><td>Delhi</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="dbt">
+        <div class="dbt-cap">customers <small>example table</small></div>
+        <div class="dbt-scroll"><table>
+          <thead><tr><th class="pk">🔑 customer_id</th><th>first_name</th><th>last_name</th><th>city</th></tr></thead>
+          <tbody>
+            <tr><td class="pk">1</td><td>Aarav</td><td>Sharma</td><td>Jaipur</td></tr>
+            <tr><td class="pk">2</td><td>Diya</td><td>Patel</td><td>Mumbai</td></tr>
+            <tr><td class="pk">3</td><td>Rohan</td><td>Mehta</td><td>Delhi</td></tr>
+          </tbody>
+        </table></div>
+      </div>
 
-    <div class="vocab-stack">
-      <div class="vocab-card">
-        <div class="vocab-term">Table</div>
-        <p>A collection of related data organized into rows and columns. In a relational database, almost everything is a table. Each table represents one kind of thing — customers, orders, products. A table is also sometimes called a <em>relation</em>.</p>
+      <div class="vocab">
+        <div class="word"><h3>Table</h3><p>A set of related data arranged in rows and columns. Each table holds one kind of thing, like customers, orders or products. Another name for a table is a <em>relation</em>.</p></div>
+        <div class="word"><h3>Column <small>also called field or attribute</small></h3><p>One type of information that every row has. Each column has a name and a data type (number, text, date and so on). Here, <code>first_name</code> and <code>city</code> are columns. A column tells you <em>what detail is being stored</em>.</p></div>
+        <div class="word"><h3>Row <small>also called record or tuple</small></h3><p>One complete entry in the table. The row <code>1, Aarav, Sharma, Jaipur</code> holds everything about one customer. A row tells you <em>who or what the entry is about</em>.</p></div>
+        <div class="word"><h3>Schema</h3><p>The design of the database: which tables exist, which columns each table has, what type each column is, and how the tables are linked. The schema is the <em>plan</em>, and the rows are the <em>data</em> that fills it. You will see the full schema of our example database on Day 2 and build it with SQL on Day 3.</p></div>
+        <div class="word pk"><h3>🔑 Primary key</h3><p>A column whose value is <strong>different for every row</strong>, so it can identify each row. Two rows can never have the same primary key, and it can never be empty. Here, <code class="k">customer_id</code> is the primary key. Think of a roll number in a school: two students can have the same name, but never the same roll number. Sometimes two columns together act as the primary key. This is called a <strong>composite key</strong>.</p></div>
+        <div class="word fk"><h3>🔗 Foreign key</h3><p>A column in one table that <strong>points to the primary key of another table</strong>. This is how tables get linked. For example, an <code class="f">orders</code> table has a <code class="f">customer_id</code> column that points to the customers table. So each order knows who placed it, without copying the customer's name and city into every order.</p></div>
+        <div class="word rel"><h3>Relationship</h3><p>The link between two tables, made using keys. Because every order has a <code>customer_id</code>, we can combine the two tables and answer questions like "show all orders placed by customers from Jaipur." You will learn how to do this with joins on Day 7.</p></div>
       </div>
-      <div class="vocab-card">
-        <div class="vocab-term">Column &nbsp;<span style="font-size:12px;color:#94A3B8;font-weight:400">(also: field, attribute)</span></div>
-        <p>A column holds one specific piece of information for every entry, and has a name and a data type. In our table, <code>first_name</code> and <code>city</code> are columns. A column answers: <em>"what kind of detail are we storing?"</em></p>
-      </div>
-      <div class="vocab-card">
-        <div class="vocab-term">Row &nbsp;<span style="font-size:12px;color:#94A3B8;font-weight:400">(also: record, tuple)</span></div>
-        <p>A row is a single, complete entry in the table — all the information about one item. The line <code>1, Aarav, Sharma, Jaipur</code> is one row describing one customer. A row answers: <em>"who or what is this one entry?"</em></p>
-      </div>
-      <div class="vocab-card">
-        <div class="vocab-term">Schema</div>
-        <p>The blueprint or structure of the database: what tables exist, what columns each table has, the data type of each column, and the rules connecting them. The schema is the <em>design</em>; the rows are the <em>data</em> that fills that design. We'll meet the full schema for our example database on Day 2, then build it for real with SQL on Day 3.</p>
-      </div>
-      <div class="vocab-card" style="border-left-color: #D97706;">
-        <div class="vocab-term" style="color:#D97706;">Primary Key &nbsp;🔑</div>
-        <p>A column (or combination of columns) whose value <strong>uniquely identifies each row</strong>. No two rows can share the same primary key, and it can never be empty. In our table, <code style="background:#FFFBEB;color:#D97706;">customer_id</code> is the primary key. Think of it as each row's unique ID — like a passport number or a roll number.</p>
-      </div>
-      <div class="vocab-card" style="border-left-color: #2563EB;">
-        <div class="vocab-term" style="color:#2563EB;">Foreign Key &nbsp;🔗</div>
-        <p>A column in one table that refers to the <strong>primary key of another table</strong>. This is the mechanism that links tables together. For example, an <code style="background:var(--fk-blue-lt);color:var(--fk-blue);">orders</code> table would have a <code style="background:var(--fk-blue-lt);color:var(--fk-blue);">customer_id</code> column pointing back to the customers table — recording which customer placed each order without copying their details over.</p>
-      </div>
-      <div class="vocab-card" style="border-left-color: #0A7C4E;">
-        <div class="vocab-term" style="color:#0A7C4E;">Relationship</div>
-        <p>A logical connection between tables, created using keys. Because each order knows its <code style="background:var(--green-lt);color:var(--green);">customer_id</code>, we can combine both tables and answer questions that span them — like "list every order placed by customers in Jaipur." Relationships are what make joins powerful, and we'll explore them in depth on Day 7.</p>
-      </div>
-    </div>
 
-    <div class="callout" style="margin-top:24px;">
-      <p>💡 If you remember only one thing from this section, remember the pair <strong>primary key and foreign key</strong>. They are the glue of relational databases, and understanding them now will make joins — usually the hardest topic for beginners — feel natural when we get there.</p>
-    </div>
+      <div class="note"><p>💡 If you remember only one thing from this section, remember <strong>primary key and foreign key</strong>. They are what connect tables. Understanding them now will make joins (usually the hardest topic for beginners) much easier later.</p></div>
 
-    <p style="margin-top:28px;">One more subtlety worth knowing about primary keys: they come in two flavors, and the choice matters for real-world design.</p>
-
-    <div class="cmp-grid" style="margin-top:16px;">
-      <div class="cmp-card">
-        <div class="cmp-hd" style="background:#0A7C4E;color:#fff;">🌍 &nbsp; Natural Key</div>
-        <div class="cmp-body">
+      <p>One more thing about primary keys. There are two types, and it helps to know the difference.</p>
+      <div class="pair">
+        <div class="side alt">
+          <h3>Natural key</h3>
           <ul>
-            <li>A value that already exists in the real world</li>
-            <li>Meaningful outside the database (email, ISBN, national ID)</li>
-            <li>Risk: can change, contain typos, or occasionally repeat</li>
+            <li>A value that already exists in real life</li>
+            <li>Has meaning outside the database (an email address, a book's ISBN number)</li>
+            <li>Problem: it can change, have typos, or sometimes repeat</li>
             <li>Example: using a customer's email as the primary key</li>
           </ul>
         </div>
-      </div>
-      <div class="cmp-card">
-        <div class="cmp-hd rel">🔢 &nbsp; Surrogate Key</div>
-        <div class="cmp-body">
+        <div class="side">
+          <h3>Surrogate key</h3>
           <ul>
-            <li>An artificial ID generated purely to identify rows</li>
-            <li>Has no meaning outside the database — just 1, 2, 3…</li>
-            <li>Stable — never needs to change even if other details do</li>
-            <li>Example: <code>customer_id</code> generated automatically</li>
+            <li>A number created only to identify the row</li>
+            <li>Has no meaning outside the database, just 1, 2, 3 and so on</li>
+            <li>Never needs to change, even if the customer's other details change</li>
+            <li>Example: <code>customer_id</code>, created automatically</li>
           </ul>
         </div>
       </div>
-    </div>
+      <div class="note"><p>Every table in our example database uses a <strong>surrogate key</strong> (<code>customer_id</code>, <code>product_id</code>, <code>order_id</code> and so on), created automatically by MySQL. You will see how on Day 3, using a feature called <code>AUTO_INCREMENT</code>.</p></div>
+    </section>
 
-    <div class="callout" style="margin-top:20px;">
-      <p>Every table in our example database uses a <strong>surrogate key</strong> — <code>customer_id</code>, <code>product_id</code>, <code>order_id</code>, and so on — generated automatically by MySQL. You'll see exactly how on Day 3, using a feature called <code>AUTO_INCREMENT</code>.</p>
-    </div>
-  </div>
+    <!-- 6 -->
+    <section id="s6">
+      <h2><span class="n">6</span>A first taste of normalization</h2>
+      <p><strong>Normalization</strong> means arranging data so the same information is not stored again and again. Repeated data is called <strong>redundant</strong> data, and it causes problems. The main idea is simple: store each fact once, in one place, and link tables using keys.</p>
+      <p>Here is an example. Suppose we store orders in one table and repeat the customer's details on every order:</p>
 
-  <!-- ── Section 6 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">06</span>
-      <h2>A first taste of normalization</h2>
-    </div>
-    <p><strong>Normalization</strong> is the practice of organizing data to reduce <strong>redundancy</strong> (the same information repeated in many places) and avoid the problems that redundancy causes. The core idea: store each piece of information once, in one place, and use relationships to connect things.</p>
-
-    <p>Let's see why this matters. Suppose we tried to store orders in a single table, repeating the customer's details on every order:</p>
-
-    <div class="norm-block">
-      <span class="norm-badge bad">✕ &nbsp; Bad Design — Redundant Data</span>
-      <div class="db-wrap">
-        <div class="db-label">TABLE: <strong>orders</strong> &nbsp;(denormalized — avoid this)</div>
-        <table>
-          <thead>
-            <tr>
-              <th>order_id</th>
-              <th>customer_name</th>
-              <th>customer_city</th>
-              <th>product</th>
-            </tr>
-          </thead>
+      <span class="verdict bad">✕ Bad design: repeated data</span>
+      <div class="dbt">
+        <div class="dbt-cap">orders <small>not normalized, avoid this</small></div>
+        <div class="dbt-scroll"><table>
+          <thead><tr><th>order_id</th><th>customer_name</th><th>customer_city</th><th>product</th></tr></thead>
           <tbody>
-            <tr><td>101</td><td class="bad-val">Aarav Sharma</td><td class="bad-val">Jaipur</td><td>Notebook</td></tr>
-            <tr><td>102</td><td class="bad-val">Aarav Sharma</td><td class="bad-val">Jaipur</td><td>Pen</td></tr>
-            <tr><td>103</td><td class="bad-val">Aarav Sharma</td><td class="bad-val">Jaipur</td><td>Backpack</td></tr>
+            <tr><td>101</td><td class="bad">Aarav Sharma</td><td class="bad">Jaipur</td><td>Notebook</td></tr>
+            <tr><td>102</td><td class="bad">Aarav Sharma</td><td class="bad">Jaipur</td><td>Pen</td></tr>
+            <tr><td>103</td><td class="bad">Aarav Sharma</td><td class="bad">Jaipur</td><td>Backpack</td></tr>
           </tbody>
-        </table>
+        </table></div>
       </div>
-      <div class="problem-list">
-        <div class="prob">Aarav's name and city are repeated on every row — wasted space, unnecessary repetition.</div>
-        <div class="prob">If Aarav moves cities, you must find and change every single row. Miss one, and your data now contradicts itself.</div>
-        <div class="prob">Someone might type "Jaipur" on one row and "jaipur " (with a trailing space) on another — the same person now looks like two different entries.</div>
+      <ul class="marks bad">
+        <li>Aarav's name and city are repeated on every row. This wastes space.</li>
+        <li>If Aarav moves to another city, you have to change every one of his rows. Miss one, and your data now says two different things.</li>
+        <li>Someone might type "Jaipur" in one row and "jaipur " (with an extra space) in another. Now the same person looks like two different customers.</li>
+      </ul>
+
+      <p style="margin-top:28px">The fix is to split this into two tables, one for customers and one for orders, and link them with a key.</p>
+
+      <span class="verdict good">✓ Good design: each fact stored once</span>
+      <div class="dbt">
+        <div class="dbt-cap">customers</div>
+        <div class="dbt-scroll"><table>
+          <thead><tr><th class="pk">🔑 customer_id</th><th>customer_name</th><th>customer_city</th></tr></thead>
+          <tbody><tr><td class="pk">1</td><td>Aarav Sharma</td><td>Jaipur</td></tr></tbody>
+        </table></div>
       </div>
-    </div>
-
-    <p style="margin-top:28px;">The normalized solution is to split this into two tables — one for customers, one for orders — and connect them with a key.</p>
-
-    <div class="norm-block">
-      <span class="norm-badge good">✓ &nbsp; Normalized Design — Each Fact Stored Once</span>
-      <div class="db-wrap">
-        <div class="db-label">TABLE: <strong>customers</strong></div>
-        <table>
-          <thead>
-            <tr>
-              <th class="pk-col">customer_id &nbsp;🔑</th>
-              <th>customer_name</th>
-              <th>customer_city</th>
-            </tr>
-          </thead>
+      <div class="dbt">
+        <div class="dbt-cap">orders <small>points to customers using a foreign key</small></div>
+        <div class="dbt-scroll"><table>
+          <thead><tr><th>order_id</th><th class="fk">🔗 customer_id</th><th>product</th></tr></thead>
           <tbody>
-            <tr><td class="pk-val">1</td><td>Aarav Sharma</td><td>Jaipur</td></tr>
+            <tr><td>101</td><td class="fk">1</td><td>Notebook</td></tr>
+            <tr><td>102</td><td class="fk">1</td><td>Pen</td></tr>
+            <tr><td>103</td><td class="fk">1</td><td>Backpack</td></tr>
           </tbody>
-        </table>
+        </table></div>
       </div>
-      <div class="db-wrap" style="margin-top:14px;">
-        <div class="db-label">TABLE: <strong>orders</strong> &nbsp;(references customers via foreign key)</div>
-        <table>
-          <thead>
-            <tr>
-              <th>order_id</th>
-              <th class="fk-col">customer_id &nbsp;🔗</th>
-              <th>product</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>101</td><td class="fk-val">1</td><td>Notebook</td></tr>
-            <tr><td>102</td><td class="fk-val">1</td><td>Pen</td></tr>
-            <tr><td>103</td><td class="fk-val">1</td><td>Backpack</td></tr>
-          </tbody>
-        </table>
+      <ul class="marks good">
+        <li>Aarav's details are stored only once.</li>
+        <li>If he moves, you change one row in the customers table.</li>
+        <li>The <code>customer_id</code> foreign key links the two tables without repeating any customer details.</li>
+      </ul>
+
+      <div class="note"><p>💡 That is normalization in one line: <strong>split data into focused tables, store each fact once, and link the tables with keys.</strong> There are formal rules for this called normal forms (1NF, 2NF, 3NF), which we cover properly on Day 17. For now, just remember that a good database does not repeat the same information. This is why our example database uses several linked tables instead of one big table.</p></div>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <h2><span class="n">7</span>Putting it all together</h2>
+      <p>Let's connect everything from today.</p>
+      <p>A <strong>database</strong> is organized data. We manage it with software called a <strong>DBMS</strong>. The relational kind, an <strong>RDBMS</strong>, stores data in <strong>tables</strong> made of <strong>rows</strong> and <strong>columns</strong>, and we talk to it using <strong>SQL</strong>. The design of these tables is the <strong>schema</strong>. Each row is identified by a <strong>primary key</strong>, and tables are linked through <strong>foreign keys</strong>, which creates <strong>relationships</strong>. We split data into several linked tables (<strong>normalization</strong>) so each fact is stored only once.</p>
+      <p>You will see every one of these words again in the coming days.</p>
+    </section>
+
+    <!-- Try this -->
+    <div class="try" id="try">
+      <h2>✏️ Try this before Day 2</h2>
+      <p>Think of a food delivery app like Swiggy or Zomato. What tables would it need? What columns would each table have? Which column would be the primary key in each table, and which columns would be foreign keys? Draw it on paper first, then open the sample answer.</p>
+      <details class="reveal">
+        <summary>Show a sample answer</summary>
+        <div class="body">
+          <p>There is no single correct answer. Here is one reasonable design:</p>
+          <div class="dbt wrap">
+            <div class="dbt-scroll"><table>
+              <thead><tr><th>Table</th><th>Columns</th><th class="pk">🔑 Primary key</th><th class="fk">🔗 Foreign keys</th></tr></thead>
+              <tbody>
+                <tr><td>customers</td><td>customer_id, name, phone, address</td><td class="pk">customer_id</td><td>none</td></tr>
+                <tr><td>restaurants</td><td>restaurant_id, name, area, cuisine</td><td class="pk">restaurant_id</td><td>none</td></tr>
+                <tr><td>menu_items</td><td>item_id, restaurant_id, item_name, price</td><td class="pk">item_id</td><td class="fk">restaurant_id</td></tr>
+                <tr><td>delivery_partners</td><td>partner_id, name, phone</td><td class="pk">partner_id</td><td>none</td></tr>
+                <tr><td>orders</td><td>order_id, customer_id, restaurant_id, partner_id, order_time, status</td><td class="pk">order_id</td><td class="fk">customer_id, restaurant_id, partner_id</td></tr>
+                <tr><td>order_items</td><td>order_item_id, order_id, item_id, quantity</td><td class="pk">order_item_id</td><td class="fk">order_id, item_id</td></tr>
+              </tbody>
+            </table></div>
+          </div>
+          <p>Things to check in your own answer:</p>
+          <ul>
+            <li>Did you avoid repeating details? The customer's address lives in <code>customers</code>, not copied into every order.</li>
+            <li>Does every table have a primary key?</li>
+            <li>One order can have many dishes, and one dish can appear in many orders. You need a separate table like <code>order_items</code> to store this. Our example database uses the same idea, which you will see on Day 2.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
+    <!-- Interview corner -->
+    <div class="interview" id="interview">
+      <div class="iv-head">
+        <h2>🎯 Interview corner</h2>
+        <p>These questions come up often in data analyst and data scientist interviews. Try to answer each one out loud before you open the answer. Keep your answers short and add a small example. Interviewers like that.</p>
       </div>
-      <div class="solution-list">
-        <div class="sol">Aarav's details exist in exactly one place — no repetition.</div>
-        <div class="sol">If he moves cities, you update a single row in the customers table.</div>
-        <div class="sol">The <code>customer_id</code> foreign key links the two tables without duplicating any data.</div>
+
+      <div class="iv-group">
+        <h3>Concept questions</h3>
+        <details class="qa"><summary><span class="q">Q1</span>What is the difference between a database, a DBMS and an RDBMS?</summary>
+          <div class="body"><p>A database is the organized data itself. A DBMS is the software used to store, read and manage that data. An RDBMS is a type of DBMS that stores data in tables linked by keys, and we use SQL to work with it. Example: MySQL is an RDBMS, and the <code>online_store</code> data inside it is a database.</p></div></details>
+        <details class="qa"><summary><span class="q">Q2</span>What is a primary key? Can it be NULL? Can a table have more than one?</summary>
+          <div class="body"><p>A primary key is a column (or a group of columns) that uniquely identifies each row. It can never be NULL and it can never repeat. A table can have only <strong>one</strong> primary key, but that key can be made of more than one column. That is called a composite key.</p></div></details>
+        <details class="qa"><summary><span class="q">Q3</span>What is a foreign key, and why do we need it?</summary>
+          <div class="body"><p>A foreign key is a column in one table that points to the primary key of another table. It links the two tables, and it also blocks bad data. For example, the database will not accept an order for <code>customer_id = 99</code> if there is no customer 99. This protection is called <strong>referential integrity</strong>.</p></div></details>
+        <details class="qa"><summary><span class="q">Q4</span>What is the difference between a primary key and a unique key?</summary>
+          <div class="body"><p>Both stop duplicate values. But a table can have only one primary key, and it can never be NULL. A table can have many unique keys, and a unique column is allowed to hold NULL (in MySQL, even more than one NULL). Example: <code>customer_id</code> is the primary key and <code>email</code> is a unique key. You will create a <code>UNIQUE</code> column yourself on Day 3.</p></div></details>
+        <details class="qa"><summary><span class="q">Q5</span>What is normalization, and why do we do it?</summary>
+          <div class="body"><p>Normalization means splitting data into smaller linked tables so that each fact is stored only once. It saves space, avoids update mistakes (changing a value in one place but not another) and keeps the data consistent. Example: we store a customer's city once in <code>customers</code> instead of repeating it in every order.</p></div></details>
+        <details class="qa"><summary><span class="q">Q6</span>Does normalization have any downside?</summary>
+          <div class="body"><p>Yes. Because the data is split into many tables, you need joins to bring it back together, and a lot of joins can make queries slower. That is why reporting databases (data warehouses) sometimes keep some repeated data on purpose. This is called <strong>denormalization</strong>. We look at this on Day 17.</p></div></details>
+        <details class="qa"><summary><span class="q">Q7</span>What are the ACID properties? Give an example.</summary>
+          <div class="body"><p>ACID is a set of four rules that keep data safe. <strong>Atomicity:</strong> all steps of a change happen, or none do. <strong>Consistency:</strong> the data always follows the rules. <strong>Isolation:</strong> changes made at the same time don't disturb each other. <strong>Durability:</strong> saved changes survive a crash. Example: in a bank transfer, money must either leave one account and reach the other, or not move at all.</p></div></details>
+        <details class="qa"><summary><span class="q">Q8</span>SQL vs NoSQL: when would you choose each one?</summary>
+          <div class="body"><p>Choose a relational (SQL) database when the data has a clear, fixed structure and accuracy matters, like orders, payments and stock levels. Choose NoSQL when the shape of the data changes often or doesn't fit into tables well, like social media posts, chat messages or sensor data. Most analyst work happens in SQL databases.</p></div></details>
+        <details class="qa"><summary><span class="q">Q9</span>Natural key or surrogate key: which would you use as a primary key?</summary>
+          <div class="body"><p>A natural key is a real-world value like an email. A surrogate key is an ID the database creates, like 1, 2, 3. I would usually pick a surrogate key, because it never changes. If we used email as the key and a customer changed their email, we would have to update it in every table linked to that customer.</p></div></details>
+      </div>
+
+      <div class="iv-group">
+        <h3>Practical questions</h3>
+        <details class="qa"><summary><span class="q">P1</span>What is wrong with this table, and how would you fix it?</summary>
+          <div class="body">
+            <div class="dbt">
+              <div class="dbt-cap">student_courses</div>
+              <div class="dbt-scroll"><table>
+                <thead><tr><th>student_name</th><th>student_email</th><th>course_name</th><th>teacher_name</th></tr></thead>
+                <tbody>
+                  <tr><td>Riya</td><td>riya@mail.com</td><td>SQL Basics</td><td>Mr. Rao</td></tr>
+                  <tr><td>Riya</td><td>riya@mail.com</td><td>Python</td><td>Ms. Iyer</td></tr>
+                  <tr><td>Karan</td><td>karan@mail.com</td><td>SQL Basics</td><td>Mr. Rao</td></tr>
+                </tbody>
+              </table></div>
+            </div>
+            <p><strong>Problems:</strong> Riya's email is repeated. The teacher of each course is repeated too, so if Mr. Rao is replaced, many rows must change. There is also no primary key.</p>
+            <p><strong>Fix:</strong> split it into three tables.</p>
+            <ul>
+              <li><code>students</code> (student_id 🔑, name, email)</li>
+              <li><code>courses</code> (course_id 🔑, course_name, teacher_name)</li>
+              <li><code>enrollments</code> (enrollment_id 🔑, student_id 🔗, course_id 🔗)</li>
+            </ul>
+            <p>The <code>enrollments</code> table is needed because one student can take many courses and one course has many students. A table like this, which sits between two others, is called a <strong>bridge table</strong>.</p>
+          </div></details>
+        <details class="qa"><summary><span class="q">P2</span>Which column would you choose as the primary key here, and why?</summary>
+          <div class="body">
+            <div class="dbt">
+              <div class="dbt-cap">employees</div>
+              <div class="dbt-scroll"><table>
+                <thead><tr><th>emp_code</th><th>full_name</th><th>email</th><th>phone</th><th>city</th></tr></thead>
+                <tbody>
+                  <tr><td>E101</td><td>Amit Kumar</td><td>amit.k@company.com</td><td>98100 11111</td><td>Pune</td></tr>
+                  <tr><td>E102</td><td>Amit Kumar</td><td>amit.kumar@company.com</td><td>NULL</td><td>Delhi</td></tr>
+                  <tr><td>E103</td><td>Neha Joshi</td><td>neha.j@company.com</td><td>98100 33333</td><td>Pune</td></tr>
+                </tbody>
+              </table></div>
+            </div>
+            <p><strong>Answer:</strong> <code>emp_code</code>. <code>full_name</code> repeats (two people are called Amit Kumar). <code>phone</code> is missing for one person, and a primary key can never be empty. <code>email</code> is unique today, but people can change it. <code>emp_code</code> is given by the company, it never repeats and it never changes. If a column like this did not exist, I would add a surrogate key such as <code>employee_id</code>.</p>
+          </div></details>
       </div>
     </div>
 
-    <div class="callout" style="margin-top:28px;">
-      <p>💡 The essence of normalization: <strong>split data into focused tables, store each fact once, and connect them with keys.</strong> Formal "normal forms" define this rigorously, but you don't need them today. Simply carry this intuition: well-designed databases avoid repeating the same information. This is exactly why our example database will use several connected tables rather than one giant one.</p>
+    <!-- Recap -->
+    <div class="recap" id="recap">
+      <h2>Quick recap</h2>
+      <ul>
+        <li>A <strong>database</strong> is organized data. A <strong>DBMS</strong> is the software that manages it. An <strong>RDBMS</strong> is the kind that uses linked tables and SQL.</li>
+        <li>Analysts need databases because real company data lives there, it is far too big for Excel, and SQL gets exactly the data you ask for.</li>
+        <li><strong>Relational</strong> databases use linked tables and SQL. <strong>NoSQL</strong> databases use flexible formats. This series is about relational databases.</li>
+        <li>Core words: <strong>table, column, row, schema, primary key, foreign key, relationship.</strong></li>
+        <li><strong>ACID</strong> (Atomicity, Consistency, Isolation, Durability) are the four rules that keep data in an RDBMS safe.</li>
+        <li>A <strong>natural key</strong> is a real-world value like an email. A <strong>surrogate key</strong> is an ID the database creates. This series uses surrogate keys.</li>
+        <li><strong>Normalization</strong> means splitting data into linked tables so each fact is stored only once.</li>
+      </ul>
     </div>
-  </div>
 
-  <!-- ── Section 7 ── -->
-  <div class="section">
-    <div class="section-hd">
-      <span class="sec-num">07</span>
-      <h2>Putting it all together</h2>
+    <div class="next">
+      <div>
+        <small>Coming up next</small>
+        <h3>Day 2: The SQL language and our example database</h3>
+        <p>The five command families, data types, and the online_store schema.</p>
+      </div>
+      <a class="btn" href="Day2_SQL_Language_and_Database.html">Read Day 2</a>
     </div>
-    <p>Let's zoom out and connect today's ideas into one picture.</p>
-    <p>A <strong>database</strong> is organized data. We manage it with software called a <strong>DBMS</strong>, and the relational kind — an <strong>RDBMS</strong> — organizes data into <strong>tables</strong> of <strong>rows</strong> and <strong>columns</strong>, which we work with using <strong>SQL</strong>. The structure of those tables is the <strong>schema</strong>. Each row is uniquely identified by a <strong>primary key</strong>, and tables are linked to one another through <strong>foreign keys</strong>, forming <strong>relationships</strong>. We deliberately split data across multiple connected tables — a practice called <strong>normalization</strong> — so that each fact is stored once and stays consistent.</p>
-    <p>Every one of these words will return throughout the series. Now you have a working sense of what each means and why it exists.</p>
-  </div>
+  </article>
+</div>
 
-  <hr>
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
 
-  <!-- Try this -->
-  <div class="try-box">
-    <h4>✏️ Try This Before Day 2</h4>
-    <p>Think of an app you use daily and try to imagine the tables behind it. For a food-delivery app, what tables might exist? What columns would each have? Which column would be the primary key, and where might a foreign key connect two tables? Sketching this on paper — even a rough one — will make tomorrow's material click instantly.</p>
-  </div>
-
-  <!-- Recap -->
-  <div class="recap">
-    <h3>Quick Recap — Day 1</h3>
-    <ul>
-      <li>A <strong>database</strong> is organized data; a <strong>DBMS</strong> is the software that manages it; an <strong>RDBMS</strong> is the relational, table-based kind that uses SQL.</li>
-      <li>Databases matter to analysts because real data lives there, it scales far beyond spreadsheets, and SQL retrieves it precisely.</li>
-      <li><strong>Relational</strong> databases use linked tables and SQL; <strong>non-relational (NoSQL)</strong> use flexible formats. We focus on relational.</li>
-      <li>Core vocabulary: <strong>table, column, row, schema, primary key, foreign key, relationship.</strong></li>
-      <li><strong>ACID</strong> (Atomicity, Consistency, Isolation, Durability) are the four guarantees an RDBMS enforces — why businesses trust it with critical data.</li>
-      <li>Primary keys come in two flavors: <strong>natural keys</strong> (real-world values like an email) and <strong>surrogate keys</strong> (auto-generated IDs) — our series uses surrogate keys throughout.</li>
-      <li><strong>Normalization</strong> means organizing data to avoid repetition by splitting it into connected tables — each fact stored exactly once.</li>
-    </ul>
-  </div>
-
-  <!-- Next day -->
-  <div class="next-cta">
-    <div class="next-cta-text">
-      <h4>Coming up next</h4>
-      <p>Day 2: The SQL Language &amp; Our Example Database</p>
-      <span>The five command families · Data types · Meet the online_store schema</span>
-    </div>
-    <a href="Day2_SQL_Language_and_Database.html" class="next-btn">Day 2 &nbsp;→</a>
-  </div>
-
-</main>
-
-<!-- Footer -->
-<footer>
-  <div class="footer-tag">Databases &amp; SQL for Analysts — 9-Day Series</div>
-  <p>From first concepts to advanced querying, one article at a time.</p>
-</footer>
-
-<!-- Reading progress script -->
 <script>
-  const bar = document.getElementById('progress-bar');
-  function updateProgress() {
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-    bar.style.width = Math.min(pct, 100) + '%';
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});
+    },{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
   }
-  window.addEventListener('scroll', updateProgress, { passive: true });
-  updateProgress();
+})();
 </script>
-
 </body>
 </html>
