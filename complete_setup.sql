@@ -155,7 +155,7 @@ INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
 (15,11, 1,  699.00);
 
 -- ── Verification ─────────────────────────────────────────────
-SELECT 'customers'   AS tbl, COUNT(*) AS rows FROM customers
+SELECT 'customers'   AS tbl, COUNT(*) AS row_count FROM customers
 UNION ALL SELECT 'categories',  COUNT(*) FROM categories
 UNION ALL SELECT 'products',    COUNT(*) FROM products
 UNION ALL SELECT 'orders',      COUNT(*) FROM orders
