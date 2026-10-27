@@ -319,6 +319,18 @@ footer b{color:var(--ink);font-weight:700}
   .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
 }
 @media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+@media (max-width:640px){.steps.three{grid-template-columns:1fr}}
 @media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
 </style>
 </head>
@@ -660,7 +672,7 @@ footer b{color:var(--ink);font-weight:700}
     </table></div>
   </div>
   <p>Notice how this follows the normalization idea from Day 1. Instead of one huge table with everything repeated, each kind of thing has its own table, and keys link them.</p>
-  <div class="note sun"><p><strong>Small now, bigger later.</strong> This database is small on purpose (65 rows in total), so you can check every answer by eye. On Day 10 we add a much larger and messier copy called <code>online_store_full</code>, with extra tables like payments, returns and website visits. That is where you practice on data that feels like real work.</p></div>
+  <div class="note sun"><p><strong>Small now, bigger later.</strong> This database is small on purpose (70 rows in total), so you can check every answer by eye. On Day 10 we add a much larger and messier copy called <code>online_store_full</code>, with extra tables like payments, returns and website visits. That is where you practice on data that feels like real work.</p></div>
 </section>
 
 <!-- 7 -->
