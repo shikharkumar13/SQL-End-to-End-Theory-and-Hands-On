@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 11: Data Cleaning in SQL | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 11 of 23</span><span class="part-pill">Must-haves</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Data cleaning in SQL</h1>
+      <p class="hero-sub">Work through yesterday's issues log one line at a time. Fix text and dates, decide what missing means, remove duplicates, and build a clean layer of views you can trust.</p>
+      <div class="facts"><span class="fact">34 minute read</span><span class="fact hl">From messy to trusted</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="Cleaning in layers: raw tables stay untouched, clean views sit on top, reports read the clean views">
+      <p class="hd">Clean in layers, never in place</p>
+      <ul class="reads">
+        <li><code>orders, customers ...</code><span>1. Raw tables: kept exactly as they arrived</span></li>
+        <li><code>clean_orders ...</code><span>2. Clean views: every fix written down as SQL</span></li>
+        <li><code>clean_sales</code><span>3. Reports read only from the clean layer</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>Clean without breaking</a></li><li><a href="#s2"><span class="n">2</span>Fixing text</a></li><li><a href="#s3"><span class="n">3</span>Categories with CASE</a></li><li><a href="#s4"><span class="n">4</span>Lookup tables</a></li><li><a href="#s5"><span class="n">5</span>What does missing mean?</a></li><li><a href="#s6"><span class="n">6</span>Dates and types</a></li><li><a href="#s7"><span class="n">7</span>Duplicates</a></li><li><a href="#s8"><span class="n">8</span>Rows that shouldn't count</a></li><li><a href="#s9"><span class="n">9</span>Build the clean layer</a></li><li><a href="#s10"><span class="n">10</span>Data quality checks</a></li><li><a href="#s11"><span class="n">11</span>A number you can trust</a></li><li class="gap"></li><li><a href="#try"><span class="n"></span>Try this</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">Yesterday you explored <code>online_store_full</code> and filled a data issues log with twelve problems, plus a few more from the Try this. Today you fix them. Not by editing the raw tables, but by building a <strong>clean layer</strong>: a set of views that tidy the data on the way out, with every decision written down in SQL. By the end, you'll have a revenue number you can defend, and a quick health check that tells you if new mess ever creeps in.</p>
+<div class="note"><p><strong>Before you start.</strong> Everything today runs on <code>online_store_full</code> (Day 10), so run <code>USE online_store_full;</code> first. Code boxes labelled <strong>Build</strong> create something (a table or a view). Run them in the order they appear. They're all safe to run again. If you'd rather set everything up in one go, <code>day11_clean_layer.sql</code> in the repo has every Build block in order. Days 12 to 23 use this clean layer, so make sure it exists before moving on.</p></div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>How to clean without breaking anything</h2>
+  <p>Think of editing a photo on your phone. A good editing app never paints over the original. It keeps the original photo and saves your edits as a list of steps (brightness up, crop, filter) that you can change or undo any time. Cleaning data should work the same way.</p>
+  <p>Four rules, all built on things you already know:</p>
+  <ol style="padding-left:22px;margin-bottom:18px">
+    <li><strong>Never change the raw tables.</strong> No <code>UPDATE</code> on <code>orders</code> or <code>customers</code>. The raw data is your evidence. If a cleaning rule turns out to be wrong, you need the original to fix it.</li>
+    <li><strong>Clean in views</strong> (Day 9). A view stores the cleaning <em>steps</em>, not a cleaned copy. When new orders arrive, they get cleaned automatically, because the view runs on the current data every time.</li>
+    <li><strong>Write every decision down.</strong> "New Delhi counts as Delhi" is a business decision, not a fact. Put it in the SQL, where anyone can see it, question it, and change it.</li>
+    <li><strong>Count before and after.</strong> Every fix should change exactly the rows you expected, and no others. If you meant to fix 60 statuses and 600 changed, stop.</li>
+  </ol>
+  <p>Here's yesterday's issues log, and where each problem gets fixed today:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>#</th><th>Issue (Day 10)</th><th>Fix</th><th>Section</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Status spelled 9 ways</td><td><code>CASE</code> on a tidied value</td><td>3</td></tr>
+        <tr><td>2</td><td>Sign-up date stored as text, 3 formats</td><td><code>STR_TO_DATE</code></td><td>6</td></tr>
+        <tr><td>3</td><td>Missing city as NULL, '' and 'N/A'</td><td>Turn fake NULLs into real ones</td><td>5</td></tr>
+        <tr><td>4</td><td>Same city, different names</td><td>A lookup table</td><td>4</td></tr>
+        <tr><td>5</td><td>Country written several ways</td><td><code>CASE</code></td><td>3</td></tr>
+        <tr><td>6</td><td>Duplicate customer accounts</td><td>A "master" customer ID</td><td>7</td></tr>
+        <tr><td>7</td><td>Test accounts and their orders</td><td>An exclusion list</td><td>8</td></tr>
+        <tr><td>8</td><td>Orders dated in 2025</td><td>Correct the year, and flag it</td><td>6</td></tr>
+        <tr><td>9</td><td>Order lines with quantity 0</td><td>Leave them out</td><td>8</td></tr>
+        <tr><td>10</td><td>Tracking events for deleted customers</td><td>Keep, but know about them</td><td>Try this</td></tr>
+        <tr><td>11</td><td>Messy free text (payment method, return reason...)</td><td><code>CASE</code> into a few clean groups</td><td>3, 9</td></tr>
+        <tr><td>12</td><td>Phone numbers in many formats</td><td>Keep only the digits, then rebuild</td><td>2</td></tr>
+        <tr><td></td><td>Double-submitted orders (Try this)</td><td>Compare the baskets</td><td>7</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Fixing text</h2>
+  <p>Most text mess is one of three things: extra spaces, inconsistent capitals, or extra characters. Each has a tool.</p>
+
+  <h3 style="margin:28px 0 8px">Spaces and capitals: TRIM, LOWER, UPPER</h3>
+  <p>You met these on Day 5. Here they do real work. First names have stray spaces and shouting capitals:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> customer_id,
+       CONCAT(<span class="s">'['</span>, first_name, <span class="s">']'</span>) <span class="k">AS</span> raw_first_name,
+       CONCAT(UPPER(<span class="k">LEFT</span>(TRIM(first_name), <span class="n">1</span>)),
+              LOWER(SUBSTRING(TRIM(first_name), <span class="n">2</span>))) <span class="k">AS</span> clean_first_name
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> customer_id <span class="k">IN</span> (<span class="n">18</span>, <span class="n">82</span>, <span class="n">107</span>, <span class="n">126</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+----------------+------------------+
+| customer_id | raw_first_name | clean_first_name |
++-------------+----------------+------------------+
+|          18 | [RAVI]         | Ravi             |
+|          82 | [ Vikram]      | Vikram           |
+|         107 | [ Vihaan]      | Vihaan           |
+|         126 | [KRITIKA]      | Kritika          |
++-------------+----------------+------------------+</code></pre></div>
+  <p>Read the formula from the inside out: <code>TRIM</code> removes the spaces, <code>LEFT(..., 1)</code> takes the first letter and <code>UPPER</code> makes it a capital, then <code>SUBSTRING(..., 2)</code> takes the rest and <code>LOWER</code> makes it small. <code>CONCAT</code> glues the two back together. MySQL has no ready-made "capitalise the first letter" function, so this little pattern is worth remembering.</p>
+  <div class="note sun"><p><strong>Don't do this to every name.</strong> It's safe on our first names, which are single words. Try it on last names, and <code>D'Souza</code> becomes <code>D'souza</code>, <code>Al-Mansoori</code> becomes <code>Al-mansoori</code>, and <code>O'Brien</code> becomes <code>O'brien</code>. All three are in our data. A cleaning rule that breaks good data is worse than no rule. Only fix what's actually broken.</p></div>
+  <p>Emails are simpler: capitals don't matter in an email address, so the clean version is all lower case, with no spaces. <code>LOWER(TRIM(email))</code> is exactly what you used to find the duplicates yesterday.</p>
+
+  <h3 style="margin:28px 0 8px">Extra characters: REPLACE and REGEXP_REPLACE</h3>
+  <p>Phone numbers came in at least four shapes. The trick is to throw away everything that isn't a digit, then build the number back up in one standard format. <code>REPLACE(text, 'find', 'replace with')</code> swaps one exact piece of text, so <code>REPLACE(phone, ' ', '')</code> removes spaces. But you'd need another <code>REPLACE</code> for <code>+</code>, another for <code>-</code>, and so on. <code>REGEXP_REPLACE</code> does it in one go with a pattern: <code>[^0-9]</code> means "any character that is <em>not</em> a digit".</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> phone,
+       country,
+       REGEXP_REPLACE(phone, <span class="s">'[^0-9]'</span>, <span class="s">''</span>) <span class="k">AS</span> digits_only,
+       <span class="k">CASE</span>
+           <span class="k">WHEN</span> phone <span class="k">IS</span> <span class="k">NULL</span> <span class="k">THEN</span> <span class="k">NULL</span>
+           <span class="k">WHEN</span> LOWER(TRIM(country)) <span class="k">IN</span> (<span class="s">'india'</span>, <span class="s">'in'</span>)
+                <span class="k">THEN</span> CONCAT(<span class="s">'+91'</span>, <span class="k">RIGHT</span>(REGEXP_REPLACE(phone, <span class="s">'[^0-9]'</span>, <span class="s">''</span>), <span class="n">10</span>))
+           <span class="k">ELSE</span> CONCAT(<span class="s">'+'</span>, REGEXP_REPLACE(phone, <span class="s">'[^0-9]'</span>, <span class="s">''</span>))
+       <span class="k">END</span> <span class="k">AS</span> clean_phone
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> customer_id <span class="k">IN</span> (<span class="n">1</span>, <span class="n">2</span>, <span class="n">4</span>, <span class="n">9</span>, <span class="n">12</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------+---------+--------------+---------------+
+| phone           | country | digits_only  | clean_phone   |
++-----------------+---------+--------------+---------------+
+| 7655010505      | India   | 7655010505   | +917655010505 |
+| +916016001695   | India   | 916016001695 | +916016001695 |
+| 065970 57267    | INDIA   | 06597057267  | +916597057267 |
+| +1 2920848108   | US      | 12920848108  | +12920848108  |
+| +91 61829 97536 | India   | 916182997536 | +916182997536 |
++-----------------+---------+--------------+---------------+</code></pre></div>
+  <p>The four Indian numbers arrived in four different shapes: ten bare digits, <code>+91</code> stuck on the front, <code>+91</code> with spaces, and a leading <code>0</code>. Indian mobile numbers are always 10 digits, so <code>RIGHT(digits, 10)</code> keeps the last 10, whatever came in front. Then <code>+91</code> goes on the front. All four became one shape: <code>+91</code> followed by ten digits. That's the format most phone and messaging systems expect. The US number already starts with its country code, so it just gets a <code>+</code>. And a missing phone stays NULL, which is why the <code>CASE</code> checks for that first.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>Messy categories: CASE on a tidied value</h2>
+  <p>For a column with a handful of allowed values, the pattern is always the same: tidy the value first with <code>LOWER(TRIM(...))</code>, then use <code>CASE</code> (Day 8) to turn each tidied spelling into the one name you want.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CONCAT(<span class="s">'['</span>, status, <span class="s">']'</span>) COLLATE utf8mb4_0900_bin <span class="k">AS</span> raw_status,
+       <span class="k">CASE</span> LOWER(TRIM(status))
+           <span class="k">WHEN</span> <span class="s">'completed'</span> <span class="k">THEN</span> <span class="s">'Completed'</span>
+           <span class="k">WHEN</span> <span class="s">'complete'</span>  <span class="k">THEN</span> <span class="s">'Completed'</span>
+           <span class="k">WHEN</span> <span class="s">'cancelled'</span> <span class="k">THEN</span> <span class="s">'Cancelled'</span>
+           <span class="k">WHEN</span> <span class="s">'canceled'</span>  <span class="k">THEN</span> <span class="s">'Cancelled'</span>
+           <span class="k">WHEN</span> <span class="s">'pending'</span>   <span class="k">THEN</span> <span class="s">'Pending'</span>
+           <span class="k">WHEN</span> <span class="s">'shipped'</span>   <span class="k">THEN</span> <span class="s">'Shipped'</span>
+           <span class="k">ELSE</span> <span class="s">'Unknown'</span>
+       <span class="k">END</span> <span class="k">AS</span> clean_status,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> orders
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> raw_status, clean_status
+<span class="k">ORDER</span> <span class="k">BY</span> clean_status, orders <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+--------------+--------+
+| raw_status   | clean_status | orders |
++--------------+--------------+--------+
+| [Cancelled]  | Cancelled    |    216 |
+| [cancelled]  | Cancelled    |     92 |
+| [Canceled]   | Cancelled    |     69 |
+| [Completed]  | Completed    |   4426 |
+| [completed]  | Completed    |   1183 |
+| [Completed ] | Completed    |     60 |
+| [COMPLETE]   | Completed    |     19 |
+| [Pending]    | Pending      |     40 |
+| [Shipped]    | Shipped      |     39 |
++--------------+--------------+--------+</code></pre></div>
+  <p>Nine raw spellings, four clean statuses, and nothing left over. Checking that every raw value landed in the right clean group like this is the "count before and after" rule in action.</p>
+  <p>Look at the last line of the <code>CASE</code>: <code>ELSE 'Unknown'</code>. It's tempting to write <code>ELSE status</code> and let anything unexpected pass through unchanged. Don't. If the app starts writing <code>"Delivered"</code> next month, you want it to show up loudly as <code>Unknown</code> in your health check (section 10), not to slip quietly into your reports as a fifth status.</p>
+
+  <h3 style="margin:28px 0 8px">Country, the same way</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">CASE</span> LOWER(TRIM(country))
+           <span class="k">WHEN</span> <span class="s">'india'</span>          <span class="k">THEN</span> <span class="s">'India'</span>
+           <span class="k">WHEN</span> <span class="s">'in'</span>             <span class="k">THEN</span> <span class="s">'India'</span>
+           <span class="k">WHEN</span> <span class="s">'uk'</span>             <span class="k">THEN</span> <span class="s">'UK'</span>
+           <span class="k">WHEN</span> <span class="s">'united kingdom'</span> <span class="k">THEN</span> <span class="s">'UK'</span>
+           <span class="k">WHEN</span> <span class="s">'usa'</span>            <span class="k">THEN</span> <span class="s">'USA'</span>
+           <span class="k">WHEN</span> <span class="s">'us'</span>             <span class="k">THEN</span> <span class="s">'USA'</span>
+           <span class="k">WHEN</span> <span class="s">'united states'</span>  <span class="k">THEN</span> <span class="s">'USA'</span>
+           <span class="k">ELSE</span> TRIM(country)
+       <span class="k">END</span> <span class="k">AS</span> clean_country,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> customers
+<span class="k">FROM</span> customers
+<span class="k">GROUP</span> <span class="k">BY</span> clean_country
+<span class="k">ORDER</span> <span class="k">BY</span> customers <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------+-----------+
+| clean_country | customers |
++---------------+-----------+
+| India         |      2646 |
+| USA           |       102 |
+| UK            |        87 |
+| UAE           |        78 |
+| Singapore     |        54 |
+| Canada        |        27 |
+| Australia     |        18 |
+| Germany       |        16 |
++---------------+-----------+</code></pre></div>
+  <p>Fourteen raw spellings (twelve if you ignore capitals, as MySQL does) became eight real countries. The UK more than doubled from the 56 rows spelled "UK" to 87, and the USA went from 48 to 102. A "customers by country" chart built on the raw column would have been badly wrong. (Here we used <code>ELSE TRIM(country)</code> on purpose: the other countries, like UAE and Singapore, were already clean. A check in section 10 still catches any new spelling.)</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>Lookup tables: when CASE gets too long</h2>
+  <p>A <code>CASE</code> is fine for 6 or 7 values. Cities have about 40, and new ones will keep arriving. Hiding a 40-line <code>CASE</code> inside a view makes it hard to read and hard to change. The better tool is a <strong>lookup table</strong> (also called a mapping table): a small table with one row per spelling, saying which clean name it should become.</p>
+  <p>Think of the contacts app on your phone. Your friend's number is saved once, with a proper name. Whether they ring from their mobile or their office line, your phone shows "Ananya". A lookup table does that for cities.</p>
+  <div class="code"><div class="code-bar"><span>Build 1: the city lookup table</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">DROP</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">EXISTS</span> city_lookup;
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> city_lookup (
+    city_key   <span class="t">VARCHAR</span>(<span class="n">50</span>) <span class="k">PRIMARY</span> <span class="k">KEY</span>,   <span class="c">-- the tidied raw spelling: lower case, no spaces</span>
+    clean_city <span class="t">VARCHAR</span>(<span class="n">50</span>) <span class="k">NOT</span> <span class="k">NULL</span>       <span class="c">-- the name we want in reports</span>
+);
+
+<span class="k">INSERT</span> <span class="k">INTO</span> city_lookup (city_key, clean_city) <span class="k">VALUES</span>
+(<span class="s">'abu dhabi'</span>,<span class="s">'Abu Dhabi'</span>), (<span class="s">'ahmedabad'</span>,<span class="s">'Ahmedabad'</span>), (<span class="s">'bangalore'</span>,<span class="s">'Bengaluru'</span>), (<span class="s">'bengaluru'</span>,<span class="s">'Bengaluru'</span>),
+(<span class="s">'berlin'</span>,<span class="s">'Berlin'</span>), (<span class="s">'bhopal'</span>,<span class="s">'Bhopal'</span>), (<span class="s">'bombay'</span>,<span class="s">'Mumbai'</span>), (<span class="s">'calcutta'</span>,<span class="s">'Kolkata'</span>),
+(<span class="s">'chandigarh'</span>,<span class="s">'Chandigarh'</span>), (<span class="s">'chennai'</span>,<span class="s">'Chennai'</span>), (<span class="s">'chicago'</span>,<span class="s">'Chicago'</span>), (<span class="s">'coimbatore'</span>,<span class="s">'Coimbatore'</span>),
+(<span class="s">'delhi'</span>,<span class="s">'Delhi'</span>), (<span class="s">'dubai'</span>,<span class="s">'Dubai'</span>), (<span class="s">'gurgaon'</span>,<span class="s">'Gurugram'</span>), (<span class="s">'gurugram'</span>,<span class="s">'Gurugram'</span>),
+(<span class="s">'hyderabad'</span>,<span class="s">'Hyderabad'</span>), (<span class="s">'indore'</span>,<span class="s">'Indore'</span>), (<span class="s">'jaipur'</span>,<span class="s">'Jaipur'</span>), (<span class="s">'kochi'</span>,<span class="s">'Kochi'</span>),
+(<span class="s">'kolkata'</span>,<span class="s">'Kolkata'</span>), (<span class="s">'london'</span>,<span class="s">'London'</span>), (<span class="s">'lucknow'</span>,<span class="s">'Lucknow'</span>), (<span class="s">'madras'</span>,<span class="s">'Chennai'</span>),
+(<span class="s">'manchester'</span>,<span class="s">'Manchester'</span>), (<span class="s">'melbourne'</span>,<span class="s">'Melbourne'</span>), (<span class="s">'mumbai'</span>,<span class="s">'Mumbai'</span>), (<span class="s">'munich'</span>,<span class="s">'Munich'</span>),
+(<span class="s">'nagpur'</span>,<span class="s">'Nagpur'</span>), (<span class="s">'new delhi'</span>,<span class="s">'Delhi'</span>), (<span class="s">'new york'</span>,<span class="s">'New York'</span>), (<span class="s">'noida'</span>,<span class="s">'Noida'</span>),
+(<span class="s">'pune'</span>,<span class="s">'Pune'</span>), (<span class="s">'san francisco'</span>,<span class="s">'San Francisco'</span>), (<span class="s">'singapore'</span>,<span class="s">'Singapore'</span>), (<span class="s">'surat'</span>,<span class="s">'Surat'</span>),
+(<span class="s">'sydney'</span>,<span class="s">'Sydney'</span>), (<span class="s">'toronto'</span>,<span class="s">'Toronto'</span>), (<span class="s">'vancouver'</span>,<span class="s">'Vancouver'</span>), (<span class="s">'visakhapatnam'</span>,<span class="s">'Visakhapatnam'</span>);</code></pre></div>
+  <p>Notice the key is the <em>tidied</em> spelling, <code>LOWER(TRIM(city))</code>. So one row, <code>'bengaluru'</code>, catches "Bengaluru", "bengaluru" and "Bengaluru " all at once. Only true aliases, like "Bangalore", need a row of their own.</p>
+  <p>And one row records a decision: <code>('new delhi', 'Delhi')</code>. On Day 10 we said that's a business question, not a spelling fix. Say the owner answered: "Report New Delhi under Delhi." The lookup table is where that answer lives. If the owner changes their mind, you change one row, and every report follows.</p>
+  <p>Now join to it, and compare the before and after for the cities that had aliases:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> l.clean_city,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> customers,
+       GROUP_CONCAT(<span class="k">DISTINCT</span> CONCAT(<span class="s">'['</span>, c.city, <span class="s">']'</span>) <span class="k">ORDER</span> <span class="k">BY</span> c.city <span class="k">SEPARATOR</span> <span class="s">' '</span>) <span class="k">AS</span> raw_spellings
+<span class="k">FROM</span> customers c
+<span class="k">JOIN</span> city_lookup l <span class="k">ON</span> l.city_key = LOWER(TRIM(c.city))
+<span class="k">WHERE</span> l.clean_city <span class="k">IN</span> (<span class="s">'Bengaluru'</span>, <span class="s">'Mumbai'</span>, <span class="s">'Delhi'</span>, <span class="s">'Gurugram'</span>, <span class="s">'Kolkata'</span>, <span class="s">'Chennai'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> l.clean_city
+<span class="k">ORDER</span> <span class="k">BY</span> customers <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+-----------+--------------------------------------+
+| clean_city | customers | raw_spellings                        |
++------------+-----------+--------------------------------------+
+| Mumbai     |       348 | [ Mumbai] [Bombay] [mumbai]          |
+| Delhi      |       321 | [Delhi] [New Delhi]                  |
+| Bengaluru  |       299 | [Bangalore] [Bengaluru] [Bengaluru ] |
+| Chennai    |       183 | [Chennai] [Madras]                   |
+| Kolkata    |       175 | [Calcutta] [Kolkata]                 |
+| Gurugram   |        79 | [Gurgaon] [Gurugram]                 |
++------------+-----------+--------------------------------------+</code></pre></div>
+  <p>Bengaluru is now 299 customers, not the 187 the raw data showed: that's 60% more. Mumbai and Delhi grow too. (The <code>GROUP_CONCAT(DISTINCT ...)</code> list uses the same case-insensitive collation, so it treats <code>Mumbai</code> and <code>mumbai</code> as one spelling and shows just one of them. Trailing spaces do count, which is why <code>[Bengaluru ]</code> appears on its own. Either way, every row is in the count.)</p>
+  <p>The best part of a lookup table is that it tells you what it <em>doesn't</em> know. Any city whose tidied spelling has no row is a new spelling you haven't mapped yet. Section 10 turns that into a check that should always return 0.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>What does missing mean?</h2>
+  <p>Back on Day 4, Riya was stored with the city <code>'NULL'</code> in quotes, and every query looking for missing cities skipped her. Day 10 found the same problem for real: missing cities hide as NULL, as empty text <code>''</code>, and as the text <code>'N/A'</code>. The fix is to turn every fake NULL into a real NULL, so <code>IS NULL</code>, <code>COUNT(column)</code> and <code>COALESCE</code> all work properly again.</p>
+  <p>The lookup table has already done it for city: <code>''</code> and <code>'n/a'</code> have no row, so the <code>LEFT JOIN</code> gives NULL. When there's no lookup table, the general pattern uses <code>NULLIF</code> (Day 4) twice:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CONCAT(<span class="s">'['</span>, city, <span class="s">']'</span>) <span class="k">AS</span> raw_city,
+       <span class="k">NULLIF</span>(<span class="k">NULLIF</span>(TRIM(city), <span class="s">''</span>), <span class="s">'N/A'</span>) <span class="k">AS</span> clean_city,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> customers
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> city <span class="k">IS</span> <span class="k">NULL</span> <span class="k">OR</span> TRIM(city) <span class="k">IN</span> (<span class="s">''</span>, <span class="s">'N/A'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> raw_city, clean_city;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------+------------+-----------+
+| raw_city | clean_city | customers |
++----------+------------+-----------+
+| NULL     | NULL       |        91 |
+| [N/A]    | NULL       |        14 |
+| []       | NULL       |        32 |
++----------+------------+-----------+</code></pre></div>
+  <p>Read it from the inside: trim the city, turn <code>''</code> into NULL, then turn <code>'N/A'</code> into NULL. All 137 customers without a city now look the same: NULL. (<code>CONCAT</code> with a NULL inside gives NULL, which is why the first row's <code>raw_city</code> shows NULL rather than <code>[NULL]</code>.)</p>
+
+  <h3 style="margin:28px 0 8px">Missing in a join: the product with no category</h3>
+  <p>Here's an issue that wasn't in yesterday's log, and it's a sneaky one. One product has no category at all:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> p.product_id, p.product_name, p.category_id, p.launch_date,
+       <span class="k">COUNT</span>(oi.order_item_id) <span class="k">AS</span> lines_sold
+<span class="k">FROM</span> products p
+<span class="k">LEFT</span> <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.product_id = p.product_id
+<span class="k">WHERE</span> p.category_id <span class="k">IS</span> <span class="k">NULL</span>
+<span class="k">GROUP</span> <span class="k">BY</span> p.product_id, p.product_name, p.category_id, p.launch_date;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+--------------------+-------------+-------------+------------+
+| product_id | product_name       | category_id | launch_date | lines_sold |
++------------+--------------------+-------------+-------------+------------+
+|         61 | Smart Fitness Band |        NULL | 2024-12-01  |         10 |
++------------+--------------------+-------------+-------------+------------+</code></pre></div>
+  <p>A new product, launched in December 2024, that nobody got round to putting in a category. Any revenue report that does <code>JOIN categories</code> (an inner join) drops all of its sales without a word: Day 7's "no match, no row". The fix in the clean layer is a <code>LEFT JOIN</code> to <code>categories</code>, with <code>COALESCE(category_name, 'Uncategorised')</code> for the label. Now its sales stay in, and the label tells everyone this product needs a category.</p>
+
+  <h3 style="margin:28px 0 8px">When to use COALESCE, and when not to</h3>
+  <p>Day 8's rule still holds: <strong>only replace NULL with a value when you know what NULL means.</strong></p>
+  <ul>
+    <li>A missing category label for display? <code>'Uncategorised'</code> is honest. It's a label, not a made-up fact.</li>
+    <li>A missing city? Leave it NULL in the clean layer. Only at report time, write <code>COALESCE(city, 'Not given')</code>, so a chart shows a "Not given" bar instead of a blank.</li>
+    <li>Never turn a missing <em>number</em> into 0 unless 0 is really true. A missing rating is not a 1-star review, and a missing price is not free.</li>
+  </ul>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>Dates and types</h2>
+
+  <h3 style="margin:28px 0 8px">Text into dates: STR_TO_DATE</h3>
+  <p>Day 10 found three formats in <code>signup_date</code>. <code>STR_TO_DATE(text, format)</code> reads text as a date, if you tell it the pattern. The format uses codes: <code>%Y</code> is a four-digit year, <code>%m</code> a two-digit month, <code>%d</code> the day, and <code>%b</code> a short month name like "Mar".</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> signup_date <span class="k">AS</span> raw_text,
+       <span class="k">CASE</span>
+           <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'</span>    <span class="k">THEN</span> STR_TO_DATE(signup_date, <span class="s">'%Y-%m-%d'</span>)
+           <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}/[0-9]{2}/[0-9]{4}$'</span>    <span class="k">THEN</span> STR_TO_DATE(signup_date, <span class="s">'%d/%m/%Y'</span>)
+           <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'</span> <span class="k">THEN</span> STR_TO_DATE(signup_date, <span class="s">'%d-%b-%Y'</span>)
+       <span class="k">END</span> <span class="k">AS</span> real_date
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> customer_id <span class="k">IN</span> (<span class="n">1</span>, <span class="n">21</span>, <span class="n">26</span>, <span class="n">32</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+
+| raw_text    | real_date  |
++-------------+------------+
+| 2023-11-02  | 2023-11-02 |
+| 07/03/2024  | 2024-03-07 |
+| 21/07/2024  | 2024-07-21 |
+| 02-Dec-2022 | 2022-12-02 |
++-------------+------------+</code></pre></div>
+  <p>It's the same <code>CASE</code> and <code>REGEXP</code> you used yesterday to <em>count</em> the formats, now used to <em>read</em> them. Each format gets the matching pattern, and they all come out as proper dates.</p>
+  <div class="note sun"><p><strong>Two dangers with STR_TO_DATE.</strong> First, if the text doesn't match the pattern, or the date is impossible (31 February), you get <strong>NULL</strong> and only a warning, not an error. So always count how many NULLs your conversion produced (section 10 does). Second, <code>03/04/2024</code> means 3 April in India and 4 March in the US, and SQL can't tell which one the system meant. We used <code>%d/%m/%Y</code> (day first) because this shop is Indian, and the data agrees: 272 of the slash dates start with a number above 12, like <code>21/07/2024</code>, which can only be a day, and none has a middle number above 12. Still, it's a decision. Write it down.</p></div>
+  <p>Now <code>MIN</code> and <code>MAX</code> finally mean something:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">MIN</span>(real_date) <span class="k">AS</span> first_signup,
+       <span class="k">MAX</span>(real_date) <span class="k">AS</span> last_signup,
+       <span class="k">SUM</span>(real_date <span class="k">IS</span> <span class="k">NULL</span>) <span class="k">AS</span> failed_to_convert
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> <span class="k">CASE</span>
+               <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'</span>    <span class="k">THEN</span> STR_TO_DATE(signup_date, <span class="s">'%Y-%m-%d'</span>)
+               <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}/[0-9]{2}/[0-9]{4}$'</span>    <span class="k">THEN</span> STR_TO_DATE(signup_date, <span class="s">'%d/%m/%Y'</span>)
+               <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'</span> <span class="k">THEN</span> STR_TO_DATE(signup_date, <span class="s">'%d-%b-%Y'</span>)
+           <span class="k">END</span> <span class="k">AS</span> real_date
+    <span class="k">FROM</span> customers
+) <span class="k">AS</span> converted;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+-------------+-------------------+
+| first_signup | last_signup | failed_to_convert |
++--------------+-------------+-------------------+
+| 2022-07-05   | 2024-12-31  |                 0 |
++--------------+-------------+-------------------+</code></pre></div>
+  <p>The first sign-up was in July 2022, not "01-Aug-2023", and every one of the 3,028 values converted.</p>
+
+  <h3 style="margin:28px 0 8px">Types matter: CAST</h3>
+  <p>Text that <em>looks</em> like a number or a date still behaves like text. Text is compared letter by letter, like words in a dictionary:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'10'</span> &lt; <span class="s">'9'</span>                                    <span class="k">AS</span> compared_as_text,
+       <span class="n">10</span> &lt; <span class="n">9</span>                                        <span class="k">AS</span> compared_as_numbers,
+       CAST(<span class="s">'10'</span> <span class="k">AS</span> <span class="k">UNSIGNED</span>) &lt; CAST(<span class="s">'9'</span> <span class="k">AS</span> <span class="k">UNSIGNED</span>) <span class="k">AS</span> after_cast;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+---------------------+------------+
+| compared_as_text | compared_as_numbers | after_cast |
++------------------+---------------------+------------+
+|                1 |                   0 |          0 |
++------------------+---------------------+------------+</code></pre></div>
+  <p>As text, "10" comes before "9", because "1" comes before "9". That's the same reason <code>MIN(signup_date)</code> gave nonsense yesterday. <code>CAST(value AS type)</code> converts a value to a proper type: <code>UNSIGNED</code> or <code>SIGNED</code> for whole numbers, <code>DECIMAL(10,2)</code> for money, <code>DATE</code> for dates already in YYYY-MM-DD form. Whenever numbers or dates arrive as text, convert them first, then compare, sort or do maths.</p>
+
+  <h3 style="margin:28px 0 8px">The two orders from the future</h3>
+  <p>Yesterday's evidence was strong: orders 5012 and 5497 sit between October and November 2024 orders, with the year typed as 2025. The fix moves them back one year, and keeps a flag so the change is never invisible:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> order_id,
+       order_date <span class="k">AS</span> raw_date,
+       <span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt; <span class="s">'2024-12-31 23:59:59'</span>
+            <span class="k">THEN</span> order_date - INTERVAL <span class="n">1</span> <span class="t">YEAR</span>
+            <span class="k">ELSE</span> order_date <span class="k">END</span>              <span class="k">AS</span> clean_date,
+       (order_date &gt; <span class="s">'2024-12-31 23:59:59'</span>)  <span class="k">AS</span> date_was_fixed
+<span class="k">FROM</span> orders
+<span class="k">WHERE</span> order_id <span class="k">IN</span> (<span class="n">5011</span>, <span class="n">5012</span>, <span class="n">5013</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------+---------------------+---------------------+----------------+
+| order_id | raw_date            | clean_date          | date_was_fixed |
++----------+---------------------+---------------------+----------------+
+|     5011 | 2024-10-08 13:04:56 | 2024-10-08 13:04:56 |              0 |
+|     5012 | 2025-10-08 13:34:15 | 2024-10-08 13:34:15 |              1 |
+|     5013 | 2024-10-08 17:18:57 | 2024-10-08 17:18:57 |              0 |
++----------+---------------------+---------------------+----------------+</code></pre></div>
+  <p>After the fix, order 5012 sits neatly between its neighbours, which confirms the decision. <code>- INTERVAL 1 YEAR</code> is date arithmetic, a preview of tomorrow. Another reasonable choice would have been to leave these two orders out. What matters is that you choose, write it down, and can find the affected rows later through the flag.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="n">7</span>Duplicates, three ways</h2>
+  <p>"Duplicate" means different things depending on what's repeated. There are three kinds in this data, and each needs its own approach.</p>
+
+  <h3 style="margin:28px 0 8px">1. Exact copies of a row</h3>
+  <p>Some reviews were submitted twice: same product, same customer, same rating, same text, same day. Only the <code>review_id</code> differs. Day 9's <code>ROW_NUMBER()</code> finds them: number the rows inside each group of identical values, and every row numbered 2 or more is a copy.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> numbered <span class="k">AS</span> (
+    <span class="k">SELECT</span> review_id,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> product_id, customer_id, rating, review_text, review_date
+                              <span class="k">ORDER</span> <span class="k">BY</span> review_id) <span class="k">AS</span> copy_number
+    <span class="k">FROM</span> reviews
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*)                <span class="k">AS</span> all_reviews,
+       <span class="k">SUM</span>(copy_number = <span class="n">1</span>)    <span class="k">AS</span> keep,
+       <span class="k">SUM</span>(copy_number &gt; <span class="n">1</span>)    <span class="k">AS</span> exact_copies
+<span class="k">FROM</span> numbered;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------+--------------+
+| all_reviews | keep | exact_copies |
++-------------+------+--------------+
+|        2117 | 2097 |           20 |
++-------------+------+--------------+</code></pre></div>
+  <p>Twenty copies. To keep one of each, filter <code>WHERE copy_number = 1</code>. <code>ORDER BY review_id</code> decides which copy survives: the first one submitted. (<code>PARTITION BY</code> treats NULLs as equal, so two copies that both have no text still land in the same group. That's what we want here.) This is today's Try this.</p>
+
+  <h3 style="margin:28px 0 8px">2. Same customer, two accounts</h3>
+  <p>The 25 customers who signed up twice can't simply be deleted: both accounts have real orders. Instead, give every account a <strong>master ID</strong>: the first account the person created. Then point everything at the master.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> customer_id,
+       email,
+       <span class="k">MIN</span>(customer_id) <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> LOWER(TRIM(email))) <span class="k">AS</span> master_customer_id
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> LOWER(TRIM(email)) <span class="k">IN</span> (<span class="s">'reyansh.kapoor@gmail.com'</span>, <span class="s">'aditi.patil@gmail.com'</span>, <span class="s">'kavya.choudhury@icloud.com'</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+----------------------------+--------------------+
+| customer_id | email                      | master_customer_id |
++-------------+----------------------------+--------------------+
+|        2688 | aditi.patil@gmail.com      |               2688 |
+|        3030 | Aditi.patil@gmail.com      |               2688 |
+|           1 | kavya.choudhury@icloud.com |                  1 |
+|        1247 | reyansh.kapoor@gmail.com   |               1247 |
+|        3012 | reyansh.kapoor@gmail.com   |               1247 |
++-------------+----------------------------+--------------------+</code></pre></div>
+  <p><code>MIN(customer_id) OVER (PARTITION BY ...)</code> is a window function (Day 9): for each row, the smallest ID among all accounts with the same tidied email. Reyansh's second account, 3012, gets master 1247. Kavya has only one account, so she is her own master. Now an order placed on account 3012 can be counted as Reyansh's, and "orders per customer" becomes right. Across the whole table, 34 orders move to their master account.</p>
+
+  <h3 style="margin:28px 0 8px">3. Double-submitted orders</h3>
+  <p>On Day 10 you found 15 pairs of orders from the same customer less than five minutes apart, and said Day 11 would compare the items. Two orders a few minutes apart could be a real second purchase ("oh, I forgot the charger"). It's only a double submit if the <em>basket</em> is the same. So first, build a basket "fingerprint" for every order: its products and quantities as one piece of text.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> baskets <span class="k">AS</span> (
+    <span class="k">SELECT</span> o.order_id,
+           o.customer_id,
+           o.order_date,
+           GROUP_CONCAT(oi.product_id, <span class="s">'x'</span>, oi.quantity <span class="k">ORDER</span> <span class="k">BY</span> oi.product_id) <span class="k">AS</span> basket
+    <span class="k">FROM</span> orders o
+    <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id = o.order_id
+    <span class="k">GROUP</span> <span class="k">BY</span> o.order_id, o.customer_id, o.order_date
+)
+<span class="k">SELECT</span> a.order_id <span class="k">AS</span> first_order,
+       b.order_id <span class="k">AS</span> repeat_order,
+       a.basket,
+       TIMESTAMPDIFF(SECOND, a.order_date, b.order_date) <span class="k">AS</span> seconds_apart
+<span class="k">FROM</span> baskets a
+<span class="k">JOIN</span> baskets b <span class="k">ON</span> b.customer_id = a.customer_id
+              <span class="k">AND</span> b.order_id    &gt; a.order_id
+              <span class="k">AND</span> b.basket      = a.basket
+              <span class="k">AND</span> TIMESTAMPDIFF(SECOND, a.order_date, b.order_date) <span class="k">BETWEEN</span> <span class="n">0</span> <span class="k">AND</span> <span class="n">300</span>
+<span class="k">ORDER</span> <span class="k">BY</span> a.order_id
+<span class="k">LIMIT</span> <span class="n">6</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+--------------+----------------+---------------+
+| first_order | repeat_order | basket         | seconds_apart |
++-------------+--------------+----------------+---------------+
+|         188 |          189 | 19x1,22x1,40x1 |           136 |
+|         207 |          208 | 4x1            |           149 |
+|         804 |          805 | 23x1           |           117 |
+|        1111 |         1112 | 43x1           |            52 |
+|        1577 |         1578 | 56x1           |            91 |
+|        2080 |         2081 | 28x3,40x1      |            46 |
++-------------+--------------+----------------+---------------+</code></pre></div>
+  <p><code>19x1,22x1,40x1</code> means "one of product 19, one of 22, one of 40". <code>ORDER BY product_id</code> inside the <code>GROUP_CONCAT</code> matters: without it, the same basket could come out as "22x1,19x1" one time and "19x1,22x1" the next, and two identical baskets wouldn't match. All 15 pairs from Day 10 have identical baskets.</p>
+  <p>Can we be sure? Look at what happened to the money for the repeat orders:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> payment_status, <span class="k">COUNT</span>(*) <span class="k">AS</span> payments
+<span class="k">FROM</span> payments
+<span class="k">WHERE</span> order_id <span class="k">IN</span> (<span class="n">189</span>, <span class="n">208</span>, <span class="n">805</span>, <span class="n">1112</span>, <span class="n">1578</span>, <span class="n">2081</span>, <span class="n">3466</span>, <span class="n">3990</span>,
+                   <span class="n">4206</span>, <span class="n">4570</span>, <span class="n">4829</span>, <span class="n">5298</span>, <span class="n">5830</span>, <span class="n">5880</span>, <span class="n">5937</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> payment_status;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+
+| payment_status | payments |
++----------------+----------+
+| refunded       |       15 |
++----------------+----------+</code></pre></div>
+  <p>Every repeat order was refunded. The shop's own payment system already treated them as mistakes, which is strong evidence our rule is right. Checking a cleaning rule against a <em>second</em> source of truth like this is one of the best habits you can build. The clean layer will flag the later order of each pair as a duplicate, and leave it out of sales.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="n">8</span>Rows that shouldn't count</h2>
+  <p>Some rows aren't wrong, they just aren't business. Test orders, zero-quantity lines and stuck orders all fall into this group.</p>
+
+  <h3 style="margin:28px 0 8px">An exclusion list for test accounts</h3>
+  <p>Yesterday's search for <code>'%test%'</code> found three test accounts, and we noted that real companies usually keep a list. So let's make one. A table means the list is written down once, with a reason, and anyone can add to it when engineering finds another test account:</p>
+  <div class="code"><div class="code-bar"><span>Build 2: the exclusion list</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">DROP</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">EXISTS</span> excluded_customers;
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> excluded_customers (
+    customer_id <span class="t">INT</span>          <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+    reason      <span class="t">VARCHAR</span>(<span class="n">100</span>) <span class="k">NOT</span> <span class="k">NULL</span>
+);
+
+<span class="k">INSERT</span> <span class="k">INTO</span> excluded_customers (customer_id, reason)
+<span class="k">SELECT</span> customer_id, <span class="s">'Test account'</span>
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> email <span class="k">LIKE</span> <span class="s">'%test%'</span>;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> x.customer_id, c.email, x.reason
+<span class="k">FROM</span> excluded_customers x
+<span class="k">JOIN</span> customers c <span class="k">ON</span> c.customer_id = x.customer_id;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+--------------------------+--------------+
+| customer_id | email                    | reason       |
++-------------+--------------------------+--------------+
+|        3006 | test@test.com            | Test account |
+|        3007 | qa.tester@onlinestore.in | Test account |
+|        3008 | test123@example.com      | Test account |
++-------------+--------------------------+--------------+</code></pre></div>
+  <p>This is <code>INSERT ... SELECT</code>: instead of typing values, insert the rows a query returns. It's how you fill a table from data you already have. We flag these customers rather than delete them, so their orders stay in the raw data, with a reason anyone can read.</p>
+
+  <h3 style="margin:28px 0 8px">Zero-quantity lines and stuck orders</h3>
+  <ul>
+    <li><strong>The 4 lines with quantity 0</strong> are left out of the clean layer: <code>WHERE quantity &gt; 0</code>. They can't be a sale.</li>
+    <li><strong>The 6 orders stuck on Pending since 2023</strong> keep their status. Our revenue definition only counts Completed orders, so they're already left out of sales. They stay on the health check as an open question for the operations team.</li>
+    <li><strong>The 12 payments missing the shipping fee</strong> can't be fixed by an analyst. Was the customer under-charged, or did the payment record lose the fee? That's a question for finance. Until it's answered, the check stays open.</li>
+  </ul>
+  <p>Knowing what <em>not</em> to fix is part of the job. Some problems need a person with access to the real-world facts.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2><span class="n">9</span>Build the clean layer</h2>
+  <p>Now put every fix into views. Each view does one table's cleaning, and the last one, <code>clean_sales</code>, brings it all together for reports. It's the same idea as Day 9's <code>completed_sales</code>, but built on clean data.</p>
+
+  <div class="code"><div class="code-bar"><span>Build 3: clean_customers</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_customers <span class="k">AS</span>
+<span class="k">SELECT</span> c.customer_id,
+       <span class="k">MIN</span>(c.customer_id) <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> LOWER(TRIM(c.email))) <span class="k">AS</span> master_customer_id,
+       CONCAT(UPPER(<span class="k">LEFT</span>(TRIM(c.first_name), <span class="n">1</span>)),
+              LOWER(SUBSTRING(TRIM(c.first_name), <span class="n">2</span>)))              <span class="k">AS</span> first_name,
+       TRIM(c.last_name)                                            <span class="k">AS</span> last_name,
+       LOWER(TRIM(c.email))                                         <span class="k">AS</span> email,
+       <span class="k">CASE</span>
+           <span class="k">WHEN</span> c.phone <span class="k">IS</span> <span class="k">NULL</span> <span class="k">THEN</span> <span class="k">NULL</span>
+           <span class="k">WHEN</span> LOWER(TRIM(c.country)) <span class="k">IN</span> (<span class="s">'india'</span>, <span class="s">'in'</span>)
+                <span class="k">THEN</span> CONCAT(<span class="s">'+91'</span>, <span class="k">RIGHT</span>(REGEXP_REPLACE(c.phone, <span class="s">'[^0-9]'</span>, <span class="s">''</span>), <span class="n">10</span>))
+           <span class="k">ELSE</span> CONCAT(<span class="s">'+'</span>, REGEXP_REPLACE(c.phone, <span class="s">'[^0-9]'</span>, <span class="s">''</span>))
+       <span class="k">END</span>                                                          <span class="k">AS</span> phone,
+       l.clean_city                                                 <span class="k">AS</span> city,
+       <span class="k">CASE</span> LOWER(TRIM(c.country))
+           <span class="k">WHEN</span> <span class="s">'india'</span> <span class="k">THEN</span> <span class="s">'India'</span>   <span class="k">WHEN</span> <span class="s">'in'</span> <span class="k">THEN</span> <span class="s">'India'</span>
+           <span class="k">WHEN</span> <span class="s">'uk'</span>    <span class="k">THEN</span> <span class="s">'UK'</span>      <span class="k">WHEN</span> <span class="s">'united kingdom'</span> <span class="k">THEN</span> <span class="s">'UK'</span>
+           <span class="k">WHEN</span> <span class="s">'usa'</span>   <span class="k">THEN</span> <span class="s">'USA'</span>     <span class="k">WHEN</span> <span class="s">'us'</span> <span class="k">THEN</span> <span class="s">'USA'</span>   <span class="k">WHEN</span> <span class="s">'united states'</span> <span class="k">THEN</span> <span class="s">'USA'</span>
+           <span class="k">ELSE</span> TRIM(c.country)
+       <span class="k">END</span>                                                          <span class="k">AS</span> country,
+       <span class="k">CASE</span>
+           <span class="k">WHEN</span> c.signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'</span>    <span class="k">THEN</span> STR_TO_DATE(c.signup_date, <span class="s">'%Y-%m-%d'</span>)
+           <span class="k">WHEN</span> c.signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}/[0-9]{2}/[0-9]{4}$'</span>    <span class="k">THEN</span> STR_TO_DATE(c.signup_date, <span class="s">'%d/%m/%Y'</span>)
+           <span class="k">WHEN</span> c.signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'</span> <span class="k">THEN</span> STR_TO_DATE(c.signup_date, <span class="s">'%d-%b-%Y'</span>)
+       <span class="k">END</span>                                                          <span class="k">AS</span> signup_date,
+       c.acquisition_channel,
+       (x.customer_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>)                                  <span class="k">AS</span> is_test
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> city_lookup l        <span class="k">ON</span> l.city_key    = LOWER(TRIM(c.city))
+<span class="k">LEFT</span> <span class="k">JOIN</span> excluded_customers x <span class="k">ON</span> x.customer_id = c.customer_id;</code></pre></div>
+
+  <div class="code"><div class="code-bar"><span>Build 4: clean_orders</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_orders <span class="k">AS</span>
+<span class="k">WITH</span> baskets <span class="k">AS</span> (
+    <span class="k">SELECT</span> o.order_id, o.customer_id, o.order_date,
+           GROUP_CONCAT(oi.product_id, <span class="s">'x'</span>, oi.quantity <span class="k">ORDER</span> <span class="k">BY</span> oi.product_id) <span class="k">AS</span> basket
+    <span class="k">FROM</span> orders o
+    <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id = o.order_id
+    <span class="k">GROUP</span> <span class="k">BY</span> o.order_id, o.customer_id, o.order_date
+),
+double_submits <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> b.order_id
+    <span class="k">FROM</span> baskets a
+    <span class="k">JOIN</span> baskets b <span class="k">ON</span> b.customer_id = a.customer_id
+                  <span class="k">AND</span> b.order_id    &gt; a.order_id
+                  <span class="k">AND</span> b.basket      = a.basket
+                  <span class="k">AND</span> TIMESTAMPDIFF(SECOND, a.order_date, b.order_date) <span class="k">BETWEEN</span> <span class="n">0</span> <span class="k">AND</span> <span class="n">300</span>
+)
+<span class="k">SELECT</span> o.order_id,
+       cc.master_customer_id                  <span class="k">AS</span> customer_id,
+       o.customer_id                          <span class="k">AS</span> original_customer_id,
+       <span class="k">CASE</span> <span class="k">WHEN</span> o.order_date &gt; <span class="s">'2024-12-31 23:59:59'</span>
+            <span class="k">THEN</span> o.order_date - INTERVAL <span class="n">1</span> <span class="t">YEAR</span>
+            <span class="k">ELSE</span> o.order_date <span class="k">END</span>             <span class="k">AS</span> order_date,
+       (o.order_date &gt; <span class="s">'2024-12-31 23:59:59'</span>) <span class="k">AS</span> date_was_fixed,
+       <span class="k">CASE</span> LOWER(TRIM(o.status))
+            <span class="k">WHEN</span> <span class="s">'completed'</span> <span class="k">THEN</span> <span class="s">'Completed'</span> <span class="k">WHEN</span> <span class="s">'complete'</span> <span class="k">THEN</span> <span class="s">'Completed'</span>
+            <span class="k">WHEN</span> <span class="s">'cancelled'</span> <span class="k">THEN</span> <span class="s">'Cancelled'</span> <span class="k">WHEN</span> <span class="s">'canceled'</span> <span class="k">THEN</span> <span class="s">'Cancelled'</span>
+            <span class="k">WHEN</span> <span class="s">'pending'</span>   <span class="k">THEN</span> <span class="s">'Pending'</span>   <span class="k">WHEN</span> <span class="s">'shipped'</span>  <span class="k">THEN</span> <span class="s">'Shipped'</span>
+            <span class="k">ELSE</span> <span class="s">'Unknown'</span> <span class="k">END</span>                <span class="k">AS</span> status,
+       o.channel,
+       o.coupon_code,
+       o.shipping_fee,
+       cc.is_test,
+       (d.order_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>)               <span class="k">AS</span> is_duplicate
+<span class="k">FROM</span> orders o
+<span class="k">JOIN</span> clean_customers cc    <span class="k">ON</span> cc.customer_id = o.customer_id
+<span class="k">LEFT</span> <span class="k">JOIN</span> double_submits d <span class="k">ON</span> d.order_id     = o.order_id;</code></pre></div>
+
+  <div class="code"><div class="code-bar"><span>Build 5: clean_order_items, clean_payments and clean_returns</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_order_items <span class="k">AS</span>
+<span class="k">SELECT</span> order_item_id, order_id, product_id, quantity, unit_price
+<span class="k">FROM</span> order_items
+<span class="k">WHERE</span> quantity &gt; <span class="n">0</span>;
+
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_payments <span class="k">AS</span>
+<span class="k">SELECT</span> payment_id,
+       order_id,
+       payment_date,
+       <span class="k">CASE</span> LOWER(TRIM(payment_method))
+            <span class="k">WHEN</span> <span class="s">'upi'</span>              <span class="k">THEN</span> <span class="s">'UPI'</span>
+            <span class="k">WHEN</span> <span class="s">'credit card'</span>      <span class="k">THEN</span> <span class="s">'Card'</span>
+            <span class="k">WHEN</span> <span class="s">'debit card'</span>       <span class="k">THEN</span> <span class="s">'Card'</span>
+            <span class="k">WHEN</span> <span class="s">'card'</span>             <span class="k">THEN</span> <span class="s">'Card'</span>
+            <span class="k">WHEN</span> <span class="s">'cod'</span>              <span class="k">THEN</span> <span class="s">'COD'</span>
+            <span class="k">WHEN</span> <span class="s">'cash on delivery'</span> <span class="k">THEN</span> <span class="s">'COD'</span>
+            <span class="k">WHEN</span> <span class="s">'netbanking'</span>       <span class="k">THEN</span> <span class="s">'NetBanking'</span>
+            <span class="k">WHEN</span> <span class="s">'net banking'</span>      <span class="k">THEN</span> <span class="s">'NetBanking'</span>
+            <span class="k">WHEN</span> <span class="s">'wallet'</span>           <span class="k">THEN</span> <span class="s">'Wallet'</span>
+            <span class="k">WHEN</span> <span class="s">'paytm wallet'</span>     <span class="k">THEN</span> <span class="s">'Wallet'</span>
+            <span class="k">ELSE</span> <span class="s">'Unknown'</span> <span class="k">END</span> <span class="k">AS</span> payment_method,
+       amount,
+       LOWER(TRIM(payment_status)) <span class="k">AS</span> payment_status
+<span class="k">FROM</span> payments;
+
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_returns <span class="k">AS</span>
+<span class="k">SELECT</span> return_id,
+       order_item_id,
+       return_date,
+       reason <span class="k">AS</span> raw_reason,
+       <span class="k">CASE</span>
+            <span class="k">WHEN</span> reason <span class="k">IS</span> <span class="k">NULL</span>                         <span class="k">THEN</span> <span class="s">'Not given'</span>
+            <span class="k">WHEN</span> reason <span class="k">LIKE</span> <span class="s">'%size%'</span>                   <span class="k">THEN</span> <span class="s">'Size problem'</span>
+            <span class="k">WHEN</span> reason <span class="k">IN</span> (<span class="s">'Damaged'</span>, <span class="s">'Defective'</span>, <span class="s">'Not working'</span>)
+                                                        <span class="k">THEN</span> <span class="s">'Damaged or faulty'</span>
+            <span class="k">WHEN</span> reason <span class="k">IN</span> (<span class="s">'Not as described'</span>, <span class="s">'Colour different from photo'</span>)
+                                                        <span class="k">THEN</span> <span class="s">'Not as described'</span>
+            <span class="k">WHEN</span> reason <span class="k">IN</span> (<span class="s">'Changed mind'</span>, <span class="s">'Ordered by mistake'</span>)
+                                                        <span class="k">THEN</span> <span class="s">'Changed mind'</span>
+            <span class="k">WHEN</span> reason = <span class="s">'Late delivery'</span>               <span class="k">THEN</span> <span class="s">'Late delivery'</span>
+            <span class="k">ELSE</span> <span class="s">'Other'</span>
+       <span class="k">END</span> <span class="k">AS</span> reason_group,
+       refund_amount,
+       processed_by
+<span class="k">FROM</span> returns;</code></pre></div>
+  <p>(The return reasons use plain <code>=</code>, <code>IN</code> and <code>LIKE</code> without <code>LOWER</code>, because MySQL's comparisons already ignore capitals, as Day 10 showed. <code>'damaged'</code> matches <code>'Damaged'</code>. In a database that cares about capitals, like PostgreSQL, you'd add <code>LOWER</code>.)</p>
+
+  <div class="code"><div class="code-bar"><span>Build 6: clean_sales, the one view reports should use</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_sales <span class="k">AS</span>
+<span class="k">SELECT</span> o.order_id,
+       o.order_date,
+       o.customer_id,
+       o.channel,
+       o.coupon_code,
+       oi.order_item_id,
+       oi.product_id,
+       p.product_name,
+       <span class="k">COALESCE</span>(cat.category_name, <span class="s">'Uncategorised'</span>) <span class="k">AS</span> category_name,
+       oi.quantity,
+       oi.unit_price,
+       oi.quantity * oi.unit_price <span class="k">AS</span> line_total,
+       oi.quantity * p.cost_price  <span class="k">AS</span> line_cost
+<span class="k">FROM</span> clean_orders o
+<span class="k">JOIN</span> clean_order_items oi <span class="k">ON</span> oi.order_id     = o.order_id
+<span class="k">JOIN</span> products p           <span class="k">ON</span> p.product_id    = oi.product_id
+<span class="k">LEFT</span> <span class="k">JOIN</span> categories cat  <span class="k">ON</span> cat.category_id = p.category_id
+<span class="k">WHERE</span> o.status = <span class="s">'Completed'</span>
+  <span class="k">AND</span> o.is_test = <span class="n">0</span>
+  <span class="k">AND</span> o.is_duplicate = <span class="n">0</span>;</code></pre></div>
+  <p>That's the whole clean layer: two small helper tables and six views. Notice how <code>clean_sales</code> reads like a sentence: completed orders, not test, not duplicates, with their lines, products and categories. Each view handles one job, and they build on each other: <code>clean_orders</code> uses <code>clean_customers</code> for the master IDs and the test flag, and <code>clean_sales</code> uses <code>clean_orders</code>. Change a rule in one place, and everything above it follows.</p>
+  <p>A quick look at how the orders came through:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> status,
+       <span class="k">COUNT</span>(*)                                <span class="k">AS</span> orders,
+       <span class="k">SUM</span>(is_test)                            <span class="k">AS</span> test,
+       <span class="k">SUM</span>(is_duplicate)                       <span class="k">AS</span> duplicates,
+       <span class="k">SUM</span>(date_was_fixed)                     <span class="k">AS</span> dates_fixed,
+       <span class="k">SUM</span>(customer_id &lt;&gt; original_customer_id) <span class="k">AS</span> moved_to_master
+<span class="k">FROM</span> clean_orders
+<span class="k">GROUP</span> <span class="k">BY</span> status
+<span class="k">ORDER</span> <span class="k">BY</span> orders <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+--------+------+------------+-------------+-----------------+
+| status    | orders | test | duplicates | dates_fixed | moved_to_master |
++-----------+--------+------+------------+-------------+-----------------+
+| Completed |   5688 |    9 |         15 |           2 |              32 |
+| Cancelled |    377 |    0 |          0 |           0 |               2 |
+| Pending   |     40 |    0 |          0 |           0 |               0 |
+| Shipped   |     39 |    0 |          0 |           0 |               0 |
++-----------+--------+------+------------+-------------+-----------------+</code></pre></div>
+  <p>Four clean statuses, and every flag matches what we found earlier: 9 test orders, 15 duplicates, 2 fixed dates, and 32 + 2 = 34 orders moved to their master account. The test orders, duplicates and future dates were all marked Completed, which is exactly why they would have leaked into revenue.</p>
+  <div class="note"><p><strong>Views or new tables?</strong> Views always show current data, cost no storage and can't go out of date. But they redo the work every time you query them. On our data that's a fraction of a second. On a table with a hundred million rows, teams often save the cleaned result into real tables on a schedule instead, for example every night. That's the job of data engineering tools, and the idea is the same: raw stays raw, cleaning is written as code.</p></div>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2><span class="n">10</span>Data quality checks: a smoke alarm for your data</h2>
+  <p>Cleaning once isn't enough. Tomorrow a new spelling arrives, or the app gets a bug. A smoke alarm doesn't put out fires, but it tells you the moment one starts. A <strong>data quality check</strong> is the same: a query that should return 0, and shouts when it doesn't. Put several together, and you get a health check you can run every morning.</p>
+  <div class="code"><div class="code-bar"><span>The health check: run it whenever the data changes</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'Order statuses we do not recognise'</span> <span class="k">AS</span> check_name,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> problems, <span class="s">'fixed'</span> <span class="k">AS</span> kind
+<span class="k">FROM</span> clean_orders <span class="k">WHERE</span> status = <span class="s">'Unknown'</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Payment methods we do not recognise'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_payments <span class="k">WHERE</span> payment_method = <span class="s">'Unknown'</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Return reasons we do not recognise'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_returns <span class="k">WHERE</span> reason_group = <span class="s">'Other'</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Countries we do not recognise'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_customers
+<span class="k">WHERE</span> country <span class="k">NOT</span> <span class="k">IN</span> (<span class="s">'India'</span>, <span class="s">'USA'</span>, <span class="s">'UK'</span>, <span class="s">'UAE'</span>, <span class="s">'Singapore'</span>, <span class="s">'Canada'</span>, <span class="s">'Australia'</span>, <span class="s">'Germany'</span>)
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Sign-up dates that would not convert'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_customers <span class="k">WHERE</span> signup_date <span class="k">IS</span> <span class="k">NULL</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'City spellings missing from the lookup'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> city_lookup l <span class="k">ON</span> l.city_key = LOWER(TRIM(c.city))
+<span class="k">WHERE</span> TRIM(c.city) <span class="k">NOT</span> <span class="k">IN</span> (<span class="s">''</span>, <span class="s">'N/A'</span>) <span class="k">AND</span> l.city_key <span class="k">IS</span> <span class="k">NULL</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Orders dated after the data ends'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_orders <span class="k">WHERE</span> order_date &gt; <span class="s">'2024-12-31 23:59:59'</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Sales lines with quantity of zero or less'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_sales <span class="k">WHERE</span> quantity &lt;= <span class="n">0</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Real customers whose first order is before their sign-up'</span>, <span class="k">COUNT</span>(*), <span class="s">'fixed'</span>
+<span class="k">FROM</span> clean_customers cc
+<span class="k">JOIN</span> (<span class="k">SELECT</span> customer_id, <span class="k">MIN</span>(order_date) <span class="k">AS</span> first_order
+      <span class="k">FROM</span> clean_orders <span class="k">GROUP</span> <span class="k">BY</span> customer_id) f <span class="k">ON</span> f.customer_id = cc.customer_id
+<span class="k">WHERE</span> cc.is_test = <span class="n">0</span> <span class="k">AND</span> <span class="t">DATE</span>(f.first_order) &lt; cc.signup_date
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Successful payments that do not match the order total'</span>, <span class="k">COUNT</span>(*), <span class="s">'open: ask finance'</span>
+<span class="k">FROM</span> payments p
+<span class="k">JOIN</span> (<span class="k">SELECT</span> o.order_id, <span class="k">SUM</span>(oi.quantity * oi.unit_price) + o.shipping_fee <span class="k">AS</span> total
+      <span class="k">FROM</span> orders o <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id = o.order_id
+      <span class="k">GROUP</span> <span class="k">BY</span> o.order_id, o.shipping_fee) t <span class="k">ON</span> t.order_id = p.order_id
+<span class="k">WHERE</span> p.payment_status = <span class="s">'success'</span> <span class="k">AND</span> p.amount &lt;&gt; t.total
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Orders pending for more than 30 days'</span>, <span class="k">COUNT</span>(*), <span class="s">'open: ask operations'</span>
+<span class="k">FROM</span> clean_orders <span class="k">WHERE</span> status = <span class="s">'Pending'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------------------------------------------------+----------+----------------------+
+| check_name                                               | problems | kind                 |
++----------------------------------------------------------+----------+----------------------+
+| Order statuses we do not recognise                       |        0 | fixed                |
+| Payment methods we do not recognise                      |        0 | fixed                |
+| Return reasons we do not recognise                       |        0 | fixed                |
+| Countries we do not recognise                            |        0 | fixed                |
+| Sign-up dates that would not convert                     |        0 | fixed                |
+| City spellings missing from the lookup                   |        0 | fixed                |
+| Orders dated after the data ends                         |        0 | fixed                |
+| Sales lines with quantity of zero or less                |        0 | fixed                |
+| Real customers whose first order is before their sign-up |        0 | fixed                |
+| Successful payments that do not match the order total    |       12 | open: ask finance    |
+| Orders pending for more than 30 days                     |        6 | open: ask operations |
++----------------------------------------------------------+----------+----------------------+</code></pre></div>
+  <p>Every "fixed" check is 0, and the two open issues show their counts, so nobody forgets them. Some details worth noticing:</p>
+  <ul>
+    <li><strong>Checks run on the clean layer</strong> where possible. They test that your fixes work, not that the raw data is still messy (it is, and it always will be).</li>
+    <li><strong>The sign-up check had a surprise.</strong> When I first ran it without <code>cc.is_test = 0</code>, it found one customer whose first order came before they signed up. It was a test account. Test data breaks the rules of real data, which is one more reason to exclude it.</li>
+    <li><strong>The "do not recognise" checks</strong> are why the cleaning <code>CASE</code>s ended in a catch-all, <code>'Unknown'</code> or <code>'Other'</code>. For country, which passes clean values through with <code>ELSE TRIM(country)</code>, the check uses a list of the countries we expect instead. A new spelling turns a 0 into a 1, and you find out on the first day, not in next quarter's board meeting.</li>
+  </ul>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <h2><span class="n">11</span>A number you can trust</h2>
+  <p>Back to the question from yesterday: what is the shop's revenue? Here are all three answers side by side:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'Day 10: naive (status = '</span><span class="s">'Completed'</span><span class="s">')'</span> <span class="k">AS</span> <span class="k">version</span>, <span class="n">13101912</span> <span class="k">AS</span> revenue
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Day 10: careful (spellings, tests, future dates)'</span>, <span class="n">13188809</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Day 11: clean_sales'</span>, <span class="k">ROUND</span>(<span class="k">SUM</span>(line_total))
+<span class="k">FROM</span> clean_sales;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------------------------------+----------+
+| version                                          | revenue  |
++--------------------------------------------------+----------+
+| Day 10: naive (status = 'Completed')             | 13101912 |
+| Day 10: careful (spellings, tests, future dates) | 13188809 |
+| Day 11: clean_sales                              | 13172860 |
++--------------------------------------------------+----------+</code></pre></div>
+  <p>(The first two numbers are typed in from Day 10, so you can see them next to the new one. In a real report, you'd only keep the last row.)</p>
+  <p>The clean number is lower than yesterday's careful one for two reasons that pull in opposite directions. Removing the 15 double-submitted orders takes ₹33,740 <em>out</em>. Fixing the year on the two "future" orders puts ₹17,791 back <em>in</em>, since yesterday's careful version simply left them out. 13,188,809 - 33,740 + 17,791 = 13,172,860, to the rupee. Every change has a reason you can point to in the SQL.</p>
+  <p>And now that the data is clean, the first real business answers come almost for free:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="t">YEAR</span>(order_date)                  <span class="k">AS</span> yr,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id)          <span class="k">AS</span> orders,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> customer_id)       <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(line_total))            <span class="k">AS</span> revenue,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(line_total) / <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id)) <span class="k">AS</span> avg_order_value
+<span class="k">FROM</span> clean_sales
+<span class="k">GROUP</span> <span class="k">BY</span> yr
+<span class="k">ORDER</span> <span class="k">BY</span> yr;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------+--------+-----------+---------+-----------------+
+| yr   | orders | customers | revenue | avg_order_value |
++------+--------+-----------+---------+-----------------+
+| 2023 |   2343 |      1089 | 5190428 |            2215 |
+| 2024 |   3319 |      1371 | 7982433 |            2405 |
++------+--------+-----------+---------+-----------------+</code></pre></div>
+  <p>Revenue grew by about 54% from 2023 to 2024, more orders came from more customers, and the average order got a little bigger too. Because <code>customer_id</code> in <code>clean_sales</code> is the <em>master</em> ID, a person with two accounts is counted once. That's a statement you can make to the owner with confidence, because every step behind it is written down.</p>
+  <div class="note sun"><p><strong>Is this "revenue"?</strong> It's <em>gross</em> revenue from completed orders. Some of those items were later returned and refunded. Whether the owner wants revenue before or after returns is one more definition to agree with whoever asked (Day 6). The <code>clean_returns</code> view makes the "after returns" number one join away. You'll use it in the case studies.</p></div>
+</section>
+
+<!-- Try this -->
+<div class="try" id="try">
+  <h2>✏️ Try this before Day 12</h2>
+  <ol style="padding-left:22px">
+    <li>Build a <code>clean_reviews</code> view that keeps one copy of each review (section 7). How many reviews does it have?</li>
+    <li>Build a <code>clean_web_events</code> view for the tracking data: device in small letters, and a clean traffic source where <code>(none)</code> means <code>direct</code> and a missing source becomes <code>unknown</code>. Keep the deleted customers' IDs, but add a column that says whether the customer still exists.</li>
+    <li>Which payment method fails most often? Use <code>clean_payments</code>, and give the failure rate as a percentage of attempts.</li>
+    <li>What share of returns is a size problem? Use <code>clean_returns</code>.</li>
+    <li>Compare customers by city before and after cleaning, for Bengaluru. How many customers did the raw data show under exactly "Bengaluru", and how many does the clean layer show?</li>
+  </ol>
+  <details class="reveal">
+    <summary>Show sample answers</summary>
+    <div class="body">
+      <p><strong>1.</strong></p>
+      <div class="code"><div class="code-bar"><span>Build 7: clean_reviews</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_reviews <span class="k">AS</span>
+<span class="k">WITH</span> numbered <span class="k">AS</span> (
+    <span class="k">SELECT</span> r.*,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> product_id, customer_id, rating, review_text, review_date
+                              <span class="k">ORDER</span> <span class="k">BY</span> review_id) <span class="k">AS</span> copy_number
+    <span class="k">FROM</span> reviews r
+)
+<span class="k">SELECT</span> review_id, product_id, customer_id, rating, review_text, review_date
+<span class="k">FROM</span> numbered
+<span class="k">WHERE</span> copy_number = <span class="n">1</span>;</code></pre></div>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> reviews)       <span class="k">AS</span> raw_reviews,
+       (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> clean_reviews) <span class="k">AS</span> clean_reviews;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+---------------+
+| raw_reviews | clean_reviews |
++-------------+---------------+
+|        2117 |          2097 |
++-------------+---------------+</code></pre></div>
+      <p><strong>2.</strong></p>
+      <div class="code"><div class="code-bar"><span>Build 8: clean_web_events</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> clean_web_events <span class="k">AS</span>
+<span class="k">SELECT</span> w.event_id,
+       w.session_id,
+       w.customer_id,
+       (c.customer_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>) <span class="k">AS</span> customer_exists,
+       w.event_time,
+       w.event_type,
+       w.product_id,
+       w.order_id,
+       LOWER(TRIM(w.device)) <span class="k">AS</span> device,
+       <span class="k">CASE</span>
+           <span class="k">WHEN</span> w.traffic_source <span class="k">IS</span> <span class="k">NULL</span>                <span class="k">THEN</span> <span class="s">'unknown'</span>
+           <span class="k">WHEN</span> LOWER(TRIM(w.traffic_source)) = <span class="s">'(none)'</span> <span class="k">THEN</span> <span class="s">'direct'</span>
+           <span class="k">ELSE</span> LOWER(TRIM(w.traffic_source))
+       <span class="k">END</span> <span class="k">AS</span> traffic_source
+<span class="k">FROM</span> web_events w
+<span class="k">LEFT</span> <span class="k">JOIN</span> customers c <span class="k">ON</span> c.customer_id = w.customer_id;</code></pre></div>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> traffic_source, <span class="k">COUNT</span>(<span class="k">DISTINCT</span> session_id) <span class="k">AS</span> sessions
+<span class="k">FROM</span> clean_web_events
+<span class="k">GROUP</span> <span class="k">BY</span> traffic_source
+<span class="k">ORDER</span> <span class="k">BY</span> sessions <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+
+| traffic_source | sessions |
++----------------+----------+
+| google         |     7181 |
+| direct         |     4580 |
+| instagram      |     3856 |
+| email          |     2097 |
+| facebook       |     1652 |
+| referral       |     1433 |
+| unknown        |      106 |
++----------------+----------+</code></pre></div>
+      <p>Why does <code>(none)</code> mean direct? Analytics tools write "(none)" when a visit came with no referring website: someone typed the address or used a bookmark. That's what "direct" means, so they belong together. It's still a decision, though, so it's written in the view where anyone can see it. Day 13 builds the website funnel on this view.</p>
+      <p><strong>3.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> payment_method,
+       <span class="k">COUNT</span>(*)                                        <span class="k">AS</span> attempts,
+       <span class="k">SUM</span>(payment_status = <span class="s">'failed'</span>)                  <span class="k">AS</span> failed,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(payment_status = <span class="s">'failed'</span>) * <span class="n">100</span> / <span class="k">COUNT</span>(*), <span class="n">1</span>) <span class="k">AS</span> failure_pct
+<span class="k">FROM</span> clean_payments
+<span class="k">GROUP</span> <span class="k">BY</span> payment_method
+<span class="k">ORDER</span> <span class="k">BY</span> failure_pct <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+--------+-------------+
+| payment_method | attempts | failed | failure_pct |
++----------------+----------+--------+-------------+
+| NetBanking     |      440 |     57 |        13.0 |
+| Card           |     1556 |    128 |         8.2 |
+| UPI            |     2957 |     96 |         3.2 |
+| Wallet         |      322 |      8 |         2.5 |
+| COD            |      992 |      0 |         0.0 |
++----------------+----------+--------+-------------+</code></pre></div>
+      <p>NetBanking fails most, at over 1 in 8 attempts, and cards about 1 in 12. COD never "fails" here, because nothing is charged online. COD problems show up as cancelled orders instead, which is worth checking separately. This only became a clear answer once the 14 spellings were grouped into 5 methods.</p>
+      <p><strong>4.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> reason_group,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> returns,
+       <span class="k">ROUND</span>(<span class="k">COUNT</span>(*) * <span class="n">100</span> / <span class="k">SUM</span>(<span class="k">COUNT</span>(*)) <span class="k">OVER</span> (), <span class="n">1</span>) <span class="k">AS</span> pct
+<span class="k">FROM</span> clean_returns
+<span class="k">GROUP</span> <span class="k">BY</span> reason_group
+<span class="k">ORDER</span> <span class="k">BY</span> returns <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------+---------+------+
+| reason_group      | returns | pct  |
++-------------------+---------+------+
+| Size problem      |     245 | 44.1 |
+| Damaged or faulty |     119 | 21.4 |
+| Changed mind      |      87 | 15.6 |
+| Not as described  |      72 | 12.9 |
+| Not given         |      21 |  3.8 |
+| Late delivery     |      12 |  2.2 |
++-------------------+---------+------+</code></pre></div>
+      <p>Size problems are about 44% of all returns. In the raw data they were spread across five spellings, and the biggest one, "wrong size", looked like only about a quarter. Grouping free text is often where the real insight is hiding.</p>
+      <p><strong>5.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> customers
+        <span class="k">WHERE</span> city COLLATE utf8mb4_0900_bin = <span class="s">'Bengaluru'</span>)  <span class="k">AS</span> raw_exact_match,
+       (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> clean_customers
+        <span class="k">WHERE</span> city = <span class="s">'Bengaluru'</span>)                           <span class="k">AS</span> clean_layer;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------+-------------+
+| raw_exact_match | clean_layer |
++-----------------+-------------+
+|             173 |         299 |
++-----------------+-------------+</code></pre></div>
+      <p>Only 173 rows spell it exactly "Bengaluru". The clean layer finds 299, because it also catches "Bangalore", "bengaluru" and "Bengaluru " with a space. A city report on the raw column would have under-counted the shop's third-biggest city by more than 40%.</p>
+    </div>
+  </details>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner</h2>
+    <p>Cleaning questions test judgement as much as SQL. Interviewers want to hear <em>how</em> you'd decide, not just which function you'd use.</p>
+  </div>
+  <div class="iv-group">
+    <h3>Concept questions</h3>
+    <details class="qa"><summary><span class="q">Q1</span>How do you approach cleaning a messy table?</summary>
+      <div class="body"><p>First profile it and list the issues (Day 10). Then, without changing the raw data, write each fix as SQL in a view or a separate cleaned table: tidy text, map categories, convert types, turn fake NULLs into real ones, handle duplicates and exclude test data. Record every business decision where people can see it. Check row counts before and after each step, and finish with data quality checks that should return 0, so new problems are caught early.</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>Why not just UPDATE the raw table to fix the data?</summary>
+      <div class="body"><p>Because the raw data is the evidence. If a cleaning rule is wrong (say, the date format was really month-first), an <code>UPDATE</code> has destroyed the original, and you can't recover it. Cleaning in views or in a separate layer keeps the original, makes every rule visible, and automatically cleans new rows as they arrive. Also, an analyst often doesn't have permission to change source tables, and shouldn't need it.</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>How do you find and remove duplicate rows?</summary>
+      <div class="body"><p>To find them: <code>GROUP BY</code> the columns that define "the same", with <code>HAVING COUNT(*) &gt; 1</code>. To keep one of each: <code>ROW_NUMBER() OVER (PARTITION BY those columns ORDER BY something)</code> and keep row number 1, where the <code>ORDER BY</code> decides which copy survives (for example the earliest). The hard part is defining "the same": exact copies, the same customer with a different email spelling, or two orders with the same basket a minute apart all need different rules.</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>What does STR_TO_DATE return for a value that doesn't match the format?</summary>
+      <div class="body"><p>NULL, with a warning, not an error, so bad conversions can pass silently. Always count the NULLs your conversion produces. Also, formats like <code>03/04/2024</code> are ambiguous (day-first or month-first), so check the data (a first number above 12, like <code>21/07/2024</code>, proves day-first) and document the choice.</p></div></details>
+    <details class="qa"><summary><span class="q">Q5</span>What's the difference between REPLACE and REGEXP_REPLACE?</summary>
+      <div class="body"><p><code>REPLACE(text, 'a', 'b')</code> swaps one exact piece of text for another. <code>REGEXP_REPLACE(text, pattern, 'b')</code> swaps anything matching a pattern, so <code>REGEXP_REPLACE(phone, '[^0-9]', '')</code> removes every non-digit in one go. <code>REGEXP_REPLACE</code> needs MySQL 8.0 or newer.</p></div></details>
+    <details class="qa"><summary><span class="q">Q6</span>When would you use a lookup table instead of CASE?</summary>
+      <div class="body"><p>When there are many values, when the mapping changes over time, or when business people should be able to maintain it. A lookup table keeps the mapping as data rather than code, can be joined anywhere, and makes unmapped values easy to find with an anti-join. <code>CASE</code> is fine for a short, stable list, like four order statuses.</p></div></details>
+    <details class="qa"><summary><span class="q">Q7</span>Why end a cleaning CASE with ELSE 'Unknown' rather than ELSE the original value?</summary>
+      <div class="body"><p>So that unexpected values become visible. With <code>ELSE status</code>, a new spelling slips into reports as an extra category without anyone noticing. With <code>ELSE 'Unknown'</code>, a data quality check counting <code>'Unknown'</code> catches it the first day it appears.</p></div></details>
+    <details class="qa"><summary><span class="q">Q8</span>What is a data quality check?</summary>
+      <div class="body"><p>A query that should return zero (or an expected number) when the data is healthy, for example "orders with an unknown status", "dates that failed to convert", "lines with quantity of zero or less", or "payments that don't match the order total". Run together on a schedule, they work like a smoke alarm: they don't fix anything, but they tell you right away when something breaks.</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Practical questions</h3>
+    <details class="qa"><summary><span class="q">P1</span>Keep only the latest review per customer per product.</summary>
+      <div class="body">
+        <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> ranked <span class="k">AS</span> (
+    <span class="k">SELECT</span> review_id, product_id, customer_id, rating, review_date,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id, product_id
+                              <span class="k">ORDER</span> <span class="k">BY</span> review_date <span class="k">DESC</span>, review_id <span class="k">DESC</span>) <span class="k">AS</span> rn
+    <span class="k">FROM</span> clean_reviews
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> latest_reviews
+<span class="k">FROM</span> ranked
+<span class="k">WHERE</span> rn = <span class="n">1</span>;</code></pre></div>
+        <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+
+| latest_reviews |
++----------------+
+|           2053 |
++----------------+</code></pre></div>
+        <p>Same pattern as removing exact copies, but here "the same" means the same customer and product, and <code>ORDER BY ... DESC</code> makes the newest review row 1. The <code>review_id DESC</code> tie-breaker makes the choice stable when two reviews share a date (Day 9).</p>
+      </div></details>
+    <details class="qa"><summary><span class="q">P2</span>A column of prices was loaded as text, like <code>'₹1,299.00'</code>. Turn it into a number.</summary>
+      <div class="body">
+        <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'₹1,299.00'</span> <span class="k">AS</span> raw_price,
+       CAST(<span class="k">REPLACE</span>(<span class="k">REPLACE</span>(<span class="s">'₹1,299.00'</span>, <span class="s">'₹'</span>, <span class="s">''</span>), <span class="s">','</span>, <span class="s">''</span>) <span class="k">AS</span> <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>)) <span class="k">AS</span> clean_price;</code></pre></div>
+        <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-------------+
+| raw_price   | clean_price |
++-------------+-------------+
+| ₹1,299.00   |     1299.00 |
++-------------+-------------+</code></pre></div>
+        <p>Remove the currency sign and the thousands comma, then <code>CAST</code> to <code>DECIMAL</code> (never <code>FLOAT</code> for money, Day 2). In a real column, add a check: any value that's still NULL or 0 after conversion needs a look.</p>
+      </div></details>
+    <details class="qa"><summary><span class="q">P3</span>Find customers whose email isn't a valid shape (something@something.something).</summary>
+      <div class="body">
+        <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> bad_emails
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> TRIM(email) <span class="k">NOT</span> <span class="k">REGEXP</span> <span class="s">'^[^@ ]+@[^@ ]+[.][^@ ]+$'</span>;</code></pre></div>
+        <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+
+| bad_emails |
++------------+
+|          0 |
++------------+</code></pre></div>
+        <p>The pattern means: some characters that aren't <code>@</code> or a space, then one <code>@</code>, then more of them, a dot, and more. Every email here has a valid shape, which is useful to know too. A good answer adds that a valid <em>shape</em> doesn't mean a real inbox. Only sending an email proves that.</p>
+      </div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li>Never change raw data. Clean in <strong>views</strong>, write every decision in SQL, and count before and after each fix.</li>
+    <li>Text: <code>TRIM</code>, <code>LOWER</code>, <code>UPPER</code>, the capitalise pattern (not on names like D'Souza), <code>REPLACE</code>, and <code>REGEXP_REPLACE</code> to keep only the characters you want.</li>
+    <li>Categories: <code>CASE</code> on <code>LOWER(TRIM(...))</code>, with a catch-all like <code>ELSE 'Unknown'</code> so new values show up. For long or changing lists, use a <strong>lookup table</strong>.</li>
+    <li>Missing values: turn <code>''</code> and <code>'N/A'</code> into real NULLs with <code>NULLIF</code>. Use <code>COALESCE</code> only when you know what NULL means. Watch for rows an inner join drops.</li>
+    <li>Types: <code>STR_TO_DATE</code> for text dates (it returns NULL on failure, so count them) and <code>CAST</code> for numbers. Text compares like words, not values.</li>
+    <li>Duplicates come in kinds: exact copies (<code>ROW_NUMBER</code>), one person with two accounts (a master ID with <code>MIN() OVER</code>), and double submits (compare the baskets, then confirm with another source).</li>
+    <li>Exclude what isn't business (test accounts, zero quantities), and leave open questions open.</li>
+    <li>Finish with <strong>data quality checks</strong> that should return 0. The clean revenue is ₹1,31,72,860, up 54% from 2023 to 2024.</li>
+  </ul>
+</div>
+
+<div class="next"><div><small>Coming up next</small><h3>Day 12: Dates and time</h3><p>Now that dates are real dates: group by week, month and quarter, compare this year with last, and fill in the months that had no sales.</p></div><a class="btn" href="Day12_Dates_and_Time.html">Read Day 12</a></div>
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>

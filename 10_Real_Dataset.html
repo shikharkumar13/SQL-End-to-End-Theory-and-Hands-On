@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 10: The Real Dataset | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 10 of 23</span><span class="part-pill">Must-haves</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>The real dataset</h1>
+      <p class="hero-sub">Meet online_store_full: two years of the shop's records, ten tables, and plenty of mess. Learn what an analyst does in the first hour with a database they've never seen.</p>
+      <div class="facts"><span class="fact">30 minute read</span><span class="fact hl">Real, messy data</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="The analyst's first hour with a new database: five questions">
+      <p class="hd">Your first hour with a new database</p>
+      <ul class="reads">
+        <li><code>SHOW TABLES</code><span>What's here, and how big is it?</span></li>
+        <li><code>DESCRIBE ...</code><span>What does one row mean, and how do tables connect?</span></li>
+        <li><code>COUNT, MIN, MAX</code><span>What do the values really look like?</span></li>
+        <li><code>GROUP BY</code><span>Are the categories clean, or messy?</span></li>
+        <li><code>LEFT JOIN ... IS NULL</code><span>Is anything duplicated, missing or broken?</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>Meet online_store_full</a></li><li><a href="#s2"><span class="n">2</span>Load it</a></li><li><a href="#s3"><span class="n">3</span>What's here?</a></li><li><a href="#s4"><span class="n">4</span>What's in each table?</a></li><li><a href="#s5"><span class="n">5</span>How tables connect</a></li><li><a href="#s6"><span class="n">6</span>Read some rows</a></li><li><a href="#s7"><span class="n">7</span>Profile the columns</a></li><li><a href="#s8"><span class="n">8</span>Check the categories</a></li><li><a href="#s9"><span class="n">9</span>Duplicates and orphans</a></li><li><a href="#s10"><span class="n">10</span>The five new tables</a></li><li><a href="#s11"><span class="n">11</span>Why it matters</a></li><li><a href="#s12"><span class="n">12</span>The data issues log</a></li><li class="gap"></li><li><a href="#try"><span class="n"></span>Try this</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">You passed Checkpoint 1. Everything so far ran on a tidy 70-row database you could check by eye. Real jobs don't look like that. On your first day, someone gives you access to a database you've never seen and says: "Have a look around, and tell me what you find." Today is that first day. You'll meet <code>online_store_full</code>, the shop's full records for 2023 and 2024, and learn the checklist analysts use in their first hour with any new data.</p>
+<p>Today is mostly about <em>looking</em>, not fixing. You'll find a lot of problems, and write them down. Fixing them is Day 11.</p>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>Meet online_store_full</h2>
+  <p>The small <code>online_store</code> was like a practice exam: neat, short, every answer known. <code>online_store_full</code> is the real thing: the shop's records for two full years, exported from several different systems. The website and app wrote the orders, a payment company sent the payments, the warehouse logged the returns, HR keeps the staff list, and an analytics tool tracked clicks on the website. Each system had its own habits, and none of them was perfect.</p>
+  <p>It has ten tables. The first five are the ones you know, with a few extra columns. The other five are new:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Table</th><th>One row means</th><th>New?</th></tr></thead>
+      <tbody>
+        <tr><td><code>categories</code></td><td>a product category (the same five)</td><td></td></tr>
+        <tr><td><code>products</code></td><td>a product. Now with a cost price, a launch date and an <code>is_active</code> flag</td><td></td></tr>
+        <tr><td><code>customers</code></td><td>a sign-up. Now with phone number and how they found the shop</td><td></td></tr>
+        <tr><td><code>orders</code></td><td>an order. Now with the time as well as the date, the channel (web or app), any coupon, and the shipping fee</td><td></td></tr>
+        <tr><td><code>order_items</code></td><td>a line on an order</td><td></td></tr>
+        <tr><td><code>employees</code></td><td>a member of staff, with their manager</td><td>✓</td></tr>
+        <tr><td><code>payments</code></td><td>a payment <em>attempt</em>. One order can have several.</td><td>✓</td></tr>
+        <tr><td><code>returns</code></td><td>a returned order line</td><td>✓</td></tr>
+        <tr><td><code>reviews</code></td><td>a rating and comment on a product</td><td>✓</td></tr>
+        <tr><td><code>web_events</code></td><td>one action on the website or app: a page view, add to cart, purchase and so on (October to December 2024 only)</td><td>✓</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>That middle column is the most important idea of the day. Analysts call it the <strong>grain</strong> of a table: what exactly does one row stand for? Get it wrong and every count is wrong. Look at <code>payments</code>: one row is one <em>attempt</em>, not one order. If a card payment fails and the customer tries again with UPI, that's two rows for one order. Counting payment rows would overcount paid orders.</p>
+  <div class="note sun"><p><strong>The data is messy on purpose.</strong> There are duplicate customers, inconsistent spellings, fake test orders, dates in the wrong format, and more. None of it was added to trick you. It's the same kind of mess every real company database has. Learning to spot it is one of the most valuable skills an analyst has.</p></div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Load it</h2>
+  <p>The whole database is one file, <code>online_store_full.sql</code>, in the series' GitHub repository. It's about 7 MB, so this is where you need MySQL on your own computer (Path B from Day 2). Online playgrounds can't handle a file this big.</p>
+  <div class="pair">
+    <div class="side">
+      <h3>In MySQL Workbench</h3>
+      <ul>
+        <li>Open <strong>File &gt; Run SQL Script...</strong></li>
+        <li>Pick <code>online_store_full.sql</code> and click Run.</li>
+        <li>Wait about a minute until it finishes.</li>
+        <li>Refresh the Schemas panel, and <code>online_store_full</code> appears.</li>
+      </ul>
+      <div class="eg">Opening the file in the editor works too, but a 7 MB file makes the editor slow. Run SQL Script is quicker.</div>
+    </div>
+    <div class="side alt">
+      <h3>From the command line</h3>
+      <ul>
+        <li>Open a terminal in the folder with the file.</li>
+        <li>Run <code>mysql -u root -p &lt; online_store_full.sql</code></li>
+        <li>Type your password and wait.</li>
+        <li>The last thing it prints is a row count for every table.</li>
+      </ul>
+      <div class="eg">It's the same way you can run complete_setup.sql, as shown in the series' README.</div>
+    </div>
+  </div>
+  <p>The file builds a <em>new</em> database. Your small <code>online_store</code> isn't touched, and every earlier lesson still works. From now on, switch between them with <code>USE</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">USE</span> online_store_full;</code></pre></div>
+  <p>The end of the file runs this check. If your numbers match, everything loaded:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'categories'</span> <span class="k">AS</span> table_name, <span class="k">COUNT</span>(*) <span class="k">AS</span> row_count <span class="k">FROM</span> categories
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'products'</span>,    <span class="k">COUNT</span>(*) <span class="k">FROM</span> products
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'customers'</span>,   <span class="k">COUNT</span>(*) <span class="k">FROM</span> customers
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'employees'</span>,   <span class="k">COUNT</span>(*) <span class="k">FROM</span> employees
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'orders'</span>,      <span class="k">COUNT</span>(*) <span class="k">FROM</span> orders
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'order_items'</span>, <span class="k">COUNT</span>(*) <span class="k">FROM</span> order_items
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'payments'</span>,    <span class="k">COUNT</span>(*) <span class="k">FROM</span> payments
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'returns'</span>,     <span class="k">COUNT</span>(*) <span class="k">FROM</span> returns
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'reviews'</span>,     <span class="k">COUNT</span>(*) <span class="k">FROM</span> reviews
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'web_events'</span>,  <span class="k">COUNT</span>(*) <span class="k">FROM</span> web_events;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-----------+
+| table_name  | row_count |
++-------------+-----------+
+| categories  |         5 |
+| products    |        61 |
+| customers   |      3028 |
+| employees   |        30 |
+| orders      |      6144 |
+| order_items |     10293 |
+| payments    |      6267 |
+| returns     |       556 |
+| reviews     |      2117 |
+| web_events  |     53024 |
++-------------+-----------+</code></pre></div>
+  <p>The file is generated from a fixed starting point, so everyone who loads it gets exactly these rows, and every result in this series will match yours. (The file also starts with <code>SET NAMES utf8mb4;</code>. That tells MySQL to read it as UTF-8 text, so names like Zoë and José arrive in one piece. Leave a line like that out, and accented letters can turn into garbage such as "ZoÃ«".)</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>Step 1: what's here, and how big is it?</h2>
+  <p>Think of moving into a new house. Before you unpack anything, you walk through every room to see what's there. With a database, the walk-through starts with <code>SHOW TABLES</code> and the row counts you just saw.</p>
+  <p>There's also a faster way to see table sizes, without counting each table yourself. MySQL keeps notes about every database in a special built-in database called <code>information_schema</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> table_name, table_rows
+<span class="k">FROM</span> information_schema.<span class="k">tables</span>
+<span class="k">WHERE</span> table_schema = <span class="s">'online_store_full'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> table_name;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+
+| TABLE_NAME  | TABLE_ROWS |
++-------------+------------+
+| categories  |          5 |
+| customers   |       2980 |
+| employees   |         30 |
+| order_items |      10481 |
+| orders      |       6086 |
+| payments    |       6504 |
+| products    |         61 |
+| returns     |        556 |
+| reviews     |       2117 |
+| web_events  |      53024 |
++-------------+------------+</code></pre></div>
+  <p>Compare it with the exact counts above. Several of these numbers are a little off (look at <code>customers</code> and <code>orders</code>), and when you run it yourself, you'll probably see different numbers again. That's not a bug. For InnoDB tables, <code>table_rows</code> is only an <strong>estimate</strong>, made from a quick sample, and MySQL refreshes it only from time to time. Your numbers may even differ from these. It's fine for "is this table about a thousand rows or about a million?", but whenever a number matters, use <code>COUNT(*)</code>.</p>
+  <div class="note"><p><strong>What is information_schema?</strong> It's MySQL's own catalogue of everything it stores: every database, table, column, key and index, in tables you can query like any other. You've already used <code>SHOW TABLES</code> and <code>DESCRIBE</code>. They get their answers from the same catalogue. Querying it directly lets you ask bigger questions, like "list every column in the whole database", in one go.</p></div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>Step 2: what's in each table?</h2>
+  <p>Next, look at the columns. <code>DESCRIBE</code> works one table at a time. Here's the whole database at once, from <code>information_schema.columns</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> table_name,
+       GROUP_CONCAT(CONCAT(column_name, <span class="s">' '</span>, column_type)
+                    <span class="k">ORDER</span> <span class="k">BY</span> ordinal_position <span class="k">SEPARATOR</span> <span class="s">', '</span>) <span class="k">AS</span> columns_and_types
+<span class="k">FROM</span> information_schema.columns
+<span class="k">WHERE</span> table_schema = <span class="s">'online_store_full'</span>
+  <span class="k">AND</span> table_name <span class="k">IN</span> (<span class="s">'customers'</span>, <span class="s">'orders'</span>, <span class="s">'web_events'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> table_name;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| TABLE_NAME | columns_and_types                                                                                                                                                                                      |
++------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| customers  | customer_id int, first_name varchar(50), last_name varchar(50), email varchar(100), phone varchar(25), city varchar(50), country varchar(50), signup_date varchar(20), acquisition_channel varchar(30) |
+| orders     | order_id int, customer_id int, order_date datetime, status varchar(20), channel varchar(10), coupon_code varchar(20), shipping_fee decimal(8,2)                                                        |
+| web_events | event_id bigint, session_id varchar(20), customer_id int, event_time datetime, event_type varchar(30), product_id int, order_id int, device varchar(20), traffic_source varchar(30)                    |
++------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+</code></pre></div>
+  <p>(<code>ordinal_position</code> is each column's place in the table, so the columns come out in their real order.) Even this quick look raises questions an analyst should write down:</p>
+  <ul>
+    <li><code>customers.signup_date</code> is <code>varchar(20)</code>, which is <strong>text</strong>, not a date. That's a red flag. You can't do date maths on text, and text dates can be in any format. Section 7 shows how bad it is.</li>
+    <li><code>orders.order_date</code> is a <code>datetime</code> now, with a time. Remember Day 5's warning about <code>BETWEEN</code> on date-and-time columns.</li>
+    <li><code>web_events.customer_id</code> exists, but is it linked to <code>customers</code>? Let's check.</li>
+  </ul>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>Step 3: how do the tables connect?</h2>
+  <p>On Day 3 you created foreign keys. Now you can ask MySQL to list every one of them:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> table_name,
+       column_name,
+       referenced_table_name,
+       referenced_column_name
+<span class="k">FROM</span> information_schema.key_column_usage
+<span class="k">WHERE</span> table_schema = <span class="s">'online_store_full'</span>
+  <span class="k">AND</span> referenced_table_name <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+<span class="k">ORDER</span> <span class="k">BY</span> table_name, column_name;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+---------------+-----------------------+------------------------+
+| TABLE_NAME  | COLUMN_NAME   | REFERENCED_TABLE_NAME | REFERENCED_COLUMN_NAME |
++-------------+---------------+-----------------------+------------------------+
+| employees   | manager_id    | employees             | employee_id            |
+| order_items | order_id      | orders                | order_id               |
+| order_items | product_id    | products              | product_id             |
+| orders      | customer_id   | customers             | customer_id            |
+| payments    | order_id      | orders                | order_id               |
+| products    | category_id   | categories            | category_id            |
+| returns     | order_item_id | order_items           | order_item_id          |
+| returns     | processed_by  | employees             | employee_id            |
+| reviews     | customer_id   | customers             | customer_id            |
+| reviews     | product_id    | products              | product_id             |
++-------------+---------------+-----------------------+------------------------+</code></pre></div>
+  <p>Ten links. Draw them, and you get a map of the database. Analysts call this an <strong>ER diagram</strong> (entity relationship diagram). Sketching one on paper is a great first-day habit.</p>
+  <div class="diagram">
+    <svg class="schema" viewBox="0 0 1000 530" role="img" aria-label="Diagram of the ten tables in online_store_full and the keys that link them">
+      <defs><style>.dash{fill:none;stroke:#7C86A2;stroke-width:2;stroke-dasharray:6 5}</style></defs>
+      <!-- customers -->
+      <rect x="20" y="20" width="210" height="110" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M20 32a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H20z" fill="#0B8A7A"/><text class="tname" x="34" y="41">customers</text>
+      <rect x="21" y="50" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="34" y="67">🔑 customer_id</text>
+      <text class="col dim" x="34" y="91">email, city, country</text>
+      <text class="col dim" x="34" y="115">signup_date (as text)</text>
+      <!-- orders -->
+      <rect x="270" y="20" width="210" height="110" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M270 32a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H270z" fill="#3D3A9E"/><text class="tname" x="284" y="41">orders</text>
+      <rect x="271" y="50" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="284" y="67">🔑 order_id</text>
+      <rect x="271" y="74" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="284" y="91">🔗 customer_id</text>
+      <text class="col dim" x="284" y="115">order_date, status, fee</text>
+      <!-- order_items -->
+      <rect x="520" y="20" width="210" height="134" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M520 32a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H520z" fill="#3D3A9E"/><text class="tname" x="534" y="41">order_items</text>
+      <rect x="521" y="50" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="534" y="67">🔑 order_item_id</text>
+      <rect x="521" y="74" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="534" y="91">🔗 order_id</text>
+      <rect x="521" y="98" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="534" y="115">🔗 product_id</text>
+      <text class="col dim" x="534" y="139">quantity, unit_price</text>
+      <!-- products -->
+      <rect x="770" y="20" width="210" height="110" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M770 32a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H770z" fill="#0B8A7A"/><text class="tname" x="784" y="41">products</text>
+      <rect x="771" y="50" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="784" y="67">🔑 product_id</text>
+      <rect x="771" y="74" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="784" y="91">🔗 category_id</text>
+      <text class="col dim" x="784" y="115">price, cost, is_active</text>
+      <!-- categories -->
+      <rect x="770" y="200" width="210" height="86" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M770 212a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H770z" fill="#0B8A7A"/><text class="tname" x="784" y="221">categories</text>
+      <rect x="771" y="230" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="784" y="247">🔑 category_id</text>
+      <text class="col dim" x="784" y="271">category_name</text>
+      <!-- payments -->
+      <rect x="270" y="200" width="210" height="110" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M270 212a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H270z" fill="#3D3A9E"/><text class="tname" x="284" y="221">payments</text>
+      <rect x="271" y="230" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="284" y="247">🔑 payment_id</text>
+      <rect x="271" y="254" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="284" y="271">🔗 order_id</text>
+      <text class="col dim" x="284" y="295">method, amount, status</text>
+      <!-- returns -->
+      <rect x="520" y="220" width="210" height="134" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M520 232a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H520z" fill="#3D3A9E"/><text class="tname" x="534" y="241">returns</text>
+      <rect x="521" y="250" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="534" y="267">🔑 return_id</text>
+      <rect x="521" y="274" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="534" y="291">🔗 order_item_id</text>
+      <rect x="521" y="298" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="534" y="315">🔗 processed_by</text>
+      <text class="col dim" x="534" y="339">reason, refund_amount</text>
+      <!-- employees -->
+      <rect x="770" y="340" width="210" height="110" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M770 352a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H770z" fill="#0B8A7A"/><text class="tname" x="784" y="361">employees</text>
+      <rect x="771" y="370" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="784" y="387">🔑 employee_id</text>
+      <rect x="771" y="394" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="784" y="411">🔗 manager_id</text>
+      <text class="col dim" x="784" y="435">department, salary</text>
+      <!-- reviews -->
+      <rect x="20" y="200" width="210" height="134" rx="12" fill="#fff" stroke="#DDE5E3"/>
+      <path d="M20 212a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H20z" fill="#3D3A9E"/><text class="tname" x="34" y="221">reviews</text>
+      <rect x="21" y="230" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="34" y="247">🔑 review_id</text>
+      <rect x="21" y="254" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="34" y="271">🔗 product_id</text>
+      <rect x="21" y="278" width="208" height="24" fill="#EEEDFA"/><text class="col fk" x="34" y="295">🔗 customer_id</text>
+      <text class="col dim" x="34" y="319">rating, review_text</text>
+      <!-- web_events -->
+      <rect x="20" y="400" width="210" height="110" rx="12" fill="#fff" stroke="#DDE5E3" stroke-dasharray="6 5"/>
+      <path d="M20 412a12 12 0 0 1 12-12h186a12 12 0 0 1 12 12v18H20z" fill="#7C86A2"/><text class="tname" x="34" y="421">web_events</text>
+      <rect x="21" y="430" width="208" height="24" fill="#FFF5D6"/><text class="col pk" x="34" y="447">🔑 event_id</text>
+      <text class="col dim" x="34" y="471">session_id, event_type</text>
+      <text class="col dim" x="34" y="495">customer, product, order IDs</text>
+      <!-- links -->
+      <path class="ln" d="M230 62 C250 62 250 86 270 86"/>
+      <path class="ln" d="M480 62 C500 62 500 86 520 86"/>
+      <path class="ln" d="M730 110 C750 110 750 62 770 62"/>
+      <path class="ln" d="M980 86 C1000 86 1000 242 980 242"/>
+      <path class="ln" d="M375 130 L375 200"/>
+      <path class="ln" d="M625 154 L625 220"/>
+      <path class="ln" d="M730 310 C750 310 750 382 770 382"/>
+      <path class="ln" d="M980 406 C1000 406 1000 382 980 382"/>
+      <path class="ln" d="M125 130 L125 200"/>
+      <path class="ln" d="M230 266 C250 266 250 180 270 180 L860 180 C875 180 875 160 875 130"/>
+      <path class="dash" d="M20 455 C2 455 2 75 20 75"/>
+      <g fill="#3D3A9E"><circle cx="230" cy="62" r="4"/><circle cx="270" cy="86" r="4"/><circle cx="480" cy="62" r="4"/><circle cx="520" cy="86" r="4"/><circle cx="730" cy="110" r="4"/><circle cx="770" cy="62" r="4"/><circle cx="980" cy="86" r="4"/><circle cx="980" cy="242" r="4"/><circle cx="375" cy="130" r="4"/><circle cx="375" cy="200" r="4"/><circle cx="625" cy="154" r="4"/><circle cx="625" cy="220" r="4"/><circle cx="730" cy="310" r="4"/><circle cx="770" cy="382" r="4"/><circle cx="980" cy="406" r="4"/><circle cx="980" cy="382" r="4"/><circle cx="125" cy="130" r="4"/><circle cx="125" cy="200" r="4"/><circle cx="230" cy="266" r="4"/><circle cx="875" cy="130" r="4"/></g>
+    </svg>
+    <div class="legend"><span><i style="background:#0B8A7A"></i>Things: customers, products, categories, employees</span><span><i style="background:#3D3A9E"></i>Events: orders, lines, payments, returns, reviews</span><span><i style="background:#7C86A2"></i>web_events: linked by ID only, no foreign keys</span></div>
+  </div>
+  <p>Two things stand out:</p>
+  <ul>
+    <li><code>employees.manager_id</code> points to <code>employees</code> itself, the self-referencing key from Day 3. And <code>returns.processed_by</code> tells you which employee handled each return.</li>
+    <li><code>web_events</code> doesn't appear in the list at all. It holds customer, product and order IDs, but with <strong>no foreign keys</strong>. The tracking data comes from a separate analytics tool, so nothing checks that those IDs are real. Day 3 taught you that the guard only protects tables that have rules. Where there are no rules, expect problems (section 9 finds one).</li>
+  </ul>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>Step 4: read some rows</h2>
+  <p>Before writing any clever query, just look at a few rows. Ten seconds of reading saves an hour of confusion.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> *
+<span class="k">FROM</span> customers
+<span class="k">ORDER</span> <span class="k">BY</span> customer_id
+<span class="k">LIMIT</span> <span class="n">8</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+-----------+-----------------------------+---------------+------------+---------+-------------+---------------------+
+| customer_id | first_name | last_name | email                       | phone         | city       | country | signup_date | acquisition_channel |
++-------------+------------+-----------+-----------------------------+---------------+------------+---------+-------------+---------------------+
+|           1 | Kavya      | Choudhury | kavya.choudhury@icloud.com  | 7655010505    | Hyderabad  | India   | 2023-11-02  | Instagram           |
+|           2 | Karan      | Kapoor    | karan.kapoor@gmail.com      | +916016001695 | Mumbai     | India   | 2023-11-05  | Referral            |
+|           3 | Tanvi      | Fernandes | tanvi.fernandes@outlook.com | +916460621741 | Chandigarh | India   | 2023-09-08  | Organic Search      |
+|           4 | Sameer     | Verma     | sameer.verma@outlook.com    | 065970 57267  | Kolkata    | INDIA   | 2023-08-03  | NULL                |
+|           5 | Vikram     | Mukherjee | vikram.mukherjee@gmail.com  | 9076336838    | Chennai    | India   | 2023-10-09  | Direct              |
+|           6 | Harsh      | Patel     | harsh.patel@yahoo.com       | 6261260592    | Noida      | India   | 2023-02-05  | Facebook            |
+|           7 | Arjun      | Siddiqui  | arjun.siddiqui@yahoo.com    | +918545401630 | Hyderabad  | India   | 2022-11-03  | Organic Search      |
+|           8 | Shruti     | Joshi     | shruti.joshi@gmail.com      | NULL          | Delhi      | India   | 2023-04-29  | Google Ads          |
++-------------+------------+-----------+-----------------------------+---------------+------------+---------+-------------+---------------------+</code></pre></div>
+  <p>Already, in just eight rows:</p>
+  <ul>
+    <li>Phone numbers are written four different ways: <code>7655010505</code>, <code>+916016001695</code>, <code>065970 57267</code>, and NULL.</li>
+    <li>Sameer's country is <code>INDIA</code>, in capitals, while everyone else has <code>India</code>.</li>
+    <li>Some <code>acquisition_channel</code> values are NULL.</li>
+  </ul>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> *
+<span class="k">FROM</span> orders
+<span class="k">ORDER</span> <span class="k">BY</span> order_id
+<span class="k">LIMIT</span> <span class="n">6</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------+-------------+---------------------+-----------+---------+-------------+--------------+
+| order_id | customer_id | order_date          | status    | channel | coupon_code | shipping_fee |
++----------+-------------+---------------------+-----------+---------+-------------+--------------+
+|        1 |         877 | 2023-01-01 01:08:40 | cancelled | app     | NULL        |         0.00 |
+|        2 |        2437 | 2023-01-01 14:54:47 | Completed | web     | NEWYEAR10   |         0.00 |
+|        3 |        1492 | 2023-01-01 19:25:44 | Completed | web     | NULL        |         0.00 |
+|        4 |         921 | 2023-01-01 19:25:57 | Completed | web     | NULL        |         0.00 |
+|        5 |        2160 | 2023-01-01 20:43:12 | completed | app     | NULL        |         0.00 |
+|        6 |         895 | 2023-01-01 20:53:23 | completed | app     | NULL        |         0.00 |
++----------+-------------+---------------------+-----------+---------+-------------+--------------+</code></pre></div>
+  <p>The very first order's status is <code>cancelled</code>, in small letters, and order 5 is <code>completed</code>. Others say <code>Completed</code>. Notice too that the order IDs mostly follow the time of the order, so <code>ORDER BY order_id</code> is <em>almost</em> date order here. That's common in real systems, but don't rely on it: section 7 finds two orders that break the pattern. Sort by the date column when the date matters.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="n">7</span>Step 5: profile the columns</h2>
+  <p><strong>Profiling</strong> means getting a quick summary of every important column: how many values are filled in, how many are different, the smallest and largest. It's like a doctor's check-up for data: a few quick measurements that show whether anything needs a closer look.</p>
+  <p>Every tool for this comes from Day 6. Here's a profile of <code>customers</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)                <span class="k">AS</span> customers,
+       <span class="k">COUNT</span>(city)             <span class="k">AS</span> city_filled,
+       <span class="k">SUM</span>(city = <span class="s">''</span>)          <span class="k">AS</span> city_empty_text,
+       <span class="k">SUM</span>(city = <span class="s">'N/A'</span>)       <span class="k">AS</span> city_na,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> city)    <span class="k">AS</span> distinct_cities,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> country) <span class="k">AS</span> distinct_countries,
+       <span class="k">MIN</span>(signup_date)        <span class="k">AS</span> min_signup,
+       <span class="k">MAX</span>(signup_date)        <span class="k">AS</span> max_signup
+<span class="k">FROM</span> customers;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+-------------+-----------------+---------+-----------------+--------------------+-------------+------------+
+| customers | city_filled | city_empty_text | city_na | distinct_cities | distinct_countries | min_signup  | max_signup |
++-----------+-------------+-----------------+---------+-----------------+--------------------+-------------+------------+
+|      3028 |        2937 |              32 |      14 |              44 |                 12 | 01-Aug-2023 | 31/10/2024 |
++-----------+-------------+-----------------+---------+-----------------+--------------------+-------------+------------+</code></pre></div>
+  <p>Read it like a detective:</p>
+  <ul>
+    <li><strong>Missing cities come in three shapes.</strong> 91 are NULL (3,028 minus 2,937), 32 are empty text, and 14 are the text <code>N/A</code>. All three mean "we don't know", but only NULL is a real missing value. The other two are the fake NULLs you met on Day 4. A query looking for <code>city IS NULL</code> finds only 91 of the 137.</li>
+    <li><strong>12 countries</strong> sounds like a lot for a shop that's mostly in India. Section 8 checks why.</li>
+    <li><strong>The earliest sign-up is "01-Aug-2023"?</strong> That can't be right, because there are orders from January 2023. Because <code>signup_date</code> is text, <code>MIN</code> compares it alphabetically, like words in a dictionary, and "01-Aug-..." comes before "2022-...". MIN and MAX on text dates are meaningless.</li>
+  </ul>
+  <p>How many date formats are there? A <code>CASE</code> with <code>REGEXP</code> (Days 5 and 8) can sort the values by pattern:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">CASE</span>
+           <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'</span>    <span class="k">THEN</span> <span class="s">'YYYY-MM-DD'</span>
+           <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}/[0-9]{2}/[0-9]{4}$'</span>    <span class="k">THEN</span> <span class="s">'DD/MM/YYYY'</span>
+           <span class="k">WHEN</span> signup_date <span class="k">REGEXP</span> <span class="s">'^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'</span> <span class="k">THEN</span> <span class="s">'DD-Mon-YYYY'</span>
+           <span class="k">ELSE</span> <span class="s">'something else'</span>
+       <span class="k">END</span> <span class="k">AS</span> date_format,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> customers
+<span class="k">FROM</span> customers
+<span class="k">GROUP</span> <span class="k">BY</span> date_format
+<span class="k">ORDER</span> <span class="k">BY</span> customers <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-----------+
+| date_format | customers |
++-------------+-----------+
+| YYYY-MM-DD  |      2428 |
+| DD/MM/YYYY  |       460 |
+| DD-Mon-YYYY |       140 |
++-------------+-----------+</code></pre></div>
+  <p>(In a regular expression, <code>{4}</code> means "exactly 4 of the thing before", so <code>[0-9]{4}</code> is four digits.) Three formats, and luckily nothing else. Day 11 turns all three into proper <code>DATE</code> values with <code>STR_TO_DATE</code>.</p>
+
+  <h3 style="margin:28px 0 8px">Profiling orders and order lines</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)                    <span class="k">AS</span> orders,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> customer_id) <span class="k">AS</span> customers_who_ordered,
+       <span class="k">MIN</span>(order_date)             <span class="k">AS</span> first_order,
+       <span class="k">MAX</span>(order_date)             <span class="k">AS</span> last_order,
+       <span class="k">SUM</span>(coupon_code <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>) <span class="k">AS</span> with_coupon
+<span class="k">FROM</span> orders;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------+-----------------------+---------------------+---------------------+-------------+
+| orders | customers_who_ordered | first_order         | last_order          | with_coupon |
++--------+-----------------------+---------------------+---------------------+-------------+
+|   6144 |                  2242 | 2023-01-01 01:08:40 | 2025-11-11 11:07:33 |         736 |
++--------+-----------------------+---------------------+---------------------+-------------+</code></pre></div>
+  <p>The data is supposed to end on 31 December 2024, but the latest order is dated <strong>November 2025</strong>. Let's look:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> order_id, customer_id, order_date, status
+<span class="k">FROM</span> orders
+<span class="k">WHERE</span> order_date &gt; <span class="s">'2024-12-31 23:59:59'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------+-------------+---------------------+-----------+
+| order_id | customer_id | order_date          | status    |
++----------+-------------+---------------------+-----------+
+|     5012 |         891 | 2025-10-08 13:34:15 | Completed |
+|     5497 |        2075 | 2025-11-11 11:07:33 | Completed |
++----------+-------------+---------------------+-----------+</code></pre></div>
+  <p>Two orders from the future. Look at the order IDs: 5012 and 5497 sit between orders from late 2024, so these were almost certainly placed in October and November <strong>2024</strong>, and someone typed the wrong year. Good analysts notice clues like that, but don't quietly change the data on a hunch. Write it down, and agree a fix.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">MIN</span>(quantity)    <span class="k">AS</span> min_qty,
+       <span class="k">MAX</span>(quantity)    <span class="k">AS</span> max_qty,
+       <span class="k">SUM</span>(quantity = <span class="n">0</span>) <span class="k">AS</span> zero_qty_lines,
+       <span class="k">MIN</span>(unit_price)  <span class="k">AS</span> min_price,
+       <span class="k">MAX</span>(unit_price)  <span class="k">AS</span> max_price
+<span class="k">FROM</span> order_items;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+---------+----------------+-----------+-----------+
+| min_qty | max_qty | zero_qty_lines | min_price | max_price |
++---------+---------+----------------+-----------+-----------+
+|       0 |      10 |              4 |    194.35 |   7999.00 |
++---------+---------+----------------+-----------+-----------+</code></pre></div>
+  <p>Four lines with a quantity of <strong>0</strong>. Nobody buys zero of something. The table has no <code>CHECK (quantity &gt; 0)</code> rule like our small shop did, so nothing stopped them. And a maximum of 10 is unusual for a shop where most people buy one or two of a thing. That's worth a look (section 9 explains it).</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="n">8</span>Step 6: check the categories</h2>
+  <p>For any column with a small set of allowed values (status, country, payment method), count each value. Messy spellings jump out straight away.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> status, <span class="k">COUNT</span>(*) <span class="k">AS</span> orders
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> status
+<span class="k">ORDER</span> <span class="k">BY</span> orders <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+--------+
+| status     | orders |
++------------+--------+
+| Completed  |   5609 |
+| cancelled  |    308 |
+| Canceled   |     69 |
+| Completed  |     60 |
+| Pending    |     40 |
+| Shipped    |     39 |
+| COMPLETE   |     19 |
++------------+--------+</code></pre></div>
+  <p>Something odd is going on. <code>Completed</code> appears <em>twice</em>, <code>cancelled</code> is in small letters, there's a <code>Canceled</code> with one L (the American spelling), and a <code>COMPLETE</code>. But even this list is hiding things. On Day 5 you learned that MySQL ignores capital letters when comparing text by default. <code>GROUP BY</code> does too, so <code>completed</code> and <code>Completed</code> were quietly put in the same group, and the group is shown under just one of the spellings. That's why the cancelled group appears as <code>cancelled</code>, in small letters, even though most of its rows say <code>Cancelled</code>.</p>
+  <p>To see the exact spellings, compare the text letter by letter with a <strong>binary collation</strong>, a setting that makes capitals count. The square brackets make spaces visible:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CONCAT(<span class="s">'['</span>, status, <span class="s">']'</span>) COLLATE utf8mb4_0900_bin <span class="k">AS</span> exact_status,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> orders
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> exact_status
+<span class="k">ORDER</span> <span class="k">BY</span> orders <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+--------+
+| exact_status | orders |
++--------------+--------+
+| [Completed]  |   4426 |
+| [completed]  |   1183 |
+| [Cancelled]  |    216 |
+| [cancelled]  |     92 |
+| [Canceled]   |     69 |
+| [Completed ] |     60 |
+| [Pending]    |     40 |
+| [Shipped]    |     39 |
+| [COMPLETE]   |     19 |
++--------------+--------+</code></pre></div>
+  <p>Nine different spellings for what should be four statuses:</p>
+  <ul>
+    <li><code>[Completed ]</code> has a <strong>space at the end</strong>. That's why it formed its own group: MySQL ignores capitals, but it does <em>not</em> ignore trailing spaces. So <code>WHERE status = 'Completed'</code> misses those 60 orders.</li>
+    <li><code>completed</code> and <code>cancelled</code> in small letters are 1,275 orders. Those happen to match <code>= 'Completed'</code> in MySQL. They wouldn't in PostgreSQL, which does care about capitals.</li>
+    <li><code>COMPLETE</code> and <code>Canceled</code> are different words, so no comparison will ever catch them by accident.</li>
+  </ul>
+  <p>Where did the small letters come from? One question tells you a lot:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> channel,
+       <span class="t">YEAR</span>(order_date) <span class="k">AS</span> yr,
+       <span class="k">SUM</span>(status COLLATE utf8mb4_0900_bin <span class="k">IN</span> (<span class="s">'completed'</span>, <span class="s">'cancelled'</span>)) <span class="k">AS</span> lowercase_status,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> orders
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> channel, yr
+<span class="k">ORDER</span> <span class="k">BY</span> channel, yr;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+------+------------------+--------+
+| channel | yr   | lowercase_status | orders |
++---------+------+------------------+--------+
+| app     | 2023 |             1045 |   1047 |
+| app     | 2024 |              230 |   1823 |
+| web     | 2023 |                0 |   1475 |
+| web     | 2024 |                0 |   1797 |
+| web     | 2025 |                0 |      2 |
++---------+------+------------------+--------+</code></pre></div>
+  <p>Only <strong>app</strong> orders, and only until early 2024. The likely story: the mobile app wrote statuses in small letters until an update fixed it. That's typical of real mess: it usually has a cause, and finding the cause tells you how far the problem goes and whether it's still happening.</p>
+
+  <div class="note sun"><p><strong>Pick the right binary collation.</strong> MySQL 8 has two: <code>utf8mb4_0900_bin</code>, which we used, and an older one, <code>utf8mb4_bin</code>. Both make capitals count, but the older one <em>ignores spaces at the end</em>, so grouping with it would merge <code>Completed </code> back into <code>Completed</code> and hide the very problem you're looking for. Use <code>utf8mb4_0900_bin</code>.</p></div>
+
+  <h3 style="margin:28px 0 8px">Other categories to check</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> country, <span class="k">COUNT</span>(*) <span class="k">AS</span> customers
+<span class="k">FROM</span> customers
+<span class="k">GROUP</span> <span class="k">BY</span> country
+<span class="k">ORDER</span> <span class="k">BY</span> customers <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+-----------+
+| country        | customers |
++----------------+-----------+
+| India          |      2574 |
+| UAE            |        78 |
+| IN             |        72 |
+| UK             |        56 |
+| Singapore      |        54 |
+| USA            |        48 |
+| United Kingdom |        31 |
+| US             |        28 |
+| Canada         |        27 |
+| United States  |        26 |
+| Australia      |        18 |
+| Germany        |        16 |
++----------------+-----------+</code></pre></div>
+  <p>India also appears as <code>IN</code>. The UK has two names (<code>UK</code> and <code>United Kingdom</code>), and the USA has three (<code>USA</code>, <code>US</code> and <code>United States</code>). So 12 values stand for only 8 real countries. (Lowercase versions like <code>india</code> are hiding in the India group again. The binary trick would show them.) Count customers by country without fixing this, and the UK looks smaller than it is.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> city, <span class="k">COUNT</span>(*) <span class="k">AS</span> customers
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> city <span class="k">IN</span> (<span class="s">'Bengaluru'</span>, <span class="s">'Bangalore'</span>, <span class="s">'Mumbai'</span>, <span class="s">'Bombay'</span>, <span class="s">'Delhi'</span>, <span class="s">'New Delhi'</span>,
+               <span class="s">'Gurugram'</span>, <span class="s">'Gurgaon'</span>, <span class="s">'Kolkata'</span>, <span class="s">'Calcutta'</span>, <span class="s">'Chennai'</span>, <span class="s">'Madras'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> city
+<span class="k">ORDER</span> <span class="k">BY</span> city;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+-----------+
+| city      | customers |
++-----------+-----------+
+| Bangalore |        96 |
+| Bengaluru |       187 |
+| Bombay    |        25 |
+| Calcutta  |         9 |
+| Chennai   |       178 |
+| Delhi     |       238 |
+| Gurgaon   |        29 |
+| Gurugram  |        50 |
+| Kolkata   |       166 |
+| Madras    |         5 |
+| Mumbai    |       315 |
+| New Delhi |        83 |
++-----------+-----------+</code></pre></div>
+  <p>Old and new names for the same city: Bangalore and Bengaluru, Bombay and Mumbai, Gurgaon and Gurugram, Calcutta and Kolkata, Madras and Chennai. Is "New Delhi" the same as "Delhi"? Strictly, New Delhi is a part of Delhi, so that's a business decision, not a spelling fix. Write it down as a question to ask.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2><span class="n">9</span>Step 7: duplicates, test data and orphans</h2>
+
+  <h3 style="margin:28px 0 8px">Duplicate customers</h3>
+  <p>Day 6's duplicate check, on emails:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> duplicated_emails
+<span class="k">FROM</span> (<span class="k">SELECT</span> email
+      <span class="k">FROM</span> customers
+      <span class="k">GROUP</span> <span class="k">BY</span> email
+      <span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt; <span class="n">1</span>) <span class="k">AS</span> d;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------+
+| duplicated_emails |
++-------------------+
+|                20 |
++-------------------+</code></pre></div>
+  <p>20 emails belong to more than one account. And because MySQL ignores capitals, <code>Shruti.joshi@gmail.com</code> and <code>shruti.joshi@gmail.com</code> were already counted as the same email. But trailing spaces count, so tidy the email first and check again:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> duplicated_emails
+<span class="k">FROM</span> (<span class="k">SELECT</span> LOWER(TRIM(email)) <span class="k">AS</span> clean_email
+      <span class="k">FROM</span> customers
+      <span class="k">GROUP</span> <span class="k">BY</span> clean_email
+      <span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt; <span class="n">1</span>) <span class="k">AS</span> d;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------+
+| duplicated_emails |
++-------------------+
+|                25 |
++-------------------+</code></pre></div>
+  <p>25. Here's one of them:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> customer_id, first_name, last_name, CONCAT(<span class="s">'['</span>, email, <span class="s">']'</span>) <span class="k">AS</span> email, signup_date
+<span class="k">FROM</span> customers
+<span class="k">WHERE</span> LOWER(TRIM(email)) = <span class="s">'reyansh.kapoor@gmail.com'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+-----------+-----------------------------+-------------+
+| customer_id | first_name | last_name | email                       | signup_date |
++-------------+------------+-----------+-----------------------------+-------------+
+|        1247 | Reyansh    | Kapoor    | [reyansh.kapoor@gmail.com]  | 2023-03-11  |
+|        3012 | Reyansh    | Kapoor    | [reyansh.kapoor@gmail.com ] | 2023-10-01  |
++-------------+------------+-----------+-----------------------------+-------------+</code></pre></div>
+  <p>Same person, signed up twice, the second time with a space after the email. And both accounts have orders, so "orders per customer" and "repeat customers" are both wrong until you merge them. Note it down.</p>
+
+  <h3 style="margin:28px 0 8px">Test accounts</h3>
+  <p>Developers and testers create fake accounts to check that the shop works. Those orders are real rows, but not real sales. A quick search:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> c.customer_id, c.first_name, c.email, <span class="k">COUNT</span>(o.order_id) <span class="k">AS</span> orders,
+       <span class="k">SUM</span>(oi.quantity) <span class="k">AS</span> units
+<span class="k">FROM</span> customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o       <span class="k">ON</span> o.customer_id = c.customer_id
+<span class="k">LEFT</span> <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id   = o.order_id
+<span class="k">WHERE</span> c.email <span class="k">LIKE</span> <span class="s">'%test%'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> c.customer_id, c.first_name, c.email;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+--------------------------+--------+-------+
+| customer_id | first_name | email                    | orders | units |
++-------------+------------+--------------------------+--------+-------+
+|        3006 | Test       | test@test.com            |      3 |    16 |
+|        3007 | QA         | qa.tester@onlinestore.in |      4 |     8 |
+|        3008 | test       | test123@example.com      |      2 |    20 |
++-------------+------------+--------------------------+--------+-------+</code></pre></div>
+  <p>Three test accounts, with 9 orders. This also explains the maximum quantity of 10 from section 7: testers ordering 5 or 10 of something. (The <code>COUNT(o.order_id)</code> here counts order <em>lines</em> after the join, which is fine for spotting them, but remember Day 7's row-multiplying trap.) A search for "test" won't find every fake account, by the way. Real companies often keep a list. Ask for it.</p>
+
+  <h3 style="margin:28px 0 8px">Orphans</h3>
+  <p>An <strong>orphan</strong> is a row that points to something that doesn't exist. Foreign keys make orphans impossible (unless someone switches the checks off while loading data), which is why section 5 matters: <code>web_events</code> has no foreign keys. Day 7's anti-join finds them:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">DISTINCT</span> w.customer_id
+<span class="k">FROM</span> web_events w
+<span class="k">LEFT</span> <span class="k">JOIN</span> customers c <span class="k">ON</span> c.customer_id = w.customer_id
+<span class="k">WHERE</span> w.customer_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+  <span class="k">AND</span> c.customer_id <span class="k">IS</span> <span class="k">NULL</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+
+| customer_id |
++-------------+
+|         571 |
+|         802 |
+|        1004 |
+|         233 |
+|        1290 |
++-------------+</code></pre></div>
+  <p>Five customer IDs in the tracking data have no customer. Notice there are gaps in the customer IDs at exactly these numbers. The likely story: these customers asked for their accounts to be deleted, which privacy laws allow, and the analytics tool kept their old clicks. Not something to "fix", but something to know before you join the two tables.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2><span class="n">10</span>A quick tour of the five new tables</h2>
+  <p>One query each, to get a feel for what's inside. You'll use every one of these tables in later days.</p>
+
+  <h3 style="margin:28px 0 8px">employees</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> department,
+       <span class="k">COUNT</span>(*)             <span class="k">AS</span> staff,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(salary))   <span class="k">AS</span> avg_salary
+<span class="k">FROM</span> employees
+<span class="k">GROUP</span> <span class="k">BY</span> department
+<span class="k">ORDER</span> <span class="k">BY</span> staff <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+-------+------------+
+| department       | staff | avg_salary |
++------------------+-------+------------+
+| Technology       |     9 |    2005556 |
+| Customer Support |     7 |     811429 |
+| Operations       |     5 |    1252000 |
+| Marketing        |     5 |    1590000 |
+| Finance          |     3 |    1300000 |
+| Management       |     1 |    4800000 |
++------------------+-------+------------+</code></pre></div>
+  <p>30 staff in six departments, with annual salaries in rupees. Every employee except the CEO has a <code>manager_id</code>. Day 7's interview question, "employees who earn more than their manager", finally has a real table to run on. It's in today's Try this.</p>
+
+  <h3 style="margin:28px 0 8px">payments</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> payment_status, <span class="k">COUNT</span>(*) <span class="k">AS</span> attempts, <span class="k">ROUND</span>(<span class="k">SUM</span>(amount)) <span class="k">AS</span> amount
+<span class="k">FROM</span> payments
+<span class="k">GROUP</span> <span class="k">BY</span> payment_status;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+----------+
+| payment_status | attempts | amount   |
++----------------+----------+----------+
+| success        |     5745 | 13448956 |
+| refunded       |      233 |   525458 |
+| failed         |      289 |   729166 |
++----------------+----------+----------+</code></pre></div>
+  <p>Remember the grain: one row per <em>attempt</em>. Failed attempts are rows too, and refunded payments are money that went back. Adding up the whole <code>amount</code> column would be badly wrong.</p>
+
+  <h3 style="margin:28px 0 8px">returns</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> reason, <span class="k">COUNT</span>(*) <span class="k">AS</span> returns
+<span class="k">FROM</span> returns
+<span class="k">GROUP</span> <span class="k">BY</span> reason
+<span class="k">ORDER</span> <span class="k">BY</span> returns <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">6</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+---------+
+| reason           | returns |
++------------------+---------+
+| wrong size       |     136 |
+| Changed mind     |      70 |
+| damaged          |      60 |
+| Size too small   |      46 |
+| Not as described |      44 |
+| Defective        |      41 |
++------------------+---------+</code></pre></div>
+  <p>Size problems top the list, but they're written several ways ("wrong size", "Size too small", "size issue"...), so the real total is even bigger. Grouping similar free-text reasons into a few clean categories is a classic cleaning job.</p>
+
+  <h3 style="margin:28px 0 8px">reviews</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> rating, <span class="k">COUNT</span>(*) <span class="k">AS</span> reviews
+<span class="k">FROM</span> reviews
+<span class="k">GROUP</span> <span class="k">BY</span> rating
+<span class="k">ORDER</span> <span class="k">BY</span> rating <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------+---------+
+| rating | reviews |
++--------+---------+
+|      5 |     926 |
+|      4 |     523 |
+|      3 |     209 |
+|      2 |     166 |
+|      1 |     259 |
+|   NULL |      34 |
++--------+---------+</code></pre></div>
+  <p>Mostly 5 stars, a bump at 1 star, and few in between. That "J" shape is normal for online reviews: people review when they're delighted or annoyed. And 34 reviews have no rating at all, only text. Should they count in an average rating? <code>AVG</code> skips them (Day 6), which is probably right, but say so.</p>
+
+  <h3 style="margin:28px 0 8px">web_events</h3>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> event_type,
+       <span class="k">COUNT</span>(*)                   <span class="k">AS</span> events,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> session_id) <span class="k">AS</span> sessions
+<span class="k">FROM</span> web_events
+<span class="k">GROUP</span> <span class="k">BY</span> event_type
+<span class="k">ORDER</span> <span class="k">BY</span> events <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+--------+----------+
+| event_type     | events | sessions |
++----------------+--------+----------+
+| product_view   |  24191 |    13605 |
+| page_view      |  20904 |    20904 |
+| add_to_cart    |   4521 |     3716 |
+| checkout_start |   2151 |     2151 |
+| purchase       |   1257 |     1257 |
++----------------+--------+----------+</code></pre></div>
+  <p>A <strong>session</strong> is one visit. 20,904 visits started with a page view, and 1,257 ended in a purchase: about 6%. Many visits only looked at the home page, a smaller number viewed products, fewer added to cart, and fewer still checked out. That narrowing path is called a <strong>funnel</strong>, and you'll measure it properly on Day 13. (Why are there more <code>product_view</code> events than <code>page_view</code> events? Because one visit can look at several products. Grain again.)</p>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <h2><span class="n">11</span>Why all this matters: two revenue numbers</h2>
+  <p>Say the owner asks for total revenue over the two years, and you write the query you learned on Day 7. Here it is next to a more careful version, which reads the messy statuses properly and leaves out test orders and the two orders from the future:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> o.status = <span class="s">'Completed'</span>
+                      <span class="k">THEN</span> oi.quantity * oi.unit_price <span class="k">END</span>)) <span class="k">AS</span> naive_revenue,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> LOWER(TRIM(o.status)) <span class="k">IN</span> (<span class="s">'completed'</span>, <span class="s">'complete'</span>)
+                       <span class="k">AND</span> c.email <span class="k">NOT</span> <span class="k">LIKE</span> <span class="s">'%test%'</span>
+                       <span class="k">AND</span> o.order_date &lt;= <span class="s">'2024-12-31 23:59:59'</span>
+                      <span class="k">THEN</span> oi.quantity * oi.unit_price <span class="k">END</span>)) <span class="k">AS</span> careful_revenue
+<span class="k">FROM</span> orders o
+<span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id    = o.order_id
+<span class="k">JOIN</span> customers c    <span class="k">ON</span> c.customer_id  = o.customer_id;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------+-----------------+
+| naive_revenue | careful_revenue |
++---------------+-----------------+
+|      13101912 |        13188809 |
++---------------+-----------------+</code></pre></div>
+  <p>The naive number is about ₹87,000 lower. It misses the 79 orders spelled <code>Completed </code> or <code>COMPLETE</code>, which is more than it wrongly includes from test accounts and future dates. Neither error would ever show up as a SQL error. The query runs, the number looks believable, and it's wrong.</p>
+  <p>And the careful version still isn't finished: it still counts the 15 double-submitted orders, and it ignores returns. That's the honest truth about real data: <strong>the SQL is usually the easy part. Knowing what the data really means is the job.</strong></p>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <h2><span class="n">12</span>The data issues log</h2>
+  <p>Every finding today goes into a simple document called a <strong>data issues log</strong>. It's the most useful thing you can hand over after a first look at new data: what's wrong, where, how big it is, and what it would break. Here's ours so far:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>#</th><th>Issue</th><th>Where</th><th>How many</th><th>What it breaks</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Status spelled 9 ways (case, trailing space, COMPLETE, Canceled)</td><td><code>orders.status</code></td><td>1,423 orders not in a clean spelling</td><td>Revenue, cancellation rate</td></tr>
+        <tr><td>2</td><td>Sign-up date stored as text, in 3 formats</td><td><code>customers.signup_date</code></td><td>600 not in YYYY-MM-DD</td><td>Any date maths, cohorts</td></tr>
+        <tr><td>3</td><td>Missing city in 3 forms: NULL, empty, 'N/A'</td><td><code>customers.city</code></td><td>91 + 32 + 14</td><td>City reports, NULL checks</td></tr>
+        <tr><td>4</td><td>Same city, different names (Bangalore / Bengaluru...)</td><td><code>customers.city</code></td><td>Several hundred</td><td>Sales by city</td></tr>
+        <tr><td>5</td><td>Country written several ways (IN, US, United Kingdom...)</td><td><code>customers.country</code></td><td>12 values for 8 countries (more with exact spelling)</td><td>Sales by country</td></tr>
+        <tr><td>6</td><td>Duplicate customer accounts (email case / spaces)</td><td><code>customers</code></td><td>25 people</td><td>Customer counts, repeat rate</td></tr>
+        <tr><td>7</td><td>Test accounts and their orders</td><td><code>customers</code>, <code>orders</code></td><td>3 accounts, 9 orders</td><td>Revenue, units sold</td></tr>
+        <tr><td>8</td><td>Orders dated in 2025 (likely year typos)</td><td><code>orders.order_date</code></td><td>2</td><td>Date ranges, monthly reports</td></tr>
+        <tr><td>9</td><td>Order lines with quantity 0</td><td><code>order_items</code></td><td>4</td><td>Units, averages</td></tr>
+        <tr><td>10</td><td>Tracking events for deleted customers</td><td><code>web_events.customer_id</code></td><td>5 IDs</td><td>Joins to customers</td></tr>
+        <tr><td>11</td><td>Messy free-text values</td><td><code>payments.payment_method</code>, <code>returns.reason</code>, <code>web_events</code></td><td>Many</td><td>Grouping and counts</td></tr>
+        <tr><td>12</td><td>Phone numbers in several formats</td><td><code>customers.phone</code></td><td>Most rows</td><td>Matching, contacting</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>That's not everything. A few more problems are hiding in the data, and today's Try this helps you find some of them. In a real job, you'd share this log with your manager or the data owner, because some fixes need a business decision ("is New Delhi the same as Delhi?", "which of the two duplicate accounts do we keep?"), not just SQL.</p>
+  <div class="note"><p><strong>Don't fix the raw data in place.</strong> It's tempting to run <code>UPDATE</code> statements now. But the raw tables are your evidence. Tomorrow you'll build cleaned <em>views</em> on top of them (Day 9), so the original data stays as it was, and every cleaning step is written down where anyone can check it.</p></div>
+</section>
+
+<!-- Try this -->
+<div class="try" id="try">
+  <h2>✏️ Try this before Day 11</h2>
+  <p>Add to the issues log. Each question hides one more problem, or uses one of the new tables.</p>
+  <ol style="padding-left:22px">
+    <li>Profile <code>payments.payment_method</code>. How many spellings are there, and how many real methods do they stand for?</li>
+    <li>Some customers seem to have placed the same order twice within a few minutes. Find pairs of orders from the same customer placed less than 5 minutes apart.</li>
+    <li>For successful payments, does the amount always equal the order's total (its lines plus the shipping fee)? Count the ones that don't.</li>
+    <li>Which employees earn more than their manager?</li>
+    <li>Are there any orders still marked Pending from 2023, more than a year ago?</li>
+  </ol>
+  <details class="reveal">
+    <summary>Show sample answers</summary>
+    <div class="body">
+      <p><strong>1.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> payment_method COLLATE utf8mb4_0900_bin <span class="k">AS</span> exact_method, <span class="k">COUNT</span>(*) <span class="k">AS</span> attempts
+<span class="k">FROM</span> payments
+<span class="k">GROUP</span> <span class="k">BY</span> exact_method
+<span class="k">ORDER</span> <span class="k">BY</span> attempts <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+----------+
+| exact_method     | attempts |
++------------------+----------+
+| UPI              |     2543 |
+| COD              |      819 |
+| Credit Card      |      784 |
+| Debit Card       |      635 |
+| NetBanking       |      300 |
+| upi              |      268 |
+| Wallet           |      241 |
+| Upi              |      146 |
+| Net Banking      |      140 |
+| Cash on Delivery |      128 |
+| card             |       98 |
+| Paytm Wallet     |       81 |
+| cod              |       45 |
+| CARD             |       39 |
++------------------+----------+</code></pre></div>
+      <p>Fourteen spellings for five real methods: UPI (also upi, Upi), Card (Credit Card, Debit Card, card, CARD), COD (also cod, Cash on Delivery), NetBanking (also Net Banking) and Wallet (also Paytm Wallet). Whether Credit and Debit cards should be one group or two is a business question.</p>
+      <p><strong>2.</strong> A self join (Day 7), using <code>TIMESTAMPDIFF</code>, which gives the gap between two date-times in the unit you choose:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> a.customer_id,
+       a.order_id <span class="k">AS</span> first_order,
+       b.order_id <span class="k">AS</span> second_order,
+       TIMESTAMPDIFF(SECOND, a.order_date, b.order_date) <span class="k">AS</span> seconds_apart
+<span class="k">FROM</span> orders a
+<span class="k">JOIN</span> orders b <span class="k">ON</span> b.customer_id = a.customer_id
+             <span class="k">AND</span> b.order_id    &gt; a.order_id
+             <span class="k">AND</span> TIMESTAMPDIFF(SECOND, a.order_date, b.order_date) <span class="k">BETWEEN</span> <span class="n">0</span> <span class="k">AND</span> <span class="n">300</span>
+<span class="k">ORDER</span> <span class="k">BY</span> a.order_id
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-------------+--------------+---------------+
+| customer_id | first_order | second_order | seconds_apart |
++-------------+-------------+--------------+---------------+
+|         717 |         188 |          189 |           136 |
+|         159 |         207 |          208 |           149 |
+|         328 |         804 |          805 |           117 |
+|        2022 |        1111 |         1112 |            52 |
+|        1446 |        1577 |         1578 |            91 |
++-------------+-------------+--------------+---------------+</code></pre></div>
+      <p>Remove the <code>LIMIT</code> and there are 15 pairs. Check one by hand: if both orders contain the same products, it's almost certainly a double click on "Place order". Real customers do sometimes order twice in a few minutes, though, so the rule for "duplicate" needs care. Day 11 compares the items too.</p>
+      <p><strong>3.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> order_totals <span class="k">AS</span> (
+    <span class="k">SELECT</span> o.order_id,
+           <span class="k">SUM</span>(oi.quantity * oi.unit_price) + o.shipping_fee <span class="k">AS</span> order_total
+    <span class="k">FROM</span> orders o
+    <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id = o.order_id
+    <span class="k">GROUP</span> <span class="k">BY</span> o.order_id, o.shipping_fee
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> mismatched_payments
+<span class="k">FROM</span> payments p
+<span class="k">JOIN</span> order_totals t <span class="k">ON</span> t.order_id = p.order_id
+<span class="k">WHERE</span> p.payment_status = <span class="s">'success'</span>
+  <span class="k">AND</span> p.amount &lt;&gt; t.order_total;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------+
+| mismatched_payments |
++---------------------+
+|                  12 |
++---------------------+</code></pre></div>
+      <p>12 payments don't match. Look at a few, and you'll see each one is short by exactly the shipping fee (₹49 or ₹59). It's a likely bug in how the fee was sent to the payment company. This is a great example of <strong>reconciliation</strong>: checking that two systems agree.</p>
+      <p><strong>4.</strong> Day 7's interview question, for real at last:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CONCAT(e.first_name, <span class="s">' '</span>, e.last_name) <span class="k">AS</span> employee,
+       e.salary,
+       CONCAT(m.first_name, <span class="s">' '</span>, m.last_name) <span class="k">AS</span> manager,
+       m.salary <span class="k">AS</span> manager_salary
+<span class="k">FROM</span> employees e
+<span class="k">JOIN</span> employees m <span class="k">ON</span> e.manager_id = m.employee_id
+<span class="k">WHERE</span> e.salary &gt; m.salary;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+------------+-------------+----------------+
+| employee     | salary     | manager     | manager_salary |
++--------------+------------+-------------+----------------+
+| Varun Chopra | 3050000.00 | Meera Menon |     2900000.00 |
+| Dev Sandhu   | 1900000.00 | Neha Kapoor |     1800000.00 |
++--------------+------------+-------------+----------------+</code></pre></div>
+      <p><strong>5.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> order_id, customer_id, order_date, status
+<span class="k">FROM</span> orders
+<span class="k">WHERE</span> status = <span class="s">'Pending'</span>
+  <span class="k">AND</span> order_date &lt; <span class="s">'2024-01-01'</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------+-------------+---------------------+---------+
+| order_id | customer_id | order_date          | status  |
++----------+-------------+---------------------+---------+
+|      608 |        2349 | 2023-05-17 08:32:38 | Pending |
+|      919 |        2637 | 2023-07-09 20:59:53 | Pending |
+|     1474 |        2918 | 2023-09-23 11:59:57 | Pending |
+|     2022 |        2401 | 2023-11-12 15:24:03 | Pending |
+|     2131 |        1251 | 2023-11-22 13:59:27 | Pending |
+|     2509 |          45 | 2023-12-30 20:00:08 | Pending |
++----------+-------------+---------------------+---------+</code></pre></div>
+      <p>Six orders "pending" for over a year. They're stuck, not pending. Does each one have a payment? Was it delivered? An analyst can't tell from here, so this goes to the operations team. Until it's answered, these orders shouldn't be counted as revenue.</p>
+    </div>
+  </details>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner</h2>
+    <p>"You've been given a dataset you've never seen. What do you do first?" is one of the most common analyst interview questions. These answers give you a structure for it.</p>
+  </div>
+  <div class="iv-group">
+    <h3>Concept questions</h3>
+    <details class="qa"><summary><span class="q">Q1</span>You get access to a database you've never seen. What are your first steps?</summary>
+      <div class="body"><p>Walk through it before answering anything. List the tables and their sizes. Understand each table's grain (what one row means). Map the keys and relationships, ideally with an ER diagram. Look at sample rows. Profile the important columns: NULLs, distinct values, min and max. Check category columns for inconsistent values, and look for duplicates, orphans, test data and out-of-range dates. Write the findings in an issues log, and ask the data owners about anything that needs a business decision.</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>What is data profiling?</summary>
+      <div class="body"><p>Summarising each column to understand its contents and quality: row count, how many values are filled in (and how many are NULL), the number of distinct values, min and max, the most common values, and the format of the values. It's done with simple aggregates like <code>COUNT</code>, <code>COUNT(DISTINCT)</code>, <code>MIN</code>, <code>MAX</code> and <code>GROUP BY</code>, and it's the fastest way to find quality problems before they reach a report.</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>What does "grain" mean, and why does it matter?</summary>
+      <div class="body"><p>The grain is what one row of a table represents: one order, one order line, one payment attempt, one click. It decides what you can count and sum safely. If you think <code>payments</code> has one row per order but it really has one per attempt, you'll overcount paid orders and overstate the amount collected. Always confirm the grain before aggregating, and again after every join.</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>What is information_schema? Give an example of using it.</summary>
+      <div class="body"><p>A built-in database where MySQL describes everything it stores: databases, tables, columns, keys, indexes. You query it like normal tables. Examples: list all columns in a database from <code>information_schema.columns</code>, or all foreign keys from <code>information_schema.key_column_usage</code>. One catch: <code>information_schema.tables.table_rows</code> is only an estimate for InnoDB tables, so use <code>COUNT(*)</code> for exact numbers.</p></div></details>
+    <details class="qa"><summary><span class="q">Q5</span>Why might <code>GROUP BY status</code> hide inconsistent values in MySQL?</summary>
+      <div class="body"><p>Because MySQL's default collation is case-insensitive, so <code>'completed'</code> and <code>'Completed'</code> count as equal and land in one group, shown under just one of the spellings. Trailing spaces, however, <em>do</em> count with the default MySQL 8 collation, so <code>'Completed '</code> forms a separate group. To see exact spellings, group by the value with a binary collation, for example <code>GROUP BY status COLLATE utf8mb4_0900_bin</code>. Avoid the older <code>utf8mb4_bin</code> for this: it ignores trailing spaces.</p></div></details>
+    <details class="qa"><summary><span class="q">Q6</span>What's the difference between NULL, an empty string and 'N/A'?</summary>
+      <div class="body"><p>Only NULL is a real missing value. <code>IS NULL</code> finds it, and aggregates skip it. An empty string <code>''</code> and the text <code>'N/A'</code> are real values that <em>mean</em> missing, so <code>IS NULL</code> doesn't find them and <code>COUNT(column)</code> counts them as filled in. In profiling, check all three. In cleaning, usually turn the fake ones into NULL, for example with <code>NULLIF</code>.</p></div></details>
+    <details class="qa"><summary><span class="q">Q7</span>What is an orphan record, and how do you find one?</summary>
+      <div class="body"><p>A row whose foreign-key-style column points to a row that doesn't exist, such as an order line for a deleted order. Foreign keys prevent them, so orphans appear where no foreign key exists, as with data copied between systems. Find them with an anti-join: <code>LEFT JOIN parent ... WHERE parent.id IS NULL AND child.parent_id IS NOT NULL</code>.</p></div></details>
+    <details class="qa"><summary><span class="q">Q8</span>Why should you exclude test data, and how do you find it?</summary>
+      <div class="body"><p>Test accounts and orders are real rows but not real business, so they inflate revenue, order counts and units sold. Look for tell-tale emails and names ("test", "qa", "example.com"), odd quantities, internal domains and unusual prices. The best source is a list from the engineering team, because pattern searches never catch everything.</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Practical questions</h3>
+    <details class="qa"><summary><span class="q">P1</span>Write one query that profiles the city column: total rows, NULLs, empty strings, distinct values, and the most common value.</summary>
+      <div class="body">
+        <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)                       <span class="k">AS</span> total_rows,
+       <span class="k">SUM</span>(city <span class="k">IS</span> <span class="k">NULL</span>)              <span class="k">AS</span> null_values,
+       <span class="k">SUM</span>(city = <span class="s">''</span>)                 <span class="k">AS</span> empty_strings,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> city)           <span class="k">AS</span> distinct_values,
+       (<span class="k">SELECT</span> city <span class="k">FROM</span> customers
+        <span class="k">WHERE</span> city <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+        <span class="k">GROUP</span> <span class="k">BY</span> city <span class="k">ORDER</span> <span class="k">BY</span> <span class="k">COUNT</span>(*) <span class="k">DESC</span> <span class="k">LIMIT</span> <span class="n">1</span>) <span class="k">AS</span> most_common
+<span class="k">FROM</span> customers;</code></pre></div>
+        <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+-------------+---------------+-----------------+-------------+
+| total_rows | null_values | empty_strings | distinct_values | most_common |
++------------+-------------+---------------+-----------------+-------------+
+|       3028 |          91 |            32 |              44 | Mumbai      |
++------------+-------------+---------------+-----------------+-------------+</code></pre></div>
+        <p>Aggregates for the counts, and a scalar subquery (Day 8) for the most common value. <code>SUM(condition)</code> counts the rows where the condition is true (Day 6).</p>
+      </div></details>
+    <details class="qa"><summary><span class="q">P2</span>Find customers whose email appears more than once, ignoring capital letters and extra spaces. Show every account involved.</summary>
+      <div class="body">
+        <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> duplicated <span class="k">AS</span> (
+    <span class="k">SELECT</span> LOWER(TRIM(email)) <span class="k">AS</span> clean_email
+    <span class="k">FROM</span> customers
+    <span class="k">GROUP</span> <span class="k">BY</span> clean_email
+    <span class="k">HAVING</span> <span class="k">COUNT</span>(*) &gt; <span class="n">1</span>
+)
+<span class="k">SELECT</span> c.customer_id, c.first_name, c.last_name, c.email
+<span class="k">FROM</span> customers c
+<span class="k">JOIN</span> duplicated d <span class="k">ON</span> d.clean_email = LOWER(TRIM(c.email))
+<span class="k">ORDER</span> <span class="k">BY</span> d.clean_email, c.customer_id
+<span class="k">LIMIT</span> <span class="n">6</span>;</code></pre></div>
+        <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+-----------+-------------------------+
+| customer_id | first_name | last_name | email                   |
++-------------+------------+-----------+-------------------------+
+|        2688 | Aditi      | Patil     | aditi.patil@gmail.com   |
+|        3030 | Aditi      | Patil     | Aditi.patil@gmail.com   |
+|        1904 | Aisha      | Gill      | aisha.gill@yahoo.com    |
+|        3015 | Aisha      | Gill      | AISHA.GILL@YAHOO.COM    |
+|        1678 | Akash      | Thakur    | akash.thakur3@gmail.com |
+|        3021 | Akash      | Thakur    | Akash.thakur3@gmail.com |
++-------------+------------+-----------+-------------------------+</code></pre></div>
+        <p>The CTE finds the duplicated clean emails, and the join lists every account that has one. Ordering by the clean email puts each pair together, so you can compare them. (Without the <code>LIMIT</code>, that's 50 accounts: 25 pairs.)</p>
+      </div></details>
+    <details class="qa"><summary><span class="q">P3</span>How many order lines point to a product that doesn't exist? How many products have never appeared on an order?</summary>
+      <div class="body">
+        <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span>
+    (<span class="k">SELECT</span> <span class="k">COUNT</span>(*)
+     <span class="k">FROM</span> order_items oi
+     <span class="k">LEFT</span> <span class="k">JOIN</span> products p <span class="k">ON</span> p.product_id = oi.product_id
+     <span class="k">WHERE</span> p.product_id <span class="k">IS</span> <span class="k">NULL</span>)                <span class="k">AS</span> orphan_lines,
+    (<span class="k">SELECT</span> <span class="k">COUNT</span>(*)
+     <span class="k">FROM</span> products p
+     <span class="k">WHERE</span> <span class="k">NOT</span> <span class="k">EXISTS</span> (<span class="k">SELECT</span> <span class="n">1</span> <span class="k">FROM</span> order_items oi
+                       <span class="k">WHERE</span> oi.product_id = p.product_id)) <span class="k">AS</span> never_ordered_products;</code></pre></div>
+        <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+------------------------+
+| orphan_lines | never_ordered_products |
++--------------+------------------------+
+|            0 |                      0 |
++--------------+------------------------+</code></pre></div>
+        <p>No orphan lines, because <code>order_items.product_id</code> has a foreign key, so it's impossible. That's worth saying in an interview: "I checked, and the foreign key guarantees it." And every product, even the new Smart Fitness Band, has been ordered at least once. Checking both directions is the habit: children without parents, and parents without children.</p>
+      </div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li><code>online_store_full</code> has 10 tables of real, messy records for 2023 and 2024. Load it once from <code>online_store_full.sql</code>, and switch with <code>USE</code>.</li>
+    <li>Know the <strong>grain</strong> of every table: one order, one line, one payment <em>attempt</em>, one click.</li>
+    <li><code>information_schema</code> describes the whole database. Its <code>table_rows</code> is only an estimate, so use <code>COUNT(*)</code> for real numbers.</li>
+    <li>The first-hour checklist: tables and sizes, columns and types, keys and an ER diagram, sample rows, column profiles, category values, ranges and dates, duplicates, test data and orphans.</li>
+    <li>MySQL hides case differences in comparisons and <code>GROUP BY</code>. Use <code>COLLATE utf8mb4_0900_bin</code> to see exact spellings. Trailing spaces are not ignored.</li>
+    <li>Missing values hide as NULL, <code>''</code> and <code>'N/A'</code>. MIN and MAX on text dates are meaningless.</li>
+    <li>A believable number can still be wrong: naive revenue missed ₹87,000. Write every finding in a <strong>data issues log</strong>, and don't change the raw data in place.</li>
+  </ul>
+</div>
+
+<div class="next"><div><small>Coming up next</small><h3>Day 11: Data cleaning in SQL</h3><p>Work through today's issues log one line at a time: fix text and dates, decide what NULL means, remove duplicates, and build a clean view you can trust.</p></div><a class="btn" href="Day11_Data_Cleaning.html">Read Day 11</a></div>
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>
