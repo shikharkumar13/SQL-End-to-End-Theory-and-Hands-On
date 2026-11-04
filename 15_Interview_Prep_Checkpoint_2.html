@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 15: Interview Prep I + Checkpoint 2 | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 15 of 23</span><span class="part-pill">Must-haves</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Interview prep I + Checkpoint 2</h1>
+      <p class="hero-sub">How SQL interviews work, a five-step method for thinking out loud, the classic question types mapped to everything you've learned, and a take-home test on the full dataset.</p>
+      <div class="facts"><span class="fact">28 minute read</span><span class="fact hl">Checkpoint 2</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="Five steps for any SQL interview question: clarify, find the grain, plan, build and check, test and explain">
+      <p class="hd">Five steps for any SQL question</p>
+      <ul class="reads">
+        <li><code>"Completed only?"</code><span>1. Clarify the question out loud</span></li>
+        <li><code>one row per ...</code><span>2. Name the grain of the answer</span></li>
+        <li><code>WITH step_1 AS ...</code><span>3. Plan in small, named steps</span></li>
+        <li><code>SELECT * ... LIMIT 5</code><span>4. Build each step, and look at it</span></li>
+        <li><code>NULLs? ties?</code><span>5. Test the edge cases, then explain</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>What interviews look like</a></li><li><a href="#s2"><span class="n">2</span>Think out loud</a></li><li><a href="#s3"><span class="n">3</span>The classic question types</a></li><li><a href="#s4"><span class="n">4</span>Practice: people and teams</a></li><li><a href="#s5"><span class="n">5</span>Practice: sales</a></li><li><a href="#s6"><span class="n">6</span>Checkpoint 2: the take-home</a></li><li class="gap"></li><li><a href="#checkpoint"><span class="n"></span>Checkpoint 2</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">Fourteen days ago, you didn't know what a primary key was. Since then you've designed tables, written every kind of query, cleaned a messy database, worked with dates, built the standard analysis patterns and run SQL from Python. That's the full must-have toolkit for an analyst job. Today you practise using it under interview conditions: what the interviews look like, how to think out loud, the question types that come up again and again, and finally <strong>Checkpoint 2</strong>, a take-home test on the full dataset.</p>
+<div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. You'll need the Day 11 clean layer (<code>day11_clean_layer.sql</code>) and Day 13's <code>customer_summary</code> view. The practice questions hide their answers: <strong>try each one yourself first</strong>, out loud if you can, before you open the answer. That's the whole point of today.</p></div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>What SQL interviews look like</h2>
+  <p>"SQL interview" covers several different formats. Most hiring processes for analyst roles use two or three of them:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Format</th><th>What happens</th><th>What helps most</th></tr></thead>
+      <tbody>
+        <tr><td>Online test</td><td>Timed questions on a website: multiple choice, plus short queries checked automatically</td><td>Speed with the basics (Days 5 to 9), and reading the question carefully</td></tr>
+        <tr><td>Live coding</td><td>You write queries in a shared editor while an interviewer watches, usually for 30 to 60 minutes</td><td>Thinking out loud (section 2), and staying calm when something errors (Day 14)</td></tr>
+        <tr><td>Take-home</td><td>A dataset and a list of questions, with a few days to answer them and write up what you found</td><td>Clean, commented SQL and a clear write-up (section 6)</td></tr>
+        <tr><td>Case discussion</td><td>"How would you measure whether the new checkout is working?" Talked through, sometimes with SQL on a whiteboard</td><td>The analysis patterns (Day 13), and asking good questions</td></tr>
+        <tr><td>Concept questions</td><td>Quick questions: "What's the difference between WHERE and HAVING?"</td><td>The Interview corners from every day, and the rapid-fire list at the end of this article</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>Whatever the format, interviewers are looking at the same five things:</p>
+  <ol style="padding-left:22px;margin-bottom:18px">
+    <li><strong>Is the answer right?</strong> Including the details: completed orders only, each customer counted once.</li>
+    <li><strong>Did you handle the edge cases?</strong> NULLs, ties, duplicates, groups with no rows, unfinished periods.</li>
+    <li><strong>Is the SQL clear?</strong> Could a colleague read it and change it next month?</li>
+    <li><strong>Can you explain it?</strong> Why this join, why this function, what you assumed.</li>
+    <li><strong>Does the number make sense?</strong> Did you check it against something you know?</li>
+  </ol>
+  <p>Notice that only the first one is about the final answer. Interviewers often say they learn more from <em>how</em> you get there than from the query itself. That's good news: the method is something you can practise.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Think out loud: a five-step method</h2>
+  <p>Think of a doctor with a new patient. A good doctor doesn't hear "my stomach hurts" and write a prescription. They ask questions first, examine, then decide, and they tell you what they're thinking as they go. A good SQL answer works the same way. Here's the method, on a real question:</p>
+  <div class="note"><p><strong>The question:</strong> "Which customers spent more with us in 2024 than in 2023?"</p></div>
+
+  <h3 style="margin:28px 0 8px">Step 1: clarify the question out loud</h3>
+  <p>Almost every interview question is a little vague on purpose, to see if you notice. Say what you'd want to know, and if there's no one to ask, say what you'll assume:</p>
+  <ul>
+    <li><em>"By 'spent', do you mean completed orders only?"</em> Assume yes, which is <code>clean_sales</code>.</li>
+    <li><em>"What about customers who only bought in one of the two years?"</em> Someone who first bought in 2024 trivially spent more than in 2023. Assume we only compare customers who bought in <strong>both</strong> years, and report the others separately.</li>
+    <li><em>"Should a person with two accounts count once?"</em> Yes. <code>clean_sales</code> already uses the master ID (Day 11).</li>
+  </ul>
+
+  <h3 style="margin:28px 0 8px">Step 2: name the grain of the answer</h3>
+  <p>"The answer has <strong>one row per customer</strong>, with their 2023 and 2024 spending side by side." Saying the grain out loud (Day 10) tells you what to <code>GROUP BY</code> before you write anything.</p>
+
+  <h3 style="margin:28px 0 8px">Step 3: plan in small steps</h3>
+  <p>Write the plan as names first, then fill them in. Interviewers love seeing this, because it shows structure:</p>
+  <div class="code"><div class="code-bar"><span>The plan, before any real SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="c">-- yearly:  one row per customer: spent_2023, spent_2024</span>
+<span class="c">-- then:    keep customers with spending in both years</span>
+<span class="c">-- then:    count how many spent more in 2024, and list the biggest increases</span></code></pre></div>
+
+  <h3 style="margin:28px 0 8px">Step 4: build each step, and look at it</h3>
+  <p>Start with the counts. They tell you the shape of the data before you trust any list:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> yearly <span class="k">AS</span> (
+    <span class="k">SELECT</span> customer_id,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> spent_2023,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> spent_2024
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> customer_id
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*)                                            <span class="k">AS</span> customers,
+       <span class="k">SUM</span>(spent_2023 &gt; <span class="n">0</span> <span class="k">AND</span> spent_2024 &gt; <span class="n">0</span>)              <span class="k">AS</span> bought_both_years,
+       <span class="k">SUM</span>(spent_2023 &gt; <span class="n">0</span> <span class="k">AND</span> spent_2024 &gt; spent_2023)     <span class="k">AS</span> spent_more_in_2024,
+       <span class="k">SUM</span>(spent_2023 = <span class="n">0</span>)                                 <span class="k">AS</span> only_2024,
+       <span class="k">SUM</span>(spent_2024 = <span class="n">0</span>)                                 <span class="k">AS</span> only_2023
+<span class="k">FROM</span> yearly;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+-------------------+--------------------+-----------+-----------+
+| customers | bought_both_years | spent_more_in_2024 | only_2024 | only_2023 |
++-----------+-------------------+--------------------+-----------+-----------+
+|      2115 |               345 |                211 |      1026 |       744 |
++-----------+-------------------+--------------------+-----------+-----------+</code></pre></div>
+  <p>Say what you see: "2,115 customers in total. 345 bought in both years, and 211 of them spent more in 2024. The three groups add up: 345 + 1,026 + 744 = 2,115, so nobody was lost." That last sentence is a check, and saying it out loud scores points. Now the list:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> yearly <span class="k">AS</span> (
+    <span class="k">SELECT</span> customer_id,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> spent_2023,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> spent_2024
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> customer_id
+)
+<span class="k">SELECT</span> y.customer_id,
+       c.first_name,
+       c.last_name,
+       <span class="k">ROUND</span>(y.spent_2023)                <span class="k">AS</span> spent_2023,
+       <span class="k">ROUND</span>(y.spent_2024)                <span class="k">AS</span> spent_2024,
+       <span class="k">ROUND</span>(y.spent_2024 - y.spent_2023) <span class="k">AS</span> increase
+<span class="k">FROM</span> yearly y
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = y.customer_id
+<span class="k">WHERE</span> y.spent_2023 &gt; <span class="n">0</span>
+  <span class="k">AND</span> y.spent_2024 &gt; y.spent_2023
+<span class="k">ORDER</span> <span class="k">BY</span> increase <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+------------+-------------+------------+------------+----------+
+| customer_id | first_name | last_name   | spent_2023 | spent_2024 | increase |
++-------------+------------+-------------+------------+------------+----------+
+|        1800 | Pranav     | Chopra      |       6061 |      77314 |    71253 |
+|        1035 | Ankit      | Bose        |       1659 |      49501 |    47842 |
+|        1379 | Anika      | Patel       |       2122 |      44651 |    42529 |
+|        2221 | Hiroshi    | Wilson      |        218 |      34151 |    33933 |
+|         918 | Olivia     | Al-Mansoori |       2820 |      35956 |    33136 |
++-------------+------------+-------------+------------+------------+----------+</code></pre></div>
+
+  <h3 style="margin:28px 0 8px">Step 5: test the edge cases, then explain</h3>
+  <p>Before saying "done", run through the usual suspects, out loud:</p>
+  <ul>
+    <li><strong>NULLs:</strong> "I used <code>ELSE 0</code> inside <code>SUM</code>, so a customer with no 2023 orders gets 0, not NULL. That's why <code>spent_2023 = 0</code> works as a test."</li>
+    <li><strong>Duplicates:</strong> "<code>clean_sales</code> has one row per order line, but I'm summing money, not counting orders, so lines are exactly right."</li>
+    <li><strong>Dates:</strong> "The data starts in 2023, so 'before 2024' really means 2023. If there were older data, I'd add a start date."</li>
+    <li><strong>Ties:</strong> "Two customers with the same increase would be ordered arbitrarily. If the cut-off at 5 mattered, I'd add a tie-breaker (Day 9)."</li>
+  </ul>
+  <p>Then the answer, in one sentence a manager would understand: <strong>"Of the 345 customers who bought in both years, 211 (61%) spent more in 2024. The biggest increase was Pranav Chopra, up from about ₹6,000 to ₹77,000."</strong></p>
+  <div class="note sun"><p><strong>When you get stuck.</strong> It happens to everyone. Say what you're trying to do: "I need the previous row's value here. That's <code>LAG</code>, I just need a moment for the syntax." Interviewers care far more about the right idea than perfect recall. Also ask which database they use. <code>LIMIT</code> versus <code>TOP</code> (Day 14) is a fair question, not a weakness.</p></div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>The classic question types</h2>
+  <p>Interview questions look endless, but most of them are one of about a dozen types in disguise. Learn to recognise the type from the words in the question, and you already know the pattern. Every one of these has appeared in this series:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Type</th><th>It sounds like</th><th>The pattern</th><th>The trap</th><th>Day</th></tr></thead>
+      <tbody>
+        <tr><td>Nth highest, top N</td><td>"second highest", "top 3 in each"</td><td><code>DENSE_RANK</code> or <code>ROW_NUMBER</code> in a CTE, then filter</td><td>Ties: which ranking function did they mean?</td><td>5, 8, 9</td></tr>
+        <tr><td>Latest or first per group</td><td>"each customer's most recent order"</td><td><code>ROW_NUMBER() ... = 1</code></td><td>No tie-breaker, so a different answer each run</td><td>9</td></tr>
+        <tr><td>Things that never happened</td><td>"customers who never ordered"</td><td><code>LEFT JOIN ... IS NULL</code>, or <code>NOT EXISTS</code></td><td><code>NOT IN</code> with a NULL returns nothing</td><td>5, 7, 8</td></tr>
+        <tr><td>Duplicates</td><td>"find the duplicates", "keep one of each"</td><td><code>GROUP BY ... HAVING COUNT(*) &gt; 1</code>, <code>ROW_NUMBER</code></td><td>Deciding what "the same" means</td><td>6, 10, 11</td></tr>
+        <tr><td>Rows compared within a table</td><td>"earns more than their manager", "bought together"</td><td>Self join</td><td>Counting each pair twice</td><td>7</td></tr>
+        <tr><td>Group filters</td><td>"customers with more than 5 orders"</td><td><code>HAVING</code></td><td>Putting the aggregate in <code>WHERE</code> (error 1111)</td><td>6</td></tr>
+        <tr><td>Rates and shares</td><td>"cancellation rate", "% of total"</td><td><code>SUM(CASE ...)</code>, <code>SUM(...) OVER ()</code></td><td>The wrong denominator, or integer division</td><td>6, 8, 9, 14</td></tr>
+        <tr><td>Change over time</td><td>"month over month", "vs last year"</td><td><code>LAG</code> on a gap-free series</td><td>Missing months, unfinished periods</td><td>9, 12</td></tr>
+        <tr><td>Running totals</td><td>"cumulative", "year to date"</td><td><code>SUM() OVER (ORDER BY ...)</code></td><td>The default frame lumps ties together</td><td>9, 12</td></tr>
+        <tr><td>Pivot</td><td>"one column per month"</td><td><code>SUM(CASE WHEN ...)</code></td><td>Columns must be known in advance</td><td>8, 14</td></tr>
+        <tr><td>Repeat and retention</td><td>"how many came back", "cohort"</td><td>First order per customer, then compare</td><td>Not giving everyone the same time</td><td>13</td></tr>
+        <tr><td>Funnel</td><td>"conversion", "where do they drop off"</td><td>One flag per step per session, with <code>MAX</code></td><td>The wrong unit, skipped steps</td><td>13</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>Notice the trap column. Interviewers choose questions <em>because</em> of the trap. "Second highest salary" isn't hard to write. It's there to see whether you think about ties, and about what happens when there isn't a second one. When you recognise the type, say the trap out loud before they ask: "There might be ties for first place, so I'll use <code>DENSE_RANK</code>."</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>Practice: people and teams</h2>
+  <p>The <code>employees</code> table is a favourite interview playground: 30 staff with a department, a salary, and a <code>manager_id</code> that points at another employee (a self-referencing foreign key, from Day 3). It came in clean, so we use it directly. Try each question before opening the answer.</p>
+
+  <h3 style="margin:28px 0 8px">1. Second-highest salary in each department</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> ranked <span class="k">AS</span> (
+    <span class="k">SELECT</span> department,
+           first_name,
+           last_name,
+           job_title,
+           salary,
+           <span class="k">DENSE_RANK</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> department <span class="k">ORDER</span> <span class="k">BY</span> salary <span class="k">DESC</span>) <span class="k">AS</span> salary_rank
+    <span class="k">FROM</span> employees
+)
+<span class="k">SELECT</span> department, first_name, last_name, job_title, salary
+<span class="k">FROM</span> ranked
+<span class="k">WHERE</span> salary_rank = <span class="n">2</span>
+<span class="k">ORDER</span> <span class="k">BY</span> department;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+------------+-----------+--------------------------+------------+
+| department       | first_name | last_name | job_title                | salary     |
++------------------+------------+-----------+--------------------------+------------+
+| Customer Support | Aditi      | Joshi     | Support Team Lead        | 1100000.00 |
+| Finance          | Gaurav     | Jain      | Accountant               |  780000.00 |
+| Marketing        | Dev        | Sandhu    | Growth Analyst           | 1900000.00 |
+| Operations       | Kiran      | Rao       | Warehouse Lead           | 1400000.00 |
+| Technology       | Varun      | Chopra    | Senior Software Engineer | 3050000.00 |
++------------------+------------+-----------+--------------------------+------------+</code></pre></div>
+  <p>The type is "Nth highest per group". <code>DENSE_RANK</code> because "second-highest salary" means the second-highest <em>value</em>: if two people shared the top salary, the next salary down should still count as second (Day 9). Then the edge case, said out loud: <strong>Management is missing</strong>. It has only one person, the CEO, so there is no second salary. Is that what the interviewer wants? If they'd rather see Management with a blank, start from a list of departments and <code>LEFT JOIN</code> this result to it, the same idea as Day 12's grid.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">2. Who earns more than their manager?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> e.first_name || <span class="s">''</span> <span class="k">AS</span> employee,
+       e.job_title,
+       e.salary,
+       m.first_name <span class="k">AS</span> manager,
+       m.job_title  <span class="k">AS</span> manager_title,
+       m.salary     <span class="k">AS</span> manager_salary
+<span class="k">FROM</span> employees e
+<span class="k">JOIN</span> employees m <span class="k">ON</span> m.employee_id = e.manager_id
+<span class="k">WHERE</span> e.salary &gt; m.salary;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------+--------------------------+------------+---------+----------------------------+----------------+
+| employee | job_title                | salary     | manager | manager_title              | manager_salary |
++----------+--------------------------+------------+---------+----------------------------+----------------+
+|        0 | Senior Software Engineer | 3050000.00 | Meera   | Engineering Manager        |     2900000.00 |
+|        0 | Growth Analyst           | 1900000.00 | Neha    | Performance Marketing Lead |     1800000.00 |
++----------+--------------------------+------------+---------+----------------------------+----------------+</code></pre></div>
+  <p>Wait: look at the <code>employee</code> column. Those 0s are Day 14's dialect trap, which slipped into this answer on purpose: in MySQL, <code>||</code> means <code>OR</code>, not "join text". The correct version uses <code>CONCAT</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CONCAT(e.first_name, <span class="s">' '</span>, e.last_name) <span class="k">AS</span> employee,
+       e.job_title,
+       e.salary,
+       CONCAT(m.first_name, <span class="s">' '</span>, m.last_name) <span class="k">AS</span> manager,
+       m.job_title <span class="k">AS</span> manager_title,
+       m.salary    <span class="k">AS</span> manager_salary
+<span class="k">FROM</span> employees e
+<span class="k">JOIN</span> employees m <span class="k">ON</span> m.employee_id = e.manager_id
+<span class="k">WHERE</span> e.salary &gt; m.salary;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+--------------------------+------------+-------------+----------------------------+----------------+
+| employee     | job_title                | salary     | manager     | manager_title              | manager_salary |
++--------------+--------------------------+------------+-------------+----------------------------+----------------+
+| Varun Chopra | Senior Software Engineer | 3050000.00 | Meera Menon | Engineering Manager        |     2900000.00 |
+| Dev Sandhu   | Growth Analyst           | 1900000.00 | Neha Kapoor | Performance Marketing Lead |     1800000.00 |
++--------------+--------------------------+------------+-------------+----------------------------+----------------+</code></pre></div>
+  <p>The self join (Day 7): the same table twice, as <code>e</code> for the employee and <code>m</code> for their manager. An inner join is right here, because the CEO has no manager and can't earn more than one. Two people out-earn their managers: a senior engineer and a growth analyst. That's common in real companies, where an expert can be paid more than the person who manages them. A good answer says so, rather than treating it as a data error. (And the broken first version is a reminder to <em>look</em> at every result before you call it finished.)</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">3. Who is paid above their department's average?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> with_average <span class="k">AS</span> (
+    <span class="k">SELECT</span> department,
+           CONCAT(first_name, <span class="s">' '</span>, last_name)          <span class="k">AS</span> employee,
+           salary,
+           <span class="k">AVG</span>(salary) <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> department) <span class="k">AS</span> dept_average
+    <span class="k">FROM</span> employees
+)
+<span class="k">SELECT</span> department,
+       employee,
+       salary,
+       <span class="k">ROUND</span>(dept_average)          <span class="k">AS</span> dept_average,
+       <span class="k">ROUND</span>(salary - dept_average) <span class="k">AS</span> above_by
+<span class="k">FROM</span> with_average
+<span class="k">WHERE</span> salary &gt; dept_average
+<span class="k">ORDER</span> <span class="k">BY</span> department, above_by <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+-----------------+------------+--------------+----------+
+| department       | employee        | salary     | dept_average | above_by |
++------------------+-----------------+------------+--------------+----------+
+| Customer Support | Vikram Nair     | 2400000.00 |       811429 |  1588571 |
+| Customer Support | Aditi Joshi     | 1100000.00 |       811429 |   288571 |
+| Finance          | Rohit Bansal    | 2600000.00 |      1300000 |  1300000 |
+| Marketing        | Farah Siddiqui  | 3000000.00 |      1590000 |  1410000 |
+| Marketing        | Dev Sandhu      | 1900000.00 |      1590000 |   310000 |
+| Marketing        | Neha Kapoor     | 1800000.00 |      1590000 |   210000 |
+| Operations       | Sanjay Kulkarni | 3200000.00 |      1252000 |  1948000 |
+| Operations       | Kiran Rao       | 1400000.00 |      1252000 |   148000 |
+| Technology       | Ananya Krishnan | 3600000.00 |      2005556 |  1594444 |
+| Technology       | Varun Chopra    | 3050000.00 |      2005556 |  1044444 |
+| Technology       | Meera Menon     | 2900000.00 |      2005556 |   894444 |
+| Technology       | Priya Sharma    | 2200000.00 |      2005556 |   194444 |
++------------------+-----------------+------------+--------------+----------+</code></pre></div>
+  <p>A window <code>AVG</code> (Day 9) puts the department's average on every row, so each person can be compared with it. The filter has to be in the outer query, because <code>WHERE</code> runs before window functions. The classic alternative is a correlated subquery (<code>WHERE salary &gt; (SELECT AVG(salary) FROM employees e2 WHERE e2.department = e.department)</code>, Day 8). Both are fine, and mentioning both shows range. Notice the averages: one high salary pulls the department average up, so in most departments only the senior people are above it.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">4. Which managers have the most direct reports?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> m.employee_id,
+       CONCAT(m.first_name, <span class="s">' '</span>, m.last_name) <span class="k">AS</span> manager,
+       m.job_title,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> direct_reports
+<span class="k">FROM</span> employees m
+<span class="k">JOIN</span> employees e <span class="k">ON</span> e.manager_id = m.employee_id
+<span class="k">GROUP</span> <span class="k">BY</span> m.employee_id, manager, m.job_title
+<span class="k">ORDER</span> <span class="k">BY</span> direct_reports <span class="k">DESC</span>, m.employee_id
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-----------------+-------------------------+----------------+
+| employee_id | manager         | job_title               | direct_reports |
++-------------+-----------------+-------------------------+----------------+
+|           1 | Ritu Malhotra   | Chief Executive Officer |              5 |
+|          14 | Aditi Joshi     | Support Team Lead       |              4 |
+|          20 | Meera Menon     | Engineering Manager     |              3 |
+|          24 | Priya Sharma    | Data Analytics Lead     |              3 |
+|           2 | Sanjay Kulkarni | Head of Operations      |              2 |
++-------------+-----------------+-------------------------+----------------+</code></pre></div>
+  <p>Self join, then <code>GROUP BY</code> the manager side. A common follow-up is "and who manages nobody?" That's the "never happened" type: <code>WHERE NOT EXISTS (SELECT 1 FROM employees e WHERE e.manager_id = m.employee_id)</code>, which finds 19 of the 30. And a harder follow-up, "list everyone under the Head of Technology, at every level", needs a recursive CTE. That's Day 16.</p>
+  </div></details>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>Practice: sales</h2>
+  <p>Four more, on the clean sales data. These are closer to what a business would really ask.</p>
+
+  <h3 style="margin:28px 0 8px">1. The top 2 products by revenue in each category, for 2024</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> product_revenue <span class="k">AS</span> (
+    <span class="k">SELECT</span> category_name,
+           product_name,
+           <span class="k">SUM</span>(line_total) <span class="k">AS</span> revenue
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2025-01-01'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> category_name, product_name
+),
+ranked <span class="k">AS</span> (
+    <span class="k">SELECT</span> category_name,
+           product_name,
+           revenue,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> category_name
+                              <span class="k">ORDER</span> <span class="k">BY</span> revenue <span class="k">DESC</span>, product_name) <span class="k">AS</span> rn
+    <span class="k">FROM</span> product_revenue
+)
+<span class="k">SELECT</span> category_name, product_name, <span class="k">ROUND</span>(revenue) <span class="k">AS</span> revenue
+<span class="k">FROM</span> ranked
+<span class="k">WHERE</span> rn &lt;= <span class="n">2</span>
+<span class="k">ORDER</span> <span class="k">BY</span> category_name, rn;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+------------------------------+---------+
+| category_name  | product_name                 | revenue |
++----------------+------------------------------+---------+
+| Books          | Python for Data Analysis     |  104057 |
+| Books          | Atomic Habits                |   89132 |
+| Clothing       | Cotton Saree                 |  255585 |
+| Clothing       | Kurta Set                    |  249719 |
+| Electronics    | Noise-Cancelling Headphones  |  523915 |
+| Electronics    | Smartwatch                   |  402557 |
+| Home &amp; Kitchen | Pressure Cooker 3L           |  159597 |
+| Home &amp; Kitchen | Stainless Steel Water Bottle |  138295 |
+| Sports         | Yoga Mat                     |  262133 |
+| Sports         | Dumbbell Set 5kg             |  254392 |
+| Uncategorised  | Smart Fitness Band           |   28491 |
++----------------+------------------------------+---------+</code></pre></div>
+  <p>Summarise first, rank second, filter third: the top-N-per-group pattern. Say why you chose <code>ROW_NUMBER</code>: "top 2" means exactly two rows per category, and <code>product_name</code> as a tie-breaker makes the choice repeatable. If the interviewer wants tied products to share a place, switch to <code>RANK</code>, and a category might show three. Two more details: the half-open date range (Day 12), and "Uncategorised" has only one product, so it shows one row. That's correct, not a bug.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">2. Which pairs of products are most often bought in the same order?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> a.product_name <span class="k">AS</span> product_1,
+       b.product_name <span class="k">AS</span> product_2,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> a.order_id) <span class="k">AS</span> orders_together
+<span class="k">FROM</span> clean_sales a
+<span class="k">JOIN</span> clean_sales b
+  <span class="k">ON</span> b.order_id   = a.order_id
+ <span class="k">AND</span> a.product_id &lt; b.product_id
+<span class="k">GROUP</span> <span class="k">BY</span> a.product_id, b.product_id, a.product_name, b.product_name
+<span class="k">ORDER</span> <span class="k">BY</span> orders_together <span class="k">DESC</span>, a.product_id, b.product_id
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+--------------------+-----------------+
+| product_1      | product_2          | orders_together |
++----------------+--------------------+-----------------+
+| Cotton T-Shirt | Yoga Mat           |              25 |
+| Cotton T-Shirt | Phone Case         |              21 |
+| Cotton T-Shirt | Polo T-Shirt       |              21 |
+| Wireless Mouse | Cotton T-Shirt     |              20 |
+| Cotton T-Shirt | Ceramic Coffee Mug |              20 |
++----------------+--------------------+-----------------+</code></pre></div>
+  <p>A self join on the order: every line paired with every other line in the same order. The key detail is <code>a.product_id &lt; b.product_id</code>. With <code>&lt;&gt;</code>, each pair would appear twice (T-shirt + mat, and mat + T-shirt), and with no condition at all, every product would pair with itself. This is called <strong>market basket analysis</strong>, and it powers "customers who bought this also bought..." on shopping sites.</p>
+  <p>And a point that impresses interviewers: the Cotton T-Shirt is in almost every top pair. Is it really "bought together" with everything? More likely, it's just the shop's most popular cheap item, so it turns up in lots of orders by chance. Real basket analysis compares each pair's count with what you'd expect by chance (a measure called <em>lift</em>). Mentioning that a raw count can mislead is the kind of judgement interviewers are looking for.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">3. Revenue by category, 2023 vs 2024, with growth</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> by_year <span class="k">AS</span> (
+    <span class="k">SELECT</span> category_name,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> rev_2023,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> rev_2024
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> category_name
+)
+<span class="k">SELECT</span> category_name,
+       <span class="k">ROUND</span>(rev_2023) <span class="k">AS</span> rev_2023,
+       <span class="k">ROUND</span>(rev_2024) <span class="k">AS</span> rev_2024,
+       <span class="k">ROUND</span>((rev_2024 - rev_2023) * <span class="n">100</span> / <span class="k">NULLIF</span>(rev_2023, <span class="n">0</span>), <span class="n">1</span>) <span class="k">AS</span> growth_pct
+<span class="k">FROM</span> by_year
+<span class="k">ORDER</span> <span class="k">BY</span> growth_pct <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+----------+------------+
+| category_name  | rev_2023 | rev_2024 | growth_pct |
++----------------+----------+----------+------------+
+| Sports         |   624728 |  1608672 |      157.5 |
+| Electronics    |  1684332 |  2609135 |       54.9 |
+| Clothing       |  1410341 |  2002168 |       42.0 |
+| Home &amp; Kitchen |   875289 |  1085177 |       24.0 |
+| Books          |   595738 |   648791 |        8.9 |
+| Uncategorised  |        0 |    28491 |       NULL |
++----------------+----------+----------+------------+</code></pre></div>
+  <p>Conditional aggregation puts the two years side by side (Day 8), then a CTE keeps the growth formula readable. <code>NULLIF(rev_2023, 0)</code> protects against dividing by zero: "Uncategorised" had no 2023 sales, so its growth is NULL ("can't be calculated") instead of an error or a misleading number. The finding: <strong>Sports more than doubled</strong>, while Books barely grew. That's worth a follow-up question: which Sports products drove it?</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">4. How many customers bought in every quarter of 2024?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> customers_every_quarter
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> customer_id
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2025-01-01'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> customer_id
+    <span class="k">HAVING</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> QUARTER(order_date)) = <span class="n">4</span>
+) <span class="k">AS</span> loyal;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------------+
+| customers_every_quarter |
++-------------------------+
+|                      75 |
++-------------------------+</code></pre></div>
+  <p>"In every X" questions are a group filter in disguise: count the <em>distinct</em> quarters each customer bought in, and keep those with all 4. <code>DISTINCT</code> matters. Without it, a customer with four orders all in March would pass. This "count distinct = total possible" trick also answers "customers who bought from every category" or "products sold in every month".</p>
+  </div></details>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>Checkpoint 2: the take-home</h2>
+  <p>This is what a real take-home looks like. A hiring manager sends you access to the shop's database and six questions, with a weekend to answer them. Treat it as a test: give yourself about two hours, answer all six before opening any answer, and write one sentence of finding for each. If you can do most of them, you've reached Checkpoint 2.</p>
+  <div class="note"><p><strong>The brief:</strong> "We're planning next year. Using our 2023 and 2024 data, please answer the six questions below. For each, give us the SQL, the result, and what you think it means for the business."</p></div>
+
+  <h3 style="margin:28px 0 8px">1. How much of each year's revenue came from new customers, and how much from returning ones?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="t">YEAR</span>(s.order_date) <span class="k">AS</span> yr,
+       <span class="k">CASE</span> <span class="k">WHEN</span> <span class="t">YEAR</span>(s.order_date) = <span class="t">YEAR</span>(c.first_order_date)
+            <span class="k">THEN</span> <span class="s">'New this year'</span> <span class="k">ELSE</span> <span class="s">'Returning'</span> <span class="k">END</span> <span class="k">AS</span> customer_type,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> s.customer_id) <span class="k">AS</span> customers,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> s.order_id)    <span class="k">AS</span> orders,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(s.line_total))      <span class="k">AS</span> revenue
+<span class="k">FROM</span> clean_sales s
+<span class="k">JOIN</span> customer_summary c <span class="k">ON</span> c.customer_id = s.customer_id
+<span class="k">GROUP</span> <span class="k">BY</span> yr, customer_type
+<span class="k">ORDER</span> <span class="k">BY</span> yr, customer_type;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------+---------------+-----------+--------+---------+
+| yr   | customer_type | customers | orders | revenue |
++------+---------------+-----------+--------+---------+
+| 2023 | New this year |      1089 |   2343 | 5190428 |
+| 2024 | New this year |      1026 |   1894 | 4550628 |
+| 2024 | Returning     |       345 |   1425 | 3431805 |
++------+---------------+-----------+--------+---------+</code></pre></div>
+  <p>"New" means the customer's first order was in that year, using <code>first_order_date</code> from Day 13's <code>customer_summary</code>. 2023 has no returning customers because our data starts there. That's a limit of the data, not a fact about the business, and it's worth saying. <strong>Finding:</strong> in 2024, the 345 returning customers brought in ₹34.3 lakh, about 43% of revenue, from a quarter of the buyers. Keeping customers matters as much as winning new ones.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">2. Which categories have the highest return rate?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> s.category_name,
+       <span class="k">COUNT</span>(*)                                   <span class="k">AS</span> lines_sold,
+       <span class="k">COUNT</span>(r.return_id)                         <span class="k">AS</span> lines_returned,
+       <span class="k">ROUND</span>(<span class="k">COUNT</span>(r.return_id) * <span class="n">100</span> / <span class="k">COUNT</span>(*), <span class="n">1</span>) <span class="k">AS</span> return_pct,
+       <span class="k">ROUND</span>(<span class="k">COALESCE</span>(<span class="k">SUM</span>(r.refund_amount), <span class="n">0</span>))   <span class="k">AS</span> refunded
+<span class="k">FROM</span> clean_sales s
+<span class="k">LEFT</span> <span class="k">JOIN</span> clean_returns r <span class="k">ON</span> r.order_item_id = s.order_item_id
+<span class="k">GROUP</span> <span class="k">BY</span> s.category_name
+<span class="k">ORDER</span> <span class="k">BY</span> return_pct <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+------------+----------------+------------+----------+
+| category_name  | lines_sold | lines_returned | return_pct | refunded |
++----------------+------------+----------------+------------+----------+
+| Clothing       |       2505 |            315 |       12.6 |   413629 |
+| Electronics    |       2131 |            106 |        5.0 |   209066 |
+| Sports         |       1832 |             67 |        3.7 |    76027 |
+| Home &amp; Kitchen |       1668 |             48 |        2.9 |    58931 |
+| Books          |       1363 |             20 |        1.5 |    18361 |
+| Uncategorised  |          9 |              0 |        0.0 |        0 |
++----------------+------------+----------------+------------+----------+</code></pre></div>
+  <p>A <code>LEFT JOIN</code>, so lines that were never returned still count in the denominator, and <code>COUNT(r.return_id)</code> counts only the matches (Day 7). <code>COALESCE</code> turns "no refunds" into 0 for Uncategorised (Day 8). Each return points at one order line, and a quick check before writing this showed every return matches a completed line, so nothing is lost. <strong>Finding:</strong> one in eight clothing lines comes back, more than twice the rate of any other category. Day 11 found that size problems are the most common reason for returns. Better size guides could save a lot of the ₹4.1 lakh refunded on clothing.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">3. Which cities have the highest revenue per customer? (Cities with at least 50 customers.)</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> cc.city,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> s.customer_id) <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(s.line_total))      <span class="k">AS</span> revenue,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(s.line_total) / <span class="k">COUNT</span>(<span class="k">DISTINCT</span> s.customer_id)) <span class="k">AS</span> revenue_per_customer
+<span class="k">FROM</span> clean_sales s
+<span class="k">JOIN</span> clean_customers cc <span class="k">ON</span> cc.customer_id = s.customer_id
+<span class="k">GROUP</span> <span class="k">BY</span> cc.city
+<span class="k">HAVING</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> s.customer_id) &gt;= <span class="n">50</span>
+<span class="k">ORDER</span> <span class="k">BY</span> revenue_per_customer <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+-----------+---------+----------------------+
+| city      | customers | revenue | revenue_per_customer |
++-----------+-----------+---------+----------------------+
+| Jaipur    |        75 |  621651 |                 8289 |
+| Gurugram  |        61 |  466022 |                 7640 |
+| NULL      |       100 |  762720 |                 7627 |
+| Hyderabad |       148 | 1085888 |                 7337 |
+| Chennai   |       130 |  944071 |                 7262 |
++-----------+-----------+---------+----------------------+</code></pre></div>
+  <p>Look at third place: <strong>NULL</strong>. The customers with no city formed their own group (<code>GROUP BY</code> puts all NULLs together), and it's big enough to pass the filter. Showing NULL as a "city" in a report to management would be embarrassing. Decide, and say: either exclude them with <code>WHERE cc.city IS NOT NULL</code>, or label them <code>COALESCE(cc.city, 'Not given')</code>. Here, excluding them is right, because the question is about cities. Catching this <em>before</em> handing it in is exactly what take-homes test. <strong>Finding:</strong> Jaipur customers spend the most each (about ₹8,300), ahead of Gurugram and Hyderabad. The <code>HAVING</code> threshold keeps tiny cities, where one big spender could top the list, out of the ranking.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">4. Who processed the most returns, and who is their manager?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CONCAT(e.first_name, <span class="s">' '</span>, e.last_name) <span class="k">AS</span> employee,
+       e.job_title,
+       m.first_name                           <span class="k">AS</span> manager,
+       <span class="k">COUNT</span>(*)                               <span class="k">AS</span> returns_processed,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(r.refund_amount))            <span class="k">AS</span> refunded
+<span class="k">FROM</span> clean_returns r
+<span class="k">JOIN</span> employees e      <span class="k">ON</span> e.employee_id = r.processed_by
+<span class="k">LEFT</span> <span class="k">JOIN</span> employees m <span class="k">ON</span> m.employee_id = e.manager_id
+<span class="k">GROUP</span> <span class="k">BY</span> e.employee_id, employee, e.job_title, m.first_name
+<span class="k">ORDER</span> <span class="k">BY</span> returns_processed <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------+--------------------+---------+-------------------+----------+
+| employee            | job_title          | manager | returns_processed | refunded |
++---------------------+--------------------+---------+-------------------+----------+
+| Pooja Iyer          | Support Agent      | Aditi   |               120 |   181725 |
+| Sneha Patil         | Support Agent      | Aditi   |               115 |   143300 |
+| Rahul Verma         | Support Agent      | Aditi   |               113 |   159685 |
+| Imran Qureshi       | Support Agent      | Aditi   |               112 |   151922 |
+| Karthik Subramanian | Returns Specialist | Vikram  |                96 |   139382 |
++---------------------+--------------------+---------+-------------------+----------+</code></pre></div>
+  <p>Three tables, one of them twice: returns to the employee who processed them, and the employee to their manager (a self join). The manager join is a <code>LEFT JOIN</code> on purpose: if the CEO ever processed a return, she has no manager, and an inner join would drop her. <strong>Finding:</strong> five people handle all the returns. Aditi's four support agents share the work almost equally, while Karthik, the returns specialist, handles a little less. Good to know when planning staff for the festive season, when returns peak.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">5. Do orders with a coupon spend more or less?</h3>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> order_totals <span class="k">AS</span> (
+    <span class="k">SELECT</span> order_id,
+           <span class="k">MAX</span>(coupon_code) <span class="k">AS</span> coupon_code,
+           <span class="k">SUM</span>(line_total)  <span class="k">AS</span> order_total
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> order_id
+)
+<span class="k">SELECT</span> <span class="k">COALESCE</span>(coupon_code, <span class="s">'No coupon'</span>) <span class="k">AS</span> coupon,
+       <span class="k">COUNT</span>(*)                           <span class="k">AS</span> orders,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(order_total))            <span class="k">AS</span> avg_order_value,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(order_total) * <span class="n">100</span> / <span class="k">SUM</span>(<span class="k">SUM</span>(order_total)) <span class="k">OVER</span> (), <span class="n">1</span>) <span class="k">AS</span> pct_of_revenue
+<span class="k">FROM</span> order_totals
+<span class="k">GROUP</span> <span class="k">BY</span> coupon
+<span class="k">ORDER</span> <span class="k">BY</span> orders <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+--------+-----------------+----------------+
+| coupon    | orders | avg_order_value | pct_of_revenue |
++-----------+--------+-----------------+----------------+
+| No coupon |   4989 |            2362 |           89.5 |
+| WELCOME10 |    498 |            2145 |            8.1 |
+| FESTIVE15 |    152 |            1870 |            2.2 |
+| NEWYEAR10 |     23 |            1599 |            0.3 |
++-----------+--------+-----------------+----------------+</code></pre></div>
+  <p>First roll lines up to one row per order (the grain is orders, so average order value is per order, not per line), then group. <code>MAX(coupon_code)</code> is a small trick: every line of an order has the same coupon, so <code>MAX</code> just picks it up. Every coupon's orders are smaller than orders without one. But don't stop there: is that a fair comparison? A quick check shows that all 498 <code>WELCOME10</code> orders are customers' <em>first</em> orders, so compare like with like, first orders only:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> order_totals <span class="k">AS</span> (
+    <span class="k">SELECT</span> order_id,
+           customer_id,
+           <span class="k">MIN</span>(order_date)  <span class="k">AS</span> order_date,
+           <span class="k">MAX</span>(coupon_code) <span class="k">AS</span> coupon_code,
+           <span class="k">SUM</span>(line_total)  <span class="k">AS</span> order_total
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> order_id, customer_id
+),
+numbered <span class="k">AS</span> (
+    <span class="k">SELECT</span> order_total,
+           coupon_code,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id <span class="k">ORDER</span> <span class="k">BY</span> order_date, order_id) <span class="k">AS</span> order_number
+    <span class="k">FROM</span> order_totals
+)
+<span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> coupon_code <span class="k">IS</span> <span class="k">NULL</span> <span class="k">THEN</span> <span class="s">'No coupon'</span> <span class="k">ELSE</span> <span class="s">'Coupon'</span> <span class="k">END</span> <span class="k">AS</span> first_order_type,
+       <span class="k">COUNT</span>(*)                <span class="k">AS</span> first_orders,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(order_total)) <span class="k">AS</span> avg_order_value
+<span class="k">FROM</span> numbered
+<span class="k">WHERE</span> order_number = <span class="n">1</span>
+<span class="k">GROUP</span> <span class="k">BY</span> first_order_type;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+--------------+-----------------+
+| first_order_type | first_orders | avg_order_value |
++------------------+--------------+-----------------+
+| Coupon           |          538 |            2107 |
+| No coupon        |         1577 |            2339 |
++------------------+--------------+-----------------+</code></pre></div>
+  <p>Even among first orders, coupon orders are smaller, by about 10%: almost exactly the size of the welcome discount. That suggests a simple explanation: <code>line_total</code> is what the customer <em>paid</em>, with the discount already taken off. If so, coupon shoppers put about the same in their baskets, and just pay less for them. Before writing that in a report, confirm with the team how <code>unit_price</code> is recorded. <strong>Finding:</strong> "Coupons don't appear to make people buy more. Coupon orders are about 10% smaller, which matches the discount itself. If the goal of the welcome coupon is bigger first orders, it isn't achieving that. Whether it wins customers who wouldn't otherwise buy needs a test." Careful wording about cause and effect is one of the things take-homes are really testing.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">6. How many valuable customers have gone quiet?</h3>
+  <p>"Valuable" means they spent at least ₹10,000 in 2023. "Gone quiet" means no completed order since 1 July 2024.</p>
+  <details class="reveal"><summary>Show the answer</summary><div class="body">
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> per_customer <span class="k">AS</span> (
+    <span class="k">SELECT</span> customer_id,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt; <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> spent_2023,
+           <span class="k">MAX</span>(order_date)                                                     <span class="k">AS</span> last_order_date
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> customer_id
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*)                <span class="k">AS</span> quiet_valuable_customers,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(spent_2023))  <span class="k">AS</span> their_2023_spend
+<span class="k">FROM</span> per_customer
+<span class="k">WHERE</span> spent_2023 &gt;= <span class="n">10000</span>
+  <span class="k">AND</span> last_order_date &lt; <span class="s">'2024-07-01'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------+------------------+
+| quiet_valuable_customers | their_2023_spend |
++--------------------------+------------------+
+|                       81 |          1412755 |
++--------------------------+------------------+</code></pre></div>
+  <p>Turn the business words into exact rules first, then write the SQL. The brief did that for you here, and in a real take-home you'd write your definitions down yourself. <strong>Finding:</strong> 81 customers who spent ₹14.1 lakh in 2023 haven't bought for at least six months. That's the win-back list from Day 13's "At risk" segment, sized in money. A campaign that brought back even a quarter of them would be worth a lot.</p>
+  </div></details>
+
+  <h3 style="margin:28px 0 8px">How to hand in a take-home</h3>
+  <ul>
+    <li><strong>Lead with the findings.</strong> One page: the six answers in plain sentences, numbers included. The SQL goes after it, not before.</li>
+    <li><strong>Write down your assumptions.</strong> "Revenue = completed orders, excluding test and duplicate orders. Customers with two accounts counted once." (Day 11's decisions, in one paragraph.)</li>
+    <li><strong>Mention the data problems you found and how you handled them.</strong> The NULL city, the unfinished December. It shows care, not weakness.</li>
+    <li><strong>Make every query runnable</strong>, in order, with a header comment (Day 14, section 8).</li>
+    <li><strong>End with one or two next steps</strong>: "I'd test whether the welcome coupon changes basket size", "I'd look at which Sports products drove the growth".</li>
+  </ul>
+</section>
+
+<!-- Checkpoint -->
+<div class="checkpoint" id="checkpoint">
+  <h2>🏁 Checkpoint 2: job-ready</h2>
+  <p>If you've worked through Days 1 to 15, you have the SQL skills most entry-level data analyst jobs ask for. Not just the syntax, but the habits that make results trustworthy. You can:</p>
+  <div class="cols">
+    <ul>
+      <li>Explore a database you've never seen, and write down what's wrong with it.</li>
+      <li>Clean it in views without touching the raw data, and build a number you can defend.</li>
+      <li>Work with dates properly: ranges, periods, calendars, year over year.</li>
+      <li>Answer the standard business questions: repeat purchase, cohorts, funnels, RFM, customer value.</li>
+    </ul>
+    <ul>
+      <li>Run SQL from Python, load files, and read error messages calmly.</li>
+      <li>Move between MySQL and other databases without being caught by their differences.</li>
+      <li>Recognise the classic interview question types, and the trap in each.</li>
+      <li>Explain your reasoning, your assumptions and your findings to people who don't read SQL.</li>
+    </ul>
+  </div>
+  <h3>A portfolio project you can do now</h3>
+  <p>Do a take-home on your own. Pick a public e-commerce or retail dataset with several linked tables (Kaggle has many). Load it into MySQL with pandas (Day 14). Profile it and write an issues log (Day 10). Build a clean layer of views (Day 11). Then answer six questions like the ones above, and write it up: findings first, assumptions, then the SQL. On GitHub, that shows an employer exactly the work they'd hire you to do.</p>
+  <h3>Where the series goes next</h3>
+  <p><strong>Days 16 to 20</strong> are the good-to-haves: advanced query patterns (percentiles, streaks, recursive queries), database design and data warehouses, making queries fast with indexes, the rest of SQL (procedures, triggers, permissions), and a second interview day for harder questions. <strong>Days 21 to 23</strong> are three full case studies on this same shop: a monthly business review, retention and churn, and product and website performance.</p>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner: the rapid-fire round</h2>
+    <p>Concept questions from Days 1 to 14, the kind that come quickly at the start of an interview. Answer each in a sentence or two before opening it. If one feels shaky, the day number tells you where to go back.</p>
+  </div>
+  <div class="iv-group">
+    <h3>Databases and tables (Days 1 to 4)</h3>
+    <details class="qa"><summary><span class="q">Q1</span>What's the difference between a primary key and a foreign key?</summary>
+      <div class="body"><p>A primary key uniquely identifies each row in its own table, and can't be NULL or repeated. A foreign key is a column that points at a primary key in another table (or the same one), and the database refuses values that don't exist there. (Day 3)</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>What's the difference between DELETE, TRUNCATE and DROP?</summary>
+      <div class="body"><p><code>DELETE</code> removes rows (all, or those matching <code>WHERE</code>) and can be rolled back inside a transaction. <code>TRUNCATE</code> empties the whole table quickly and resets <code>AUTO_INCREMENT</code>. <code>DROP</code> removes the table itself, structure and all. (Days 3 and 4)</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>What is a transaction, and what does ACID mean?</summary>
+      <div class="body"><p>A group of statements that succeed or fail together (<code>START TRANSACTION</code> ... <code>COMMIT</code> or <code>ROLLBACK</code>). ACID: Atomic (all or nothing), Consistent (rules are never broken), Isolated (transactions don't see each other's half-done work), Durable (once committed, it survives a crash). (Day 4)</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>Why use DECIMAL rather than FLOAT for money?</summary>
+      <div class="body"><p><code>FLOAT</code> stores approximations, so 0.1 + 0.2 isn't exactly 0.3, and small errors add up over millions of rows. <code>DECIMAL</code> stores exact values. (Day 2)</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Querying (Days 5 to 9)</h3>
+    <details class="qa"><summary><span class="q">Q5</span>In what order does MySQL run the parts of a query?</summary>
+      <div class="body"><p><code>FROM</code> and joins, <code>WHERE</code>, <code>GROUP BY</code>, <code>HAVING</code>, window functions, <code>SELECT</code>, <code>DISTINCT</code>, <code>ORDER BY</code>, <code>LIMIT</code>. That's why <code>WHERE</code> can't use an aggregate or a window function, and why <code>ORDER BY</code> can use an alias. (Days 6 and 9)</p></div></details>
+    <details class="qa"><summary><span class="q">Q6</span>WHERE vs HAVING?</summary>
+      <div class="body"><p><code>WHERE</code> filters rows before grouping. <code>HAVING</code> filters groups after grouping, so it can use aggregates like <code>COUNT(*) &gt; 5</code>. (Day 6)</p></div></details>
+    <details class="qa"><summary><span class="q">Q7</span>COUNT(*) vs COUNT(column) vs COUNT(DISTINCT column)?</summary>
+      <div class="body"><p><code>COUNT(*)</code> counts rows. <code>COUNT(column)</code> counts non-NULL values in that column. <code>COUNT(DISTINCT column)</code> counts different non-NULL values. After a <code>LEFT JOIN</code>, <code>COUNT(*)</code> gives 1 for an unmatched row, while <code>COUNT(right_table.id)</code> correctly gives 0. (Days 6 and 7)</p></div></details>
+    <details class="qa"><summary><span class="q">Q8</span>Explain the join types.</summary>
+      <div class="body"><p><code>INNER JOIN</code> keeps only matches. <code>LEFT JOIN</code> keeps every row from the left table, with NULLs where there's no match. <code>RIGHT JOIN</code> is the mirror image. <code>FULL OUTER JOIN</code> keeps unmatched rows from both sides (not in MySQL: use a <code>UNION</code> of left and right joins). <code>CROSS JOIN</code> pairs every row with every row. A self join joins a table to itself. (Day 7)</p></div></details>
+    <details class="qa"><summary><span class="q">Q9</span>Why can a condition on the right table turn a LEFT JOIN into an inner join?</summary>
+      <div class="body"><p>Unmatched rows have NULL in every right-table column, and a <code>WHERE</code> condition like <code>o.status = 'Completed'</code> is never true for NULL, so those rows are thrown away. Put the condition in the <code>ON</code> clause instead, or filter in a subquery first. (Day 7)</p></div></details>
+    <details class="qa"><summary><span class="q">Q10</span>UNION vs UNION ALL?</summary>
+      <div class="body"><p><code>UNION</code> removes duplicate rows, which costs time. <code>UNION ALL</code> keeps everything. Use <code>UNION ALL</code> unless you specifically need duplicates removed. (Day 7)</p></div></details>
+    <details class="qa"><summary><span class="q">Q11</span>Subquery, CTE or view: when would you use each?</summary>
+      <div class="body"><p>A subquery for a small, one-off step inside a query. A CTE to break a longer query into named, readable steps. A view to save a query in the database so many queries and people can reuse it, like Day 11's clean layer. (Days 8 and 9)</p></div></details>
+    <details class="qa"><summary><span class="q">Q12</span>ROW_NUMBER vs RANK vs DENSE_RANK?</summary>
+      <div class="body"><p>For values 100, 90, 90, 80: <code>ROW_NUMBER</code> gives 1, 2, 3, 4 (always unique). <code>RANK</code> gives 1, 2, 2, 4 (ties share, then a gap). <code>DENSE_RANK</code> gives 1, 2, 2, 3 (ties share, no gap). (Day 9)</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Real-world data (Days 10 to 14)</h3>
+    <details class="qa"><summary><span class="q">Q13</span>You're given a database you've never seen. What do you do first?</summary>
+      <div class="body"><p>List the tables and their sizes, work out each table's grain and how they link, look at sample rows, profile the key columns (NULLs, distinct values, ranges), and write an issues log before answering anything. (Day 10)</p></div></details>
+    <details class="qa"><summary><span class="q">Q14</span>How would you clean messy data without risking it?</summary>
+      <div class="body"><p>Never change the raw tables. Write each fix as SQL in views (or a cleaned copy), record every business decision, compare counts before and after, and add data quality checks that should return 0. (Day 11)</p></div></details>
+    <details class="qa"><summary><span class="q">Q15</span>Why can BETWEEN give the wrong answer for dates, and why might the latest month look like a crash?</summary>
+      <div class="body"><p>On a <code>DATETIME</code>, <code>BETWEEN ... AND '2024-12-31'</code> stops at midnight at the start of the 31st. Use <code>&gt;=</code> the start and <code>&lt;</code> the day after the end. The latest month often looks weak because it's unfinished, or recent orders haven't completed yet, so compare like-for-like. (Day 12)</p></div></details>
+    <details class="qa"><summary><span class="q">Q16</span>What is a cohort, and why do recent cohorts often look worse?</summary>
+      <div class="body"><p>A group of customers who started at the same time, followed over time. Recent cohorts have had less time to come back, so compare fixed windows (such as 90 days) for customers who have all had that long, and show "not yet known" as NULL, not 0. (Day 13)</p></div></details>
+    <details class="qa"><summary><span class="q">Q17</span>What is SQL injection, and how do you prevent it?</summary>
+      <div class="body"><p>Outside input pasted into SQL text can change the query itself (<code>' OR '1'='1</code>). Prevent it with parameters, such as <code>:status</code> with the value passed separately, never by building SQL from strings. (Day 14)</p></div></details>
+    <details class="qa"><summary><span class="q">Q18</span>Name two differences between MySQL and PostgreSQL that can change an answer silently.</summary>
+      <div class="body"><p>Integer division (<code>7/2</code> is 3.5 in MySQL, 3 in PostgreSQL), and text comparison (MySQL ignores capitals by default, PostgreSQL doesn't). Others: <code>||</code> joins text in PostgreSQL but means OR in MySQL, <code>CONCAT</code> with a NULL, and NULL sort order. (Day 14)</p></div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li>SQL interviews come as online tests, live coding, take-homes, case discussions and concept questions. All of them judge correctness, edge cases, clarity, explanation and common sense.</li>
+    <li>The five-step method: <strong>clarify</strong> the question out loud, name the <strong>grain</strong>, <strong>plan</strong> in named steps, <strong>build and look</strong> at each step, then <strong>test edge cases and explain</strong> in one plain sentence.</li>
+    <li>Most questions are one of about a dozen types: Nth highest, latest per group, never happened, duplicates, self joins, group filters, rates, change over time, running totals, pivots, retention, funnels. Each has a standard pattern, and a trap the interviewer is waiting to see you handle.</li>
+    <li>Always look at your result before calling it done: a column of 0s, a NULL "city" or a missing department are clues, not details.</li>
+    <li>In a take-home, lead with findings, write down assumptions and data problems, keep every query runnable, and be careful with cause and effect.</li>
+    <li><strong>Checkpoint 2:</strong> you have the must-have SQL toolkit for an analyst job. Days 16 to 20 add the good-to-haves, and Days 21 to 23 put everything together in case studies.</li>
+  </ul>
+</div>
+
+<div class="next"><div><small>Coming up next</small><h3>Day 16: Advanced query patterns</h3><p>The first good-to-have day: pivots, medians and percentiles, the 80/20 rule, finding streaks and gaps, and recursive CTEs for hierarchies.</p></div><a class="btn" href="Day16_Advanced_Query_Patterns.html">Read Day 16</a></div>
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>

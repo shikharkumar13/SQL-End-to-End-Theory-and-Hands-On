@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 19: Beyond SELECT | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+
+.code.sa{box-shadow:inset 6px 0 0 var(--lagoon)}
+.code.sb{box-shadow:inset 6px 0 0 var(--saffron)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 19 of 23</span><span class="part-pill">Good-to-haves</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Beyond SELECT</h1>
+      <p class="hero-sub">The rest of SQL: your own functions, stored procedures and triggers, who is allowed to do what, and what you see when many people use the database at the same time.</p>
+      <div class="facts"><span class="fact">33 minute read</span><span class="fact hl">Good-to-have</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="Four things beyond SELECT: your own functions, saved procedures, permissions, and isolation">
+      <p class="hd">Four things beyond SELECT</p>
+      <ul class="reads">
+        <li><code>CREATE FUNCTION</code><span>Your own formulas, like <em>fiscal_year()</em></span></li>
+        <li><code>CALL</code><span>Run a saved procedure: a report, a refresh job</span></li>
+        <li><code>GRANT</code><span>Who can read, change or run what</span></li>
+        <li><code>REPEATABLE READ</code><span>What you see while others change the data</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>Logic inside the database</a></li><li><a href="#s2"><span class="n">2</span>Your own functions</a></li><li><a href="#s3"><span class="n">3</span>Stored procedures</a></li><li><a href="#s4"><span class="n">4</span>Triggers</a></li><li><a href="#s5"><span class="n">5</span>Users and permissions</a></li><li><a href="#s6"><span class="n">6</span>Many people at once</a></li><li><a href="#s7"><span class="n">7</span>Locks and deadlocks</a></li><li><a href="#s8"><span class="n">8</span>What this means for you</a></li><li class="gap"></li><li><a href="#try"><span class="n"></span>Try this</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">Yesterday was about making <code>SELECT</code> fast. Today is about everything around it. Databases can hold more than tables and views: formulas you write yourself, saved scripts, rules that run by themselves when data changes, and a list of who is allowed to do what. And they're shared by many people at once, which raises a question Day 4 left open: while someone else is changing the data, what exactly do <em>you</em> see? You won't write these things every day as an analyst, but you'll meet all of them, and some will explain numbers that otherwise make no sense.</p>
+<div class="note"><p><strong>Before you start.</strong> Everything runs on <code>online_store_full</code>, so run <code>USE online_store_full;</code> first. Log in as <code>root</code> (or another user with full rights), because today you'll create users. Data changes happen inside transactions that end with <code>ROLLBACK</code>, or on a small practice table, so the shop's data stays exactly as it is. Section 8 ends with a tidy-up.</p></div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>Logic that lives inside the database</h2>
+  <p>On Day 13 you saved a query as a <strong>view</strong>, so that everyone who asks "how much has each customer spent?" uses the same definition. That was your first piece of logic stored <em>inside</em> the database, instead of in a file on your laptop. There are a few more kinds. Think of them as the shop's written procedures:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Object</th><th>What it is</th><th>How you use it</th><th>In the shop</th></tr></thead>
+      <tbody>
+        <tr><td><strong>View</strong> (Day 13)</td><td>A saved query that acts like a table</td><td><code>SELECT ... FROM customer_summary</code></td><td>A standard report everyone reads</td></tr>
+        <tr><td><strong>Function</strong></td><td>A saved formula that returns one value</td><td>Inside a query: <code>SELECT fiscal_year(order_date)</code></td><td>The rule for working out the financial year</td></tr>
+        <tr><td><strong>Procedure</strong></td><td>A saved script of one or more steps, with inputs</td><td><code>CALL refresh_monthly_sales();</code></td><td>The closing-time checklist</td></tr>
+        <tr><td><strong>Trigger</strong></td><td>Steps that run by themselves when rows change</td><td>Nobody calls it. It reacts to <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code></td><td>The bell that rings when the door opens</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>Together, procedures, functions and triggers are called <strong>stored programs</strong> (or "stored routines" for the first two). Then there are two things every shared database has to decide, whatever is stored in it: <strong>who</strong> may do what (permissions, section 5), and <strong>what each person sees</strong> while others are working (isolation, sections 6 and 7).</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Your own functions</h2>
+  <p>You've used dozens of built-in functions: <code>ROUND</code>, <code>COALESCE</code>, <code>DATE_FORMAT</code>. But every business has calculations of its own that MySQL doesn't know. Here's a common one in India: the <strong>financial year</strong> runs from 1 April to 31 March, so 15 February 2024 is in "FY2023-24", and 15 April 2024 is in "FY2024-25". Finance teams report this way, and writing the rule out in every query is long and easy to get wrong.</p>
+  <p>Here's a trick: move a date back 3 months, and April becomes January. Then the ordinary <code>YEAR()</code> of the moved date is the year the financial year started. Let's save that as a function:</p>
+  <div class="code"><div class="code-bar"><span>Build 1: a first attempt</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> FUNCTION fiscal_year(d <span class="t">DATETIME</span>) RETURNS <span class="t">VARCHAR</span>(<span class="n">9</span>)
+RETURN CONCAT(<span class="s">'FY'</span>, <span class="t">YEAR</span>(d - INTERVAL <span class="n">3</span> MONTH), <span class="s">'-'</span>,
+              <span class="k">RIGHT</span>(<span class="t">YEAR</span>(d - INTERVAL <span class="n">3</span> MONTH) + <span class="n">1</span>, <span class="n">2</span>));</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says</span></div><pre><code>ERROR 1418 (HY000): This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)</code></pre></div>
+  <p>Read the message: MySQL wants to know what kind of function this is. Most servers keep a <strong>binary log</strong>, a record of every change, used to copy data to other servers (like the read replicas from Day 18) and to restore backups. If a function could give a different answer each time it runs (like <code>NOW()</code> or <code>RAND()</code>), the copies could end up different from the original. So you have to declare it. <code>DETERMINISTIC</code> means "the same input always gives the same output", which is true for our function:</p>
+  <div class="code"><div class="code-bar"><span>Build 2: fiscal_year and fiscal_quarter</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> FUNCTION fiscal_year(d <span class="t">DATETIME</span>) RETURNS <span class="t">VARCHAR</span>(<span class="n">9</span>)
+DETERMINISTIC
+RETURN CONCAT(<span class="s">'FY'</span>, <span class="t">YEAR</span>(d - INTERVAL <span class="n">3</span> MONTH), <span class="s">'-'</span>,
+              <span class="k">RIGHT</span>(<span class="t">YEAR</span>(d - INTERVAL <span class="n">3</span> MONTH) + <span class="n">1</span>, <span class="n">2</span>));
+
+<span class="k">CREATE</span> FUNCTION fiscal_quarter(d <span class="t">DATETIME</span>) RETURNS <span class="t">TINYINT</span>
+DETERMINISTIC
+RETURN QUARTER(d - INTERVAL <span class="n">3</span> MONTH);       <span class="c">-- April to June is Q1</span></code></pre></div>
+  <p>The parts: a name, the inputs with their types, <code>RETURNS</code> and the type of the answer, and after <code>RETURN</code>, the formula. The input is a <code>DATETIME</code>, so it accepts both dates and order times. Now test it on the dates where it could go wrong, the edges:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> fiscal_year(<span class="s">'2024-03-31'</span>)          <span class="k">AS</span> last_day_of_march,
+       fiscal_year(<span class="s">'2024-04-01'</span>)          <span class="k">AS</span> first_day_of_april,
+       fiscal_quarter(<span class="s">'2024-04-01'</span>)       <span class="k">AS</span> april_quarter,
+       fiscal_year(<span class="s">'2025-01-15 10:00:00'</span>) <span class="k">AS</span> a_january_order;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------+--------------------+---------------+-----------------+
+| last_day_of_march | first_day_of_april | april_quarter | a_january_order |
++-------------------+--------------------+---------------+-----------------+
+| FY2023-24         | FY2024-25          |             1 | FY2024-25       |
++-------------------+--------------------+---------------+-----------------+</code></pre></div>
+  <p>And use it like any built-in function:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> fiscal_year(order_date)  <span class="k">AS</span> fy,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders,
+       <span class="k">SUM</span>(line_total)          <span class="k">AS</span> revenue
+<span class="k">FROM</span> clean_sales
+<span class="k">GROUP</span> <span class="k">BY</span> fy
+<span class="k">ORDER</span> <span class="k">BY</span> fy;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+--------+------------+
+| fy        | orders | revenue    |
++-----------+--------+------------+
+| FY2022-23 |    358 |  748760.63 |
+| FY2023-24 |   2645 | 5992100.93 |
+| FY2024-25 |   2659 | 6431998.91 |
++-----------+--------+------------+</code></pre></div>
+  <p>The three years add up to 13,172,860, the same total as Day 17's warehouse. But the first and last rows aren't whole years: the data starts in January 2023 and ends in December 2024, so FY2022-23 has only 3 months and FY2024-25 has 9. Even so, those 9 months already earned more than the whole of FY2023-24. Day 13's warning applies: say how much of the period each number covers.</p>
+  <div class="note sun"><p><strong>Two cautions.</strong> First, a function on a column in <code>WHERE</code> hides the column from its index, just like <code>YEAR()</code> did yesterday (Day 18). <code>WHERE fiscal_year(order_date) = 'FY2024-25'</code> has to calculate the function for every row, so for filtering, write the date range: <code>order_date &gt;= '2024-04-01' AND order_date &lt; '2025-04-01'</code>. Use the function to <em>label</em> and group. Second, a function is a promise. If you mark it <code>DETERMINISTIC</code> when it isn't, MySQL believes you, and the copies of the data can drift apart.</p></div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>Stored procedures</h2>
+  <p>A function is a formula: values in, one value out. A <strong>procedure</strong> is more like a recipe. It can run many steps, change data, and return whole tables of results. You run it with <code>CALL</code>. Here's a report that the marketing team asks for every week, "sales by category between two dates", saved with the dates as inputs:</p>
+  <div class="code"><div class="code-bar"><span>Build 3: a report with inputs</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> PROCEDURE sales_summary(<span class="k">IN</span> p_start <span class="t">DATE</span>, <span class="k">IN</span> p_end <span class="t">DATE</span>)
+<span class="k">SELECT</span> category_name,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders,
+       <span class="k">SUM</span>(line_total)          <span class="k">AS</span> revenue
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= p_start <span class="k">AND</span> order_date &lt; p_end   <span class="c">-- Day 12's half-open range</span>
+<span class="k">GROUP</span> <span class="k">BY</span> category_name
+<span class="k">ORDER</span> <span class="k">BY</span> revenue <span class="k">DESC</span>;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL sales_summary(<span class="s">'2024-10-01'</span>, <span class="s">'2025-01-01'</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+--------+-----------+
+| category_name  | orders | revenue   |
++----------------+--------+-----------+
+| Electronics    |    401 | 960872.48 |
+| Clothing       |    474 | 849245.26 |
+| Sports         |    348 | 453228.88 |
+| Home &amp; Kitchen |    223 | 282387.32 |
+| Books          |    187 | 176392.26 |
+| Uncategorised  |      9 |  28490.50 |
++----------------+--------+-----------+</code></pre></div>
+  <p>The last quarter of 2024, with one line. Anyone can run it for any dates without knowing how <code>clean_sales</code> works, and everyone gets the same definition of "sales". (Starting input names with <code>p_</code> is a common habit. It keeps them from being confused with column names.)</p>
+
+  <h3 style="margin:28px 0 8px">More than one step: DELIMITER</h3>
+  <p>Most procedures have several statements between <code>BEGIN</code> and <code>END</code>, each ending with <code>;</code>. That causes a problem. Workbench and the <code>mysql</code> command line split your script at every <code>;</code> and send the pieces one by one, so the procedure would be cut off after its first statement. The fix is to change the separator for a moment. <code>DELIMITER $$</code> says "until further notice, a statement ends at <code>$$</code>". After the procedure, <code>DELIMITER ;</code> switches back. (<code>DELIMITER</code> is an instruction to your tool, not SQL. When Python sends a procedure, as on Day 14, it goes as one piece, and no <code>DELIMITER</code> is needed.)</p>
+  <p>Procedures can also hand values back through <code>OUT</code> inputs. Here's one that counts a customer's orders:</p>
+  <div class="code"><div class="code-bar"><span>Build 4: a procedure with an OUT value</span><button class="copy" type="button">Copy</button></div><pre><code>DELIMITER $$
+
+<span class="k">CREATE</span> PROCEDURE customer_order_count(<span class="k">IN</span> p_customer <span class="t">INT</span>, OUT p_orders <span class="t">INT</span>)
+BEGIN
+    <span class="k">SELECT</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">INTO</span> p_orders
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> customer_id = p_customer;
+<span class="k">END</span>$$
+
+DELIMITER ;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL customer_order_count(<span class="n">181</span>, @orders);
+<span class="k">SELECT</span> @orders <span class="k">AS</span> orders_for_181;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+
+| orders_for_181 |
++----------------+
+|             12 |
++----------------+</code></pre></div>
+  <p><code>@orders</code> is a <strong>user variable</strong>: a value with a name, kept until you disconnect. The procedure filled it in, and you read it afterwards. Customer 181, whose 45 website events you followed yesterday, has placed 12 completed orders.</p>
+
+  <h3 style="margin:28px 0 8px">A real job: refreshing a summary table</h3>
+  <p>Day 17 explained that dashboards often read small <strong>summary tables</strong> instead of adding up every order each time. Someone has to rebuild them every night. That's a perfect job for a procedure: the steps are always the same, and they must all happen, or none of them. First, the table:</p>
+  <div class="code"><div class="code-bar"><span>Build 5: the summary table</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> monthly_sales (
+    month_start   <span class="t">DATE</span>          <span class="k">NOT</span> <span class="k">NULL</span>,
+    category_name <span class="t">VARCHAR</span>(<span class="n">50</span>)   <span class="k">NOT</span> <span class="k">NULL</span>,
+    orders        <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    revenue       <span class="t">DECIMAL</span>(<span class="n">14</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> (month_start, category_name)
+);</code></pre></div>
+  <div class="code"><div class="code-bar"><span>Build 6: the refresh procedure</span><button class="copy" type="button">Copy</button></div><pre><code>DELIMITER $$
+
+<span class="k">CREATE</span> PROCEDURE refresh_monthly_sales()
+BEGIN
+    <span class="c">-- If any step below fails: undo everything, then report the error</span>
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        <span class="k">ROLLBACK</span>;
+        RESIGNAL;
+    <span class="k">END</span>;
+
+    <span class="k">START</span> <span class="k">TRANSACTION</span>;
+    <span class="k">DELETE</span> <span class="k">FROM</span> monthly_sales;                          <span class="c">-- empty it</span>
+    <span class="k">INSERT</span> <span class="k">INTO</span> monthly_sales (month_start, category_name, orders, revenue)
+    <span class="k">SELECT</span> DATE_FORMAT(order_date, <span class="s">'%Y-%m-01'</span>) <span class="k">AS</span> month_start,
+           category_name,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id),
+           <span class="k">SUM</span>(line_total)
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> month_start, category_name;                <span class="c">-- fill it again</span>
+    <span class="k">COMMIT</span>;
+
+    <span class="k">SELECT</span> <span class="k">COUNT</span>(*)         <span class="k">AS</span> rows_loaded,
+           <span class="k">MIN</span>(month_start) <span class="k">AS</span> first_month,
+           <span class="k">MAX</span>(month_start) <span class="k">AS</span> last_month,
+           <span class="k">SUM</span>(revenue)     <span class="k">AS</span> total_revenue
+    <span class="k">FROM</span> monthly_sales;
+<span class="k">END</span>$$
+
+DELIMITER ;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL refresh_monthly_sales();</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-------------+------------+---------------+
+| rows_loaded | first_month | last_month | total_revenue |
++-------------+-------------+------------+---------------+
+|         121 | 2023-01-01  | 2024-12-01 |   13172860.47 |
++-------------+-------------+------------+---------------+</code></pre></div>
+  <p>121 rows (24 months of 5 categories, plus the uncategorised products, which only sold in December 2024), and the same 13,172,860 in total. Call it again, and you get exactly the same result, because it empties the table before filling it. A job that's safe to run twice is easy to live with: if it's not sure whether last night's run worked, just run it again.</p>
+  <p>The interesting part is the <strong>handler</strong> at the top. It says: "if any statement fails with an error (<code>SQLEXCEPTION</code>), stop, roll the transaction back, and pass the error on (<code>RESIGNAL</code>)". To see why it matters, break the job on purpose. Rename a column, so the <code>INSERT</code> fails <em>after</em> the <code>DELETE</code> has already emptied the table:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">ALTER</span> <span class="k">TABLE</span> monthly_sales <span class="k">RENAME</span> <span class="k">COLUMN</span> orders <span class="k">TO</span> order_count;   <span class="c">-- someone renames a column</span>
+
+CALL refresh_monthly_sales();</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says</span></div><pre><code>ERROR 1054 (42S22): Unknown column 'orders' in 'field list'</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> rows_still_there <span class="k">FROM</span> monthly_sales;
+
+<span class="k">ALTER</span> <span class="k">TABLE</span> monthly_sales <span class="k">RENAME</span> <span class="k">COLUMN</span> order_count <span class="k">TO</span> orders;   <span class="c">-- put it back</span></code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+
+| rows_still_there |
++------------------+
+|              121 |
++------------------+</code></pre></div>
+  <p>The refresh failed, but the dashboard still has all of yesterday's numbers, because the handler rolled the <code>DELETE</code> back. Without the handler, the procedure would just stop, leaving the transaction open with the <code>DELETE</code> done and nothing inserted. The next <code>COMMIT</code>, or any <code>CREATE</code> or <code>ALTER</code> (which commit by themselves, Day 4), would save an <strong>empty table</strong>, and the dashboard would show zero sales. This is Day 4's atomicity, put to work.</p>
+  <p>Jobs like this usually run on a timer: MySQL has an <strong>event scheduler</strong> (<code>CREATE EVENT ... ON SCHEDULE EVERY 1 DAY</code>), and many teams use outside tools to run them. To see what procedures and functions a database already has, ask <code>information_schema</code>, and read any one with <code>SHOW CREATE PROCEDURE name;</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> routine_name, routine_type
+<span class="k">FROM</span> information_schema.routines
+<span class="k">WHERE</span> routine_schema = <span class="s">'online_store_full'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> routine_type, routine_name;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------------+--------------+
+| ROUTINE_NAME          | ROUTINE_TYPE |
++-----------------------+--------------+
+| fiscal_quarter        | FUNCTION     |
+| fiscal_year           | FUNCTION     |
+| customer_order_count  | PROCEDURE    |
+| refresh_monthly_sales | PROCEDURE    |
+| sales_summary         | PROCEDURE    |
++-----------------------+--------------+</code></pre></div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>Triggers</h2>
+  <p>A <strong>trigger</strong> is a set of steps attached to a table, which runs by itself <em>every time</em> a row is inserted, updated or deleted. Like the bell above a shop door, nobody has to remember to ring it. A classic use is an <strong>audit log</strong>. Prices in <code>products</code> get overwritten, so once a price changes, the old one is gone, and the question "what did the mouse cost in March?" has no answer. A trigger can write down every change:</p>
+  <div class="code"><div class="code-bar"><span>Build 7: a price history table and a trigger</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> price_history (
+    change_id  <span class="t">INT</span> <span class="k">AUTO_INCREMENT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+    product_id <span class="t">INT</span>           <span class="k">NOT</span> <span class="k">NULL</span>,
+    old_price  <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    new_price  <span class="t">DECIMAL</span>(<span class="n">10</span>,<span class="n">2</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    changed_by <span class="t">VARCHAR</span>(<span class="n">100</span>)  <span class="k">NOT</span> <span class="k">NULL</span>,
+    changed_at <span class="t">DATETIME</span>      <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> CURRENT_TIMESTAMP
+);
+
+DELIMITER $$
+
+<span class="k">CREATE</span> TRIGGER trg_products_price_log
+<span class="k">AFTER</span> <span class="k">UPDATE</span> <span class="k">ON</span> products
+FOR EACH <span class="k">ROW</span>
+BEGIN
+    <span class="k">IF</span> NEW.price &lt;&gt; OLD.price <span class="k">THEN</span>
+        <span class="k">INSERT</span> <span class="k">INTO</span> price_history (product_id, old_price, new_price, changed_by)
+        <span class="k">VALUES</span> (NEW.product_id, OLD.price, NEW.price, CURRENT_USER());
+    <span class="k">END</span> <span class="k">IF</span>;
+<span class="k">END</span>$$
+
+DELIMITER ;</code></pre></div>
+  <p>Read it as a sentence: <strong>after</strong> any <code>UPDATE</code> on <code>products</code>, <strong>for each row</strong> that changed, if the price is different, write a line in the history. Inside a trigger, <code>OLD</code> is the row as it was, and <code>NEW</code> is the row as it is now. (An <code>INSERT</code> trigger has only <code>NEW</code>, and a <code>DELETE</code> trigger has only <code>OLD</code>.) Test it with Day 4's rule, inside a transaction:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+
+<span class="k">UPDATE</span> products <span class="k">SET</span> price = <span class="n">849</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;                       <span class="c">-- the mouse</span>
+<span class="k">UPDATE</span> products <span class="k">SET</span> stock_quantity = stock_quantity - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">2</span>; <span class="c">-- not a price change</span>
+<span class="k">UPDATE</span> products <span class="k">SET</span> price = <span class="k">ROUND</span>(price * <span class="n">1.10</span>)
+<span class="k">WHERE</span> category_id = (<span class="k">SELECT</span> category_id <span class="k">FROM</span> categories <span class="k">WHERE</span> category_name = <span class="s">'Books'</span>);
+
+<span class="k">SELECT</span> product_id, old_price, new_price, changed_by <span class="k">FROM</span> price_history;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+-----------+-----------+----------------+
+| product_id | old_price | new_price | changed_by     |
++------------+-----------+-----------+----------------+
+|          1 |    799.00 |    849.00 | root@localhost |
+|          5 |    599.00 |    659.00 | root@localhost |
+|          6 |   1199.00 |   1319.00 | root@localhost |
+|          7 |    899.00 |    989.00 | root@localhost |
+|         24 |   1499.00 |   1649.00 | root@localhost |
+|         25 |    999.00 |   1099.00 | root@localhost |
+|         26 |    499.00 |    549.00 | root@localhost |
+|         27 |    699.00 |    769.00 | root@localhost |
+|         28 |    399.00 |    439.00 | root@localhost |
+|         29 |    449.00 |    494.00 | root@localhost |
+|         30 |    549.00 |    604.00 | root@localhost |
+|         31 |   1099.00 |   1209.00 | root@localhost |
+|         32 |   1299.00 |   1429.00 | root@localhost |
++------------+-----------+-----------+----------------+</code></pre></div>
+  <p>Thirteen lines: the mouse, and 12 books from one <code>UPDATE</code>, because the trigger ran once <em>for each row</em>. The stock change wasn't logged, because the <code>IF</code> only looks at prices. Now undo it all:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">ROLLBACK</span>;
+
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> logged_changes <span class="k">FROM</span> price_history;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+
+| logged_changes |
++----------------+
+|              0 |
++----------------+</code></pre></div>
+  <p>The history is empty again. A trigger's work belongs to the same transaction as the change that set it off, so a <code>ROLLBACK</code> undoes both. That's exactly right: a log of price changes that never happened would be wrong.</p>
+
+  <h3 style="margin:28px 0 8px">BEFORE triggers can say no</h3>
+  <p>A trigger that runs <code>BEFORE</code> the change can check it, and stop it with <code>SIGNAL</code>, which raises an error with your own message. Suppose someone once typed 79.90 instead of 799.00, and the shop sold mice at a tenth of the price for a day. A guard:</p>
+  <div class="code"><div class="code-bar"><span>Build 8: a guard trigger</span><button class="copy" type="button">Copy</button></div><pre><code>DELIMITER $$
+
+<span class="k">CREATE</span> TRIGGER trg_products_price_guard
+BEFORE <span class="k">UPDATE</span> <span class="k">ON</span> products
+FOR EACH <span class="k">ROW</span>
+BEGIN
+    <span class="k">IF</span> NEW.price &lt; OLD.price * <span class="n">0.5</span> <span class="k">THEN</span>
+        SIGNAL SQLSTATE <span class="s">'45000'</span>          <span class="c">-- '45000' means "an error I defined"</span>
+            <span class="k">SET</span> MESSAGE_TEXT = <span class="s">'Price cut of more than 50% blocked. Ask a manager.'</span>;
+    <span class="k">END</span> <span class="k">IF</span>;
+<span class="k">END</span>$$
+
+DELIMITER ;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">UPDATE</span> products <span class="k">SET</span> price = <span class="n">79.90</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says</span></div><pre><code>ERROR 1644 (45000): Price cut of more than 50% blocked. Ask a manager.</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> products <span class="k">SET</span> price = price * <span class="n">0.4</span> <span class="k">WHERE</span> product_id <span class="k">IN</span> (<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>);</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says</span></div><pre><code>ERROR 1644 (45000): Price cut of more than 50% blocked. Ask a manager.</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> products <span class="k">SET</span> price = <span class="n">699</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;      <span class="c">-- a normal sale price</span>
+
+<span class="k">SELECT</span> product_id, price <span class="k">FROM</span> products <span class="k">WHERE</span> product_id <span class="k">IN</span> (<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>);
+<span class="k">SELECT</span> product_id, old_price, new_price <span class="k">FROM</span> price_history;
+<span class="k">ROLLBACK</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+---------+
+| product_id | price   |
++------------+---------+
+|          1 |  699.00 |
+|          2 | 2499.00 |
+|          3 | 1299.00 |
++------------+---------+
++------------+-----------+-----------+
+| product_id | old_price | new_price |
++------------+-----------+-----------+
+|          1 |    799.00 |    699.00 |
++------------+-----------+-----------+</code></pre></div>
+  <p>The typo was blocked. The 60% cut on three products was blocked too, and <em>none</em> of the three changed: when one row fails, the whole statement is undone. The ordinary cut to 699 went through, and the logging trigger wrote it down. (For simple rules about one row, like "price can't be negative", Day 3's <code>CHECK</code> constraint is simpler. Triggers are for rules that compare old and new values, or touch other tables.)</p>
+
+  <div class="note sun"><p><strong>Why analysts should know about triggers.</strong> They're invisible. You run an <code>UPDATE</code>, and rows appear in a table you never touched. Or a number changes and nobody knows why. When data behaves strangely, check for triggers: <code>SHOW TRIGGERS;</code>, or the query below. Also know their limits: they run once per row, so they slow down big updates, and they don't run for everything. <code>TRUNCATE</code> doesn't fire <code>DELETE</code> triggers, and neither do rows deleted by a foreign key's <code>ON DELETE CASCADE</code>.</p></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> trigger_name, action_timing, event_manipulation, event_object_table
+<span class="k">FROM</span> information_schema.triggers
+<span class="k">WHERE</span> trigger_schema = <span class="s">'online_store_full'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------+---------------+--------------------+--------------------+
+| TRIGGER_NAME             | ACTION_TIMING | EVENT_MANIPULATION | EVENT_OBJECT_TABLE |
++--------------------------+---------------+--------------------+--------------------+
+| trg_products_price_log   | AFTER         | UPDATE             | products           |
+| trg_products_price_guard | BEFORE        | UPDATE             | products           |
++--------------------------+---------------+--------------------+--------------------+</code></pre></div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>Users and permissions</h2>
+  <p>On Day 14 you connected Python as <code>root</code>, the user who can do anything. On your own computer that's fine. At work, nobody gets <code>root</code>. Everyone gets their own user, with only the rights their job needs. That's the <strong>principle of least privilege</strong>, and it's Day 2's DCL family: <code>GRANT</code> and <code>REVOKE</code>. A new analyst, Riya, joins the team:</p>
+  <div class="code"><div class="code-bar"><span>Build 9: a user for Riya</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> USER <span class="s">'riya'</span>@<span class="s">'localhost'</span> IDENTIFIED <span class="k">BY</span> <span class="s">'Riya#Reports24'</span>;
+
+<span class="k">SHOW</span> GRANTS FOR <span class="s">'riya'</span>@<span class="s">'localhost'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------------------------------+
+| Grants for riya@localhost                |
++------------------------------------------+
+| GRANT USAGE ON *.* TO `riya`@`localhost` |
++------------------------------------------+</code></pre></div>
+  <p>A MySQL user is a name <em>and</em> a place: <code>'riya'@'localhost'</code> can only log in from the server's own computer. <code>'riya'@'%'</code> could log in from anywhere. <code>USAGE</code> means "no rights at all": Riya can log in and do nothing else. Give her read access to the shop's database:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> online_store_full.* <span class="k">TO</span> <span class="s">'riya'</span>@<span class="s">'localhost'</span>;</code></pre></div>
+  <p>Now log in as Riya. In a terminal: <code>mysql -u riya -p online_store_full</code>. In Workbench, add a new connection with the user name <code>riya</code>.</p>
+  <div class="code"><div class="code-bar"><span>As riya</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CURRENT_USER();
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> orders <span class="k">FROM</span> orders;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Riya sees</span></div><pre><code>+----------------+
+| CURRENT_USER() |
++----------------+
+| riya@localhost |
++----------------+
++--------+
+| orders |
++--------+
+|   6144 |
++--------+</code></pre></div>
+  <div class="code"><div class="code-bar"><span>As riya</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> products <span class="k">SET</span> price = <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;
+<span class="k">DROP</span> <span class="k">TABLE</span> marketing_spend;</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says to Riya</span></div><pre><code>ERROR 1142 (42000): UPDATE command denied to user 'riya'@'localhost' for table 'products'
+ERROR 1142 (42000): DROP command denied to user 'riya'@'localhost' for table 'marketing_spend'</code></pre></div>
+  <div class="code"><div class="code-bar"><span>As riya</span><button class="copy" type="button">Copy</button></div><pre><code>CALL sales_summary(<span class="s">'2024-11-01'</span>, <span class="s">'2024-11-08'</span>);</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says to Riya</span></div><pre><code>ERROR 1370 (42000): execute command denied to user 'riya'@'localhost' for routine 'online_store_full.sales_summary'</code></pre></div>
+  <p>She can read everything and change nothing. That's what most analysts get, and it's a good thing: you can't break anything by accident (Day 4's <code>UPDATE</code> without <code>WHERE</code>). Notice the last error: reading tables doesn't include <em>running</em> procedures and functions. That's a separate right, <code>EXECUTE</code>.</p>
+
+  <h3 style="margin:28px 0 8px">Share the answer, not the raw data</h3>
+  <p>Now a harder case. <code>customers</code> holds names, emails and phone numbers. Suppose Riya works with an outside agency, and should see each customer's spending but no personal details. Views and procedures solve this neatly. Take away the broad right, and give her only the door you want her to use:</p>
+  <div class="code"><div class="code-bar"><span>Build 10: narrower rights</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">REVOKE</span> <span class="k">SELECT</span> <span class="k">ON</span> online_store_full.* <span class="k">FROM</span> <span class="s">'riya'</span>@<span class="s">'localhost'</span>;
+
+<span class="k">GRANT</span> <span class="k">SELECT</span>  <span class="k">ON</span> online_store_full.customer_summary        <span class="k">TO</span> <span class="s">'riya'</span>@<span class="s">'localhost'</span>;
+<span class="k">GRANT</span> EXECUTE <span class="k">ON</span> PROCEDURE online_store_full.sales_summary <span class="k">TO</span> <span class="s">'riya'</span>@<span class="s">'localhost'</span>;
+
+<span class="k">SHOW</span> GRANTS FOR <span class="s">'riya'</span>@<span class="s">'localhost'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------------------------------------------------------------------+
+| Grants for riya@localhost                                                            |
++--------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `riya`@`localhost`                                             |
+| GRANT SELECT ON `online_store_full`.`customer_summary` TO `riya`@`localhost`         |
+| GRANT EXECUTE ON PROCEDURE `online_store_full`.`sales_summary` TO `riya`@`localhost` |
++--------------------------------------------------------------------------------------+</code></pre></div>
+  <div class="code"><div class="code-bar"><span>As riya (log in again)</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SHOW</span> <span class="k">TABLES</span>;
+<span class="k">SELECT</span> customer_id, orders, revenue <span class="k">FROM</span> customer_summary <span class="k">ORDER</span> <span class="k">BY</span> revenue <span class="k">DESC</span> <span class="k">LIMIT</span> <span class="n">3</span>;
+CALL sales_summary(<span class="s">'2024-11-01'</span>, <span class="s">'2024-11-08'</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Riya sees</span></div><pre><code>+-----------------------------+
+| Tables_in_online_store_full |
++-----------------------------+
+| customer_summary            |
++-----------------------------+
++-------------+--------+----------+
+| customer_id | orders | revenue  |
++-------------+--------+----------+
+|        1800 |     42 | 83375.22 |
+|        2049 |     30 | 72939.04 |
+|        2493 |     31 | 66706.10 |
++-------------+--------+----------+
++----------------+--------+-----------+
+| category_name  | orders | revenue   |
++----------------+--------+-----------+
+| Clothing       |     58 | 110075.14 |
+| Electronics    |     29 |  52370.28 |
+| Sports         |     32 |  38408.54 |
+| Home &amp; Kitchen |     17 |  20392.26 |
+| Books          |     21 |  19404.00 |
++----------------+--------+-----------+</code></pre></div>
+  <div class="code"><div class="code-bar"><span>As riya</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> first_name, email <span class="k">FROM</span> customers <span class="k">LIMIT</span> <span class="n">3</span>;</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says to Riya</span></div><pre><code>ERROR 1142 (42000): SELECT command denied to user 'riya'@'localhost' for table 'customers'</code></pre></div>
+  <p><code>SHOW TABLES</code> lists only the one view she may read. She can't read <code>customers</code>, or any of the tables behind the view (orders, order lines, products), and yet the view works for her, and so does the procedure. That's because, by default, a view or procedure runs with the rights of the person who <em>created</em> it (its <strong>definer</strong>, here <code>root</code>), not the person using it. So you can hand someone a safe, finished answer without handing them the tables behind it. (Writing <code>SQL SECURITY INVOKER</code> when creating one makes it use the caller's rights instead.)</p>
+
+  <h3 style="margin:28px 0 8px">Roles: rights for a job, not a person</h3>
+  <p>When ten people need the same rights, granting them one by one gets messy. A <strong>role</strong> is a named bundle of rights. You give rights to the role, and the role to people:</p>
+  <div class="code"><div class="code-bar"><span>Build 11: a reporting role</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> ROLE <span class="s">'reporting'</span>;
+<span class="k">GRANT</span> <span class="k">SELECT</span>  <span class="k">ON</span> online_store_full.customer_summary        <span class="k">TO</span> <span class="s">'reporting'</span>;
+<span class="k">GRANT</span> EXECUTE <span class="k">ON</span> PROCEDURE online_store_full.sales_summary <span class="k">TO</span> <span class="s">'reporting'</span>;
+
+<span class="k">CREATE</span> USER <span class="s">'arjun'</span>@<span class="s">'localhost'</span> IDENTIFIED <span class="k">BY</span> <span class="s">'Arjun#Reports24'</span>;
+<span class="k">GRANT</span> <span class="s">'reporting'</span> <span class="k">TO</span> <span class="s">'arjun'</span>@<span class="s">'localhost'</span>;</code></pre></div>
+  <p>Arjun logs in (<code>mysql -u arjun -p</code>) and tries the view:</p>
+  <div class="code"><div class="code-bar"><span>As arjun</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CURRENT_ROLE();
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> customers <span class="k">FROM</span> online_store_full.customer_summary;</code></pre></div>
+  <div class="code err"><div class="code-bar"><span>MySQL says to Arjun</span></div><pre><code>+----------------+
+| CURRENT_ROLE() |
++----------------+
+| NONE           |
++----------------+
+ERROR 1142 (42000): SELECT command denied to user 'arjun'@'localhost' for table 'customer_summary'</code></pre></div>
+  <p>Denied, even though his role allows it. This catches almost everyone the first time. Having a role isn't the same as <em>using</em> it, and <code>CURRENT_ROLE()</code> says <code>NONE</code>. He could switch it on for this session with <code>SET ROLE 'reporting';</code>, but the proper fix is to make it switch on every time he logs in:</p>
+  <div class="code"><div class="code-bar"><span>Build 12: switch the role on at login</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SET</span> <span class="k">DEFAULT</span> ROLE <span class="s">'reporting'</span> <span class="k">TO</span> <span class="s">'arjun'</span>@<span class="s">'localhost'</span>;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>As arjun (log in again)</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> CURRENT_ROLE();
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> customers <span class="k">FROM</span> online_store_full.customer_summary;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Arjun sees</span></div><pre><code>+-----------------+
+| CURRENT_ROLE()  |
++-----------------+
+| `reporting`@`%` |
++-----------------+
++-----------+
+| customers |
++-----------+
+|      2115 |
++-----------+</code></pre></div>
+  <p>When Arjun changes teams, one <code>REVOKE 'reporting' FROM 'arjun'@'localhost';</code> takes it all away. When the reporting team needs a new view, one <code>GRANT</code> to the role gives it to everyone.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>Many people at once: isolation</h2>
+  <p>Day 1's ACID had an <strong>I</strong> for isolation, and Day 4 promised to explain it. While the shop is open, orders arrive, stock goes down and prices change, all at the same moment you're running a report. Imagine counting the stock in a shop while customers keep taking things off the shelves. By the time you reach the last shelf, the first one has changed. Your total describes a moment that never existed. Databases have to decide how much of other people's unfinished and finished work you see. That decision is the <strong>isolation level</strong>.</p>
+  <p>There are three classic things that can go wrong:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Problem</th><th>What happens</th><th>In the shop</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Dirty read</strong></td><td>You see someone's change before they've committed it, and they might undo it</td><td>You count a sale the customer then cancels at the till</td></tr>
+        <tr><td><strong>Non-repeatable read</strong></td><td>You read the same row twice in one transaction and get different values, because someone committed a change in between</td><td>The mouse stock is 23 on your first count and 20 on your second</td></tr>
+        <tr><td><strong>Phantom read</strong></td><td>You run the same search twice and new rows appear (or vanish), because someone inserted them</td><td>"Orders today" was 40, and is 42 a minute later in the same report</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>The SQL standard defines four levels, from least to most protected:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Level</th><th>Dirty read</th><th>Non-repeatable read</th><th>Phantom read</th></tr></thead>
+      <tbody>
+        <tr><td><code>READ UNCOMMITTED</code></td><td>possible</td><td>possible</td><td>possible</td></tr>
+        <tr><td><code>READ COMMITTED</code></td><td>prevented</td><td>possible</td><td>possible</td></tr>
+        <tr><td><code>REPEATABLE READ</code> (MySQL's default)</td><td>prevented</td><td>prevented</td><td>possible in the standard, but prevented for plain reads in MySQL</td></tr>
+        <tr><td><code>SERIALIZABLE</code></td><td>prevented</td><td>prevented</td><td>prevented</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>More protection costs more waiting, so most systems sit in the middle. MySQL's InnoDB uses <code>REPEATABLE READ</code>. PostgreSQL, SQL Server and Oracle use <code>READ COMMITTED</code>. Check yours:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> @@transaction_isolation;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------------+
+| @@transaction_isolation |
++-------------------------+
+| REPEATABLE-READ         |
++-------------------------+</code></pre></div>
+
+  <h3 style="margin:28px 0 8px">See it for yourself: two sessions</h3>
+  <p>To watch isolation, you need two people. Open two connections to the same database: two terminal windows running <code>mysql</code>, or in Workbench, two connection tabs (go back to the Home screen and click your connection again). Call them <strong>Session A</strong> (green edge) and <strong>Session B</strong> (yellow edge), and run the steps in the order shown, switching windows as you go. First, a small practice table, so the shop's real stock isn't touched:</p>
+  <div class="code"><div class="code-bar"><span>Build 13: a practice stock table</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">TABLE</span> stock_levels (
+    product_id   <span class="t">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+    product_name <span class="t">VARCHAR</span>(<span class="n">100</span>) <span class="k">NOT</span> <span class="k">NULL</span>,
+    stock        <span class="t">INT</span>          <span class="k">NOT</span> <span class="k">NULL</span>
+);
+<span class="k">INSERT</span> <span class="k">INTO</span> stock_levels
+<span class="k">SELECT</span> product_id, product_name, stock_quantity
+<span class="k">FROM</span> products <span class="k">WHERE</span> product_id <span class="k">IN</span> (<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>);
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> stock_levels;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+---------------------+-------+
+| product_id | product_name        | stock |
++------------+---------------------+-------+
+|          1 | Wireless Mouse      |    23 |
+|          2 | Mechanical Keyboard |   287 |
+|          3 | USB-C Hub           |   176 |
++------------+---------------------+-------+</code></pre></div>
+
+  <h3 style="margin:28px 0 8px">REPEATABLE READ: a frozen snapshot</h3>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 1</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    23 |
++-------+</code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 2</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">3</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;   <span class="c">-- 3 mice sold, saved at once</span>
+<span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code out sb"><div class="code-bar"><span>Session B sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    20 |
++-------+</code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 3</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    23 |
++-------+</code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 4</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">COMMIT</span>;
+<span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    20 |
++-------+</code></pre></div>
+  <p>B's change was committed (autocommit, Day 4), but A still saw 23 until A's own transaction ended. At its first read, A's transaction took a <strong>snapshot</strong> of the data, and every later read in the same transaction sees that snapshot. Nobody waited for anybody: InnoDB keeps old versions of changed rows for as long as an open transaction might need them.</p>
+  <p>For an analyst, this is a gift. Run all the queries of a report inside one transaction, and they all describe the same moment, so the category totals add up to the grand total even while orders keep arriving. It's also a trap: if you leave a transaction open in Workbench and come back an hour later, you're still looking at data from an hour ago, and wondering why the new orders don't show up.</p>
+
+  <h3 style="margin:28px 0 8px">READ COMMITTED: always the latest saved data</h3>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 5</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SET</span> SESSION <span class="k">TRANSACTION</span> ISOLATION LEVEL READ COMMITTED;
+<span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    20 |
++-------+</code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 6</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">2</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 7</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;
+<span class="k">COMMIT</span>;</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    18 |
++-------+</code></pre></div>
+  <p>Same steps, different result: inside one transaction, A read 20 and then 18. That's a <strong>non-repeatable read</strong>. Each statement sees the latest committed data, which is often what you want for a quick lookup, but two queries in one report can now describe two different moments.</p>
+
+  <h3 style="margin:28px 0 8px">READ UNCOMMITTED: reading a change that never happened</h3>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 8</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SET</span> SESSION <span class="k">TRANSACTION</span> ISOLATION LEVEL READ UNCOMMITTED;</code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 9</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = <span class="n">0</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;      <span class="c">-- not committed yet</span></code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 10</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|     0 |
++-------+</code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 11</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">ROLLBACK</span>;                                                    <span class="c">-- B changes its mind</span></code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 12</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;
+<span class="k">SET</span> SESSION <span class="k">TRANSACTION</span> ISOLATION LEVEL REPEATABLE READ;     <span class="c">-- back to the default</span></code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A sees</span></div><pre><code>+-------+
+| stock |
++-------+
+|    18 |
++-------+</code></pre></div>
+  <p>A saw the mouse out of stock, a state that was never committed and never existed. If A's report had said "mouse sold out", it would have been wrong. That's a <strong>dirty read</strong>, and it's why <code>READ UNCOMMITTED</code> is almost never used. (You'll sometimes see SQL Server queries with <code>WITH (NOLOCK)</code>. It means the same thing: faster, and possibly wrong.)</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="n">7</span>Locks and deadlocks</h2>
+  <p>Reading never had to wait in section 6. Writing is different. Two people can't change the same row at the same moment, or one change would overwrite the other. So when a transaction changes a row, it holds a <strong>lock</strong> on that row until it commits or rolls back. Anyone else who wants to change the row has to wait.</p>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 1</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;   <span class="c">-- A now holds the lock</span></code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 2 (waits)</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;
+<span class="k">SELECT</span> stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <p>B's window seems to hang. It's waiting for A's lock. Now let A finish:</p>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 3</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">COMMIT</span>;</code></pre></div>
+  <div class="code out sb"><div class="code-bar"><span>Session B, after the wait</span></div><pre><code>+-------+
+| stock |
++-------+
+|    16 |
++-------+</code></pre></div>
+  <p>The moment A committed, B's <code>UPDATE</code> went ahead, and it used A's new value: 18, minus 1 for A, minus 1 for B, is 16. Neither sale was lost. That's what locks are for.</p>
+
+  <h3 style="margin:28px 0 8px">When the lock isn't released</h3>
+  <p>What if A never finishes? A forgotten transaction in a Workbench tab, for example. B doesn't wait forever. After <code>innodb_lock_wait_timeout</code> seconds (50 by default, set to 5 here so you don't have to wait), it gives up:</p>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 4</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;   <span class="c">-- and then A goes to lunch</span></code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 5 (waits)</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SET</span> SESSION innodb_lock_wait_timeout = <span class="n">5</span>;
+<span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;</code></pre></div>
+  <div class="code err sb"><div class="code-bar"><span>Session B, after the wait</span></div><pre><code>ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction</code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 6</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">ROLLBACK</span>;</code></pre></div>
+  <p>Now imagine B is the shop's website, trying to record a sale. Customers would see errors at checkout because an analyst left an <code>UPDATE</code> uncommitted. <strong>Keep transactions that change data short, and always finish them.</strong></p>
+
+  <h3 style="margin:28px 0 8px">Deadlocks: two people waiting for each other</h3>
+  <p>Picture two shop assistants in a narrow aisle. One holds the mice and needs the keyboards. The other holds the keyboards and needs the mice. Each waits for the other, forever. In a database, that's a <strong>deadlock</strong>:</p>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 7</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;   <span class="c">-- A locks the mouse</span></code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 8</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span>;
+<span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">2</span>;   <span class="c">-- B locks the keyboard</span></code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 9 (waits)</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">2</span>;   <span class="c">-- A waits for B</span>
+<span class="k">SELECT</span> product_id, stock <span class="k">FROM</span> stock_levels <span class="k">WHERE</span> product_id <span class="k">IN</span> (<span class="n">1</span>, <span class="n">2</span>);</code></pre></div>
+  <div class="code sb"><div class="code-bar"><span>Session B · step 10</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">UPDATE</span> stock_levels <span class="k">SET</span> stock = stock - <span class="n">1</span> <span class="k">WHERE</span> product_id = <span class="n">1</span>;   <span class="c">-- B waits for A: deadlock!</span></code></pre></div>
+  <div class="code err sb"><div class="code-bar"><span>MySQL says to Session B</span></div><pre><code>ERROR 1213 (40001): Deadlock found when trying to get lock; try restarting transaction</code></pre></div>
+  <div class="code out sa"><div class="code-bar"><span>Session A, after the wait</span></div><pre><code>+------------+-------+
+| product_id | stock |
++------------+-------+
+|          1 |    15 |
+|          2 |   286 |
++------------+-------+</code></pre></div>
+  <div class="code sa"><div class="code-bar"><span>Session A · step 11</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">COMMIT</span>;</code></pre></div>
+  <p>InnoDB spots the circle at once, picks one transaction as the victim (here B), and rolls back <em>all</em> of its work, so B's keyboard change is gone too. That freed the keyboard, so A's waiting <code>UPDATE</code> went through: the mouse is down to 15, and the keyboard to 286. The message says what to do: <strong>try again</strong>. Applications that write a lot retry automatically. Deadlocks are rarer when every program changes rows in the same order (always the mouse first, then the keyboard), and when transactions are short.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="n">8</span>What this means for you</h2>
+  <p>As an analyst, you'll read and use these things far more often than you write them. Some practical rules:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Situation</th><th>What to do</th><th>Day</th></tr></thead>
+      <tbody>
+        <tr><td>A report with several queries must add up</td><td>Run them in one transaction: <code>START TRANSACTION READ ONLY;</code> ... <code>COMMIT;</code>. You get one snapshot, and the database knows you won't change anything</td><td>19</td></tr>
+        <tr><td>New data doesn't show up</td><td>Check for a transaction you left open, and end it</td><td>19</td></tr>
+        <tr><td>Changing data</td><td>A transaction, check the rows affected, commit quickly. Never leave an <code>UPDATE</code> uncommitted</td><td>4, 19</td></tr>
+        <tr><td>Numbers change and nobody knows why</td><td>Look for triggers and scheduled procedures: <code>information_schema.triggers</code>, <code>.routines</code></td><td>19</td></tr>
+        <tr><td>A calculation everyone repeats</td><td>A view (for a table of results) or a function (for one value)</td><td>13, 19</td></tr>
+        <tr><td>A job that must run the same way every time</td><td>A procedure, with a transaction and an error handler, safe to re-run</td><td>17, 19</td></tr>
+        <tr><td>Sharing data with someone</td><td>Grant the least they need. Prefer a view or procedure over the raw tables, especially with personal data</td><td>13, 19</td></tr>
+        <tr><td>Connecting from Python or a dashboard</td><td>Its own read-only user, password in an environment variable, never <code>root</code></td><td>14, 19</td></tr>
+        <tr><td>Heavy queries on a busy database</td><td>Ask for a read replica</td><td>18</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>One more judgment call: <strong>where should logic live?</strong> Logic inside the database is shared by every tool, close to the data, and fast. But it's also harder to see, test and track. Nobody reviews a trigger the way they review code, and a procedure edited directly on the server has no history. That's why many analytics teams keep their logic as SQL files in version control (Day 17's dbt) and keep stored programs for jobs that really belong to the database. If you do create them, keep their code in a file in Git too, and write a comment saying what each one is for.</p>
+  <p>Finally, tidy up. Remove the practice table, the triggers and the users. The two functions, the procedures and the <code>monthly_sales</code> table are useful, so keep them for the case studies:</p>
+  <div class="code"><div class="code-bar"><span>Build 14: tidy up</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">DROP</span> TRIGGER <span class="k">IF</span> <span class="k">EXISTS</span> trg_products_price_log;
+<span class="k">DROP</span> TRIGGER <span class="k">IF</span> <span class="k">EXISTS</span> trg_products_price_guard;
+<span class="k">DROP</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">EXISTS</span> price_history, stock_levels;
+<span class="k">DROP</span> USER <span class="k">IF</span> <span class="k">EXISTS</span> <span class="s">'riya'</span>@<span class="s">'localhost'</span>, <span class="s">'arjun'</span>@<span class="s">'localhost'</span>;
+<span class="k">DROP</span> ROLE <span class="k">IF</span> <span class="k">EXISTS</span> <span class="s">'reporting'</span>;</code></pre></div>
+</section>
+
+<!-- Try this -->
+<div class="try" id="try">
+  <h2>✏️ Try this before Day 20</h2>
+  <ol style="padding-left:22px">
+    <li>Use <code>fiscal_year</code> and <code>fiscal_quarter</code> to show revenue by financial year and quarter. Which quarter is the biggest, and why?</li>
+    <li>Write a procedure <code>top_products(category, how_many)</code> that returns the best-selling products in one category by revenue. Call it for the top 3 Books.</li>
+    <li>On Day 14, Python connected as <code>root</code>. Create a user for your Python scripts that can read everything in <code>online_store_full</code> but change nothing, and prove it.</li>
+    <li>Your monthly report runs 5 queries, one after another. Orders arrive while it runs, and the category totals don't add up to the grand total. Why, and how do you fix it?</li>
+    <li>You suspect the database changes data behind your back. List every function, procedure and trigger in <code>online_store_full</code>.</li>
+  </ol>
+  <details class="reveal">
+    <summary>Show sample answers</summary>
+    <div class="body">
+      <p><strong>1.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> fiscal_year(order_date)    <span class="k">AS</span> fy,
+       fiscal_quarter(order_date) <span class="k">AS</span> fq,
+       <span class="k">SUM</span>(line_total)            <span class="k">AS</span> revenue
+<span class="k">FROM</span> clean_sales
+<span class="k">GROUP</span> <span class="k">BY</span> fy, fq
+<span class="k">ORDER</span> <span class="k">BY</span> fy, fq;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+------+------------+
+| fy        | fq   | revenue    |
++-----------+------+------------+
+| FY2022-23 |    4 |  748760.63 |
+| FY2023-24 |    1 |  935810.20 |
+| FY2023-24 |    2 | 1327216.74 |
+| FY2023-24 |    3 | 2178639.96 |
+| FY2023-24 |    4 | 1550434.03 |
+| FY2024-25 |    1 | 1711879.20 |
+| FY2024-25 |    2 | 1969503.01 |
+| FY2024-25 |    3 | 2750616.70 |
++-----------+------+------------+</code></pre></div>
+      <p>Q3 of each financial year (October to December) is the biggest: the festive season, with Diwali sales (Day 12). FY2022-23 shows only its Q4, because the data starts in January 2023, and FY2024-25 has no Q4 yet.</p>
+      <p><strong>2.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>DELIMITER $$
+
+<span class="k">CREATE</span> PROCEDURE top_products(<span class="k">IN</span> p_category <span class="t">VARCHAR</span>(<span class="n">50</span>), <span class="k">IN</span> p_limit <span class="t">INT</span>)
+BEGIN
+    <span class="k">SELECT</span> product_name,
+           <span class="k">SUM</span>(quantity)   <span class="k">AS</span> units,
+           <span class="k">SUM</span>(line_total) <span class="k">AS</span> revenue
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> category_name = p_category
+    <span class="k">GROUP</span> <span class="k">BY</span> product_name
+    <span class="k">ORDER</span> <span class="k">BY</span> revenue <span class="k">DESC</span>
+    <span class="k">LIMIT</span> p_limit;
+<span class="k">END</span>$$
+
+DELIMITER ;
+
+CALL top_products(<span class="s">'Books'</span>, <span class="n">3</span>);</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------+-------+-----------+
+| product_name             | units | revenue   |
++--------------------------+-------+-----------+
+| Python for Data Analysis |   128 | 179525.90 |
+| Atomic Habits            |   377 | 176171.75 |
+| SQL Fundamentals         |   238 | 137948.22 |
++--------------------------+-------+-----------+</code></pre></div>
+      <p>Inside a procedure, <code>LIMIT</code> can take an input like <code>p_limit</code>. <em>Atomic Habits</em> sold almost three times as many copies as <em>Python for Data Analysis</em>, but at a lower price, so it comes second by revenue. Whether "best-selling" means units or revenue is worth asking (Day 15).</p>
+      <p><strong>3.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> USER <span class="s">'py_reader'</span>@<span class="s">'localhost'</span> IDENTIFIED <span class="k">BY</span> <span class="s">'choose-a-strong-password'</span>;
+<span class="k">GRANT</span> <span class="k">SELECT</span>  <span class="k">ON</span> online_store_full.* <span class="k">TO</span> <span class="s">'py_reader'</span>@<span class="s">'localhost'</span>;
+<span class="k">GRANT</span> EXECUTE <span class="k">ON</span> online_store_full.* <span class="k">TO</span> <span class="s">'py_reader'</span>@<span class="s">'localhost'</span>;   <span class="c">-- to use fiscal_year() too</span>
+<span class="k">SHOW</span> GRANTS FOR <span class="s">'py_reader'</span>@<span class="s">'localhost'</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------------------------------------------------------------+
+| Grants for py_reader@localhost                                            |
++---------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `py_reader`@`localhost`                             |
+| GRANT SELECT, EXECUTE ON `online_store_full`.* TO `py_reader`@`localhost` |
++---------------------------------------------------------------------------+</code></pre></div>
+      <p>Prove it by logging in as <code>py_reader</code>: a <code>SELECT</code> works, and an <code>UPDATE</code> gives error 1142. Then change <code>MYSQL_USER</code> and <code>MYSQL_PASSWORD</code> in your environment variables (Day 14). One catch: Day 14's <code>to_sql()</code> wrote a table, which a read-only user can't do. That's a feature. If a script must write, give it rights on one specific table, not the whole database. (Remove it later with <code>DROP USER 'py_reader'@'localhost';</code>.)</p>
+      <p><strong>4.</strong> With autocommit, each query is its own transaction and sees the data as it was <em>when that query started</em>. Orders committed between query 1 and query 5 are counted by some queries and not others. Put the queries in one transaction, so they share one snapshot:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">START</span> <span class="k">TRANSACTION</span> READ ONLY;
+
+<span class="k">SELECT</span> <span class="k">SUM</span>(line_total) <span class="k">AS</span> total_revenue                <span class="c">-- query 1</span>
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>;
+
+<span class="k">SELECT</span> category_name, <span class="k">SUM</span>(line_total) <span class="k">AS</span> revenue       <span class="c">-- query 2, and so on</span>
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> category_name;
+
+<span class="k">COMMIT</span>;</code></pre></div>
+      <p>With <code>REPEATABLE READ</code>, the snapshot is taken at the first read, and every query after it sees the same data. <code>READ ONLY</code> adds a safety catch: any <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code> inside it fails with error 1792. And don't forget the <code>COMMIT</code>, or you'll keep seeing old data.</p>
+      <p><strong>5.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> routine_type <span class="k">AS</span> object_type, routine_name <span class="k">AS</span> name
+<span class="k">FROM</span> information_schema.routines
+<span class="k">WHERE</span> routine_schema = <span class="s">'online_store_full'</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'TRIGGER'</span>, CONCAT(trigger_name, <span class="s">' on '</span>, event_object_table)
+<span class="k">FROM</span> information_schema.triggers
+<span class="k">WHERE</span> trigger_schema = <span class="s">'online_store_full'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> object_type, name;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-----------------------+
+| object_type | name                  |
++-------------+-----------------------+
+| FUNCTION    | fiscal_quarter        |
+| FUNCTION    | fiscal_year           |
+| PROCEDURE   | customer_order_count  |
+| PROCEDURE   | refresh_monthly_sales |
+| PROCEDURE   | sales_summary         |
+| PROCEDURE   | top_products          |
++-------------+-----------------------+</code></pre></div>
+      <p>After the tidy-up, there are no triggers left: only today's two functions and four procedures (if you created <code>top_products</code>). <code>UNION ALL</code> (Day 16) stacks the two lists. To read one, use <code>SHOW CREATE PROCEDURE name;</code> or <code>SHOW CREATE FUNCTION name;</code>. Also check for scheduled jobs with <code>SHOW EVENTS;</code>.</p>
+    </div>
+  </details>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner</h2>
+    <p>Analyst interviews ask about these topics as concepts more often than as code: what's the difference, when would you use it, what can go wrong. Transactions and isolation come up especially often, because they test whether you understand that a database is shared.</p>
+  </div>
+  <div class="iv-group">
+    <h3>Concept questions</h3>
+    <details class="qa"><summary><span class="q">Q1</span>What's the difference between a stored procedure and a function?</summary>
+      <div class="body"><p>A function returns a single value and is used inside a query (<code>SELECT fiscal_year(order_date)</code>). A procedure is run on its own with <code>CALL</code>, can run many statements, can change data and manage transactions, can return result sets, and passes values back through <code>OUT</code> parameters. Use a function for a reusable calculation, and a procedure for a job.</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>View, procedure or function: how do you choose?</summary>
+      <div class="body"><p>A <strong>view</strong> when you want a reusable table of results that people query with <code>SELECT</code>, filter and join. A <strong>function</strong> when you want one value per row, like a label or a formula. A <strong>procedure</strong> when the work has several steps, needs inputs, or changes data, like a report with dates or a refresh job.</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>What is a trigger? What are the risks?</summary>
+      <div class="body"><p>Code that runs automatically before or after an <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code> on a table, once for each affected row, with <code>OLD</code> and <code>NEW</code> giving the row before and after. Good for audit logs and rules that compare old and new values. Risks: the logic is hidden, so changes happen that nobody expects; it slows down big updates; and it doesn't fire for everything (not for <code>TRUNCATE</code>, and not for rows deleted by foreign key cascades).</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>What are GRANT and REVOKE? What is the principle of least privilege?</summary>
+      <div class="body"><p>They're DCL commands that give and take away rights (<code>SELECT</code>, <code>INSERT</code>, <code>EXECUTE</code> and so on) on databases, tables, views and routines. Least privilege means giving each user only the rights their job needs, such as read-only access for analysts, or one view instead of a table with personal data. Roles bundle rights so they can be given to many users at once.</p></div></details>
+    <details class="qa"><summary><span class="q">Q5</span>Explain dirty reads, non-repeatable reads and phantom reads.</summary>
+      <div class="body"><p>A <strong>dirty read</strong> sees another transaction's uncommitted change, which may be rolled back. A <strong>non-repeatable read</strong> reads the same row twice in one transaction and gets different values, because another transaction committed a change in between. A <strong>phantom read</strong> runs the same search twice and finds new or missing rows, because another transaction inserted or deleted some.</p></div></details>
+    <details class="qa"><summary><span class="q">Q6</span>What are the isolation levels, and which is MySQL's default?</summary>
+      <div class="body"><p><code>READ UNCOMMITTED</code> (allows dirty reads), <code>READ COMMITTED</code> (each statement sees the latest committed data), <code>REPEATABLE READ</code> (a transaction keeps seeing the snapshot from its first read) and <code>SERIALIZABLE</code> (transactions behave as if they ran one after another). MySQL's InnoDB defaults to <code>REPEATABLE READ</code>. PostgreSQL, SQL Server and Oracle default to <code>READ COMMITTED</code>. Higher levels give more consistency but more waiting.</p></div></details>
+    <details class="qa"><summary><span class="q">Q7</span>What is a deadlock, and how is it handled?</summary>
+      <div class="body"><p>Two transactions each hold a lock the other needs, so neither can continue. InnoDB detects it immediately, rolls back one transaction (error 1213), and lets the other carry on. The application should retry the failed transaction. To make deadlocks rarer: keep transactions short, and change rows in the same order everywhere.</p></div></details>
+    <details class="qa"><summary><span class="q">Q8</span>Why do you need DELIMITER when creating a procedure?</summary>
+      <div class="body"><p>Tools like Workbench and the <code>mysql</code> client split scripts into statements at each <code>;</code>. A procedure body contains semicolons, so it would be cut into pieces. <code>DELIMITER $$</code> changes the separator so the whole <code>CREATE PROCEDURE</code> is sent as one statement, and <code>DELIMITER ;</code> changes it back. It's a client command, not SQL, so code sent from Python doesn't need it.</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Practical questions</h3>
+    <details class="qa"><summary><span class="q">P1</span>Write a function that returns the Indian financial year label (like 'FY2024-25') for a date.</summary>
+      <div class="body"><p>Move the date back 3 months, so April becomes January, and take the year:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> FUNCTION fiscal_year(d <span class="t">DATETIME</span>) RETURNS <span class="t">VARCHAR</span>(<span class="n">9</span>)
+DETERMINISTIC
+RETURN CONCAT(<span class="s">'FY'</span>, <span class="t">YEAR</span>(d - INTERVAL <span class="n">3</span> MONTH), <span class="s">'-'</span>,
+              <span class="k">RIGHT</span>(<span class="t">YEAR</span>(d - INTERVAL <span class="n">3</span> MONTH) + <span class="n">1</span>, <span class="n">2</span>));</code></pre></div>
+      <p>Mention <code>DETERMINISTIC</code> (required when binary logging is on, and true here), test the edges (31 March and 1 April), and say you'd use it for labels, not in <code>WHERE</code>, where a date range can use an index.</p></div></details>
+    <details class="qa"><summary><span class="q">P2</span>A colleague needs customer spending figures, but must not see emails or phone numbers. How do you set that up?</summary>
+      <div class="body"><p>Create a view with only the columns they need (like <code>customer_summary</code>: ID, orders, revenue), and grant <code>SELECT</code> on that view only, ideally to a role. A view runs with its definer's rights, so they can read it without any rights on <code>customers</code>. Check with <code>SHOW GRANTS</code>, and by logging in as them.</p></div></details>
+    <details class="qa"><summary><span class="q">P3</span>A nightly job deletes a summary table and reloads it. One night the reload failed and the dashboard showed zero sales. What went wrong, and how do you fix it?</summary>
+      <div class="body"><p>The delete and the reload weren't one unit: the delete was saved and the insert failed. Put both in one transaction, inside a procedure with an error handler (<code>DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;</code>), so a failure undoes the delete and the error is still reported. Then a failed run leaves yesterday's numbers in place, and the job can simply be run again.</p></div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li>Databases can store logic: views (a saved query), functions (one value), procedures (a saved script you <code>CALL</code>) and triggers (steps that run by themselves when rows change).</li>
+    <li>Functions need <code>DETERMINISTIC</code> (or another declaration) when binary logging is on. Use them to label and group, not to filter.</li>
+    <li>Multi-statement routines need <code>DELIMITER</code> in Workbench and the <code>mysql</code> client. A job that changes data belongs in a transaction with an error handler, so it's all or nothing and safe to re-run.</li>
+    <li>Triggers use <code>OLD</code> and <code>NEW</code>, run once per row, are undone by <code>ROLLBACK</code> with everything else, and can block changes with <code>SIGNAL</code>. They're invisible, so check for them when data behaves strangely.</li>
+    <li><code>GRANT</code> and <code>REVOKE</code> control who can do what. Grant the least that's needed. Views and procedures let people use answers without seeing the tables. Roles bundle rights, and need <code>SET DEFAULT ROLE</code>.</li>
+    <li>Isolation decides what you see while others change data. MySQL's <code>REPEATABLE READ</code> gives each transaction a snapshot. <code>READ COMMITTED</code> shows the latest saved data. <code>READ UNCOMMITTED</code> allows dirty reads.</li>
+    <li>Writers lock the rows they change until they commit. Long or forgotten transactions block others (error 1205), and deadlocks are resolved by rolling one transaction back (error 1213). Keep transactions short.</li>
+  </ul>
+</div>
+
+<div class="next"><div><small>Coming up next</small><h3>Day 20: Interview prep II</h3><p>The second round of interview practice: harder SQL problems, performance and design questions, and how to talk through your thinking.</p></div><a class="btn" href="Day20_Interview_Prep_II.html">Read Day 20</a></div>
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>
