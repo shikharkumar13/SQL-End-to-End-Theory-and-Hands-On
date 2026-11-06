@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 23: Case Study: Products & Funnel | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 23 of 23</span><span class="part-pill">Case studies</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Case study 3: products, categories and the funnel</h1>
+      <p class="hero-sub">The last case study. Which products carry the shop, which one is causing trouble, how much of 2024's growth was real, what sells together, and where the website loses shoppers. Then a look back at all 23 days.</p>
+      <div class="facts"><span class="fact">31 minute read</span><span class="fact hl">Case study 3</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="Four ideas for product and funnel analysis: ABC classes, a price-volume-mix bridge, lift, and step-by-step funnel rates">
+      <p class="hd">Products and the funnel, in four ideas</p>
+      <ul class="reads">
+        <li><code>SUM() OVER (...)</code><span>ABC classes from a running total</span></li>
+        <li><code>volume + mix + price</code><span>What 2024's growth was made of</span></li>
+        <li><code>together ÷ expected</code><span>Pairs that sell together, or just popular ones?</span></li>
+        <li><code>carts ÷ viewers</code><span>Where the website loses shoppers, by device</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>The brief</a></li><li><a href="#s2"><span class="n">2</span>Check the data first</a></li><li><a href="#s3"><span class="n">3</span>Which products matter</a></li><li><a href="#s4"><span class="n">4</span>The problem product</a></li><li><a href="#s5"><span class="n">5</span>Real growth or price?</a></li><li><a href="#s6"><span class="n">6</span>What sells together</a></li><li><a href="#s7"><span class="n">7</span>The website funnel</a></li><li><a href="#s8"><span class="n">8</span>Write it up</a></li><li class="gap"></li><li><a href="#try"><span class="n"></span>Try this</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li><li><a href="#finale"><span class="n"></span>Where next</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">Day 21 reviewed a month for the CEO. Day 22 followed customers for the Head of Marketing. The last case study turns to the other side of the shop: the <em>products</em> it sells and the <em>website</em> it sells them on. It touches nearly everything in the series: running totals (Day 9), self joins (Day 7), returns and reviews (Days 11 and 15), the funnel (Day 13), a decomposition like Day 21's, and Day 22's ruler for luck. Then, since this is Day 23, we'll finish with a look back over the whole series.</p>
+<div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. You'll use the Day 11 clean layer (<code>clean_sales</code>, <code>clean_returns</code>, <code>clean_reviews</code>, <code>clean_web_events</code>, <code>clean_customers</code>) and the original <code>products</code> table. Today adds one view, in the Build box.</p></div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>The brief</h2>
+  <p>Ritu is planning 2025 with two of her team: Sanjay Kulkarni, Head of Operations, who decides what stock to buy, and Ananya Krishnan, Head of Technology, whose team runs the website. Her note:</p>
+  <div class="note"><p><strong>"Before we plan next year: which products really carry us, and are any causing trouble? Sanjay needs that for buying. Was 2024's growth real demand, or just our price rises? Ananya wants to add 'frequently bought together' to product pages: is there anything to show? And where does the website lose people?"</strong></p></div>
+  <p>Five questions, each with its own section. Before any SQL, settle the periods, using rules from earlier days:</p>
+  <ul>
+    <li><strong>Sales: 1 January to 24 December 2024</strong>, the last settled day (Day 12). When comparing with 2023, use <em>the same days</em> of 2023, 1 January to 24 December, so neither year gets an extra week (Day 21's "compare like with like").</li>
+    <li><strong>Returns: orders placed before 30 November 2024.</strong> Returns arrive within 25 days (Day 21), so later orders haven't had their full window.</li>
+    <li><strong>Website: 1 October to 24 December 2024</strong>, the only months with tracking, leaving out 19 November, when tracking was down (Day 12's issue log, Day 13).</li>
+  </ul>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Check the data first</h2>
+  <p>A product analysis assumes every product had the same chance to sell. Did it? Some products were launched recently, some were withdrawn, and the <code>products</code> table only stores a launch date and an <code>is_active</code> flag, not the day a product stopped. The sales themselves tell you the rest:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> p.product_id, p.product_name,
+       <span class="k">COALESCE</span>(c.category_name, <span class="s">'(none)'</span>)  <span class="k">AS</span> category,
+       p.launch_date, p.is_active,
+       <span class="t">DATE</span>(<span class="k">MIN</span>(s.order_date))              <span class="k">AS</span> first_sale,
+       <span class="t">DATE</span>(<span class="k">MAX</span>(s.order_date))              <span class="k">AS</span> last_sale
+<span class="k">FROM</span> products p
+<span class="k">LEFT</span> <span class="k">JOIN</span> categories c  <span class="k">ON</span> c.category_id = p.category_id
+<span class="k">LEFT</span> <span class="k">JOIN</span> clean_sales s <span class="k">ON</span> s.product_id  = p.product_id
+<span class="k">WHERE</span> p.launch_date &gt;= <span class="s">'2023-01-01'</span>
+   <span class="k">OR</span> p.is_active = <span class="n">0</span>
+   <span class="k">OR</span> p.category_id <span class="k">IS</span> <span class="k">NULL</span>
+<span class="k">GROUP</span> <span class="k">BY</span> p.product_id, p.product_name, c.category_name, p.launch_date, p.is_active
+<span class="k">ORDER</span> <span class="k">BY</span> p.launch_date;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------+--------------------------+----------------+-------------+-----------+------------+------------+
+| product_id | product_name             | category       | launch_date | is_active | first_sale | last_sale  |
++------------+--------------------------+----------------+-------------+-----------+------------+------------+
+|         23 | HDMI Cable 2m            | Electronics    | 2022-02-07  |         0 | 2023-01-02 | 2024-03-22 |
+|         42 | Rain Jacket              | Clothing       | 2022-04-13  |         0 | 2023-01-26 | 2023-10-26 |
+|         32 | Children's Encyclopedia  | Books          | 2022-04-21  |         0 | 2023-01-03 | 2024-06-19 |
+|         50 | Scented Candles Set      | Home &amp; Kitchen | 2022-11-24  |         0 | 2023-01-06 | 2024-08-17 |
+|         24 | Python for Data Analysis | Books          | 2023-03-01  |         1 | 2023-03-17 | 2024-12-21 |
+|         49 | Electric Kettle          | Home &amp; Kitchen | 2023-04-01  |         1 | 2023-04-10 | 2024-12-28 |
+|         25 | Storytelling with Data   | Books          | 2023-06-01  |         1 | 2023-06-03 | 2024-12-20 |
+|         17 | Smartwatch               | Electronics    | 2023-09-15  |         1 | 2023-09-16 | 2024-12-16 |
+|         35 | Kurta Set                | Clothing       | 2023-09-20  |         1 | 2023-09-27 | 2024-12-24 |
+|         37 | Winter Jacket            | Clothing       | 2023-11-01  |         1 | 2023-11-01 | 2024-12-28 |
+|         52 | Dumbbell Set 5kg         | Sports         | 2024-01-05  |         1 | 2024-01-11 | 2024-12-26 |
+|         21 | Wireless Earbuds         | Electronics    | 2024-02-01  |         1 | 2024-02-03 | 2024-12-28 |
+|         60 | Foam Roller              | Sports         | 2024-05-10  |         1 | 2024-05-11 | 2024-12-28 |
+|         61 | Smart Fitness Band       | (none)         | 2024-12-01  |         1 | 2024-12-06 | 2024-12-24 |
++------------+--------------------------+----------------+-------------+-----------+------------+------------+</code></pre></div>
+  <p>Fourteen products were <em>not</em> on sale for the whole two years. Four were withdrawn (<code>is_active = 0</code>), and their last sale is the best guess at when. Ten were launched during the two years, four of them in 2024: the Dumbbell Set in January, the Wireless Earbuds in February, the Foam Roller in May, and the Smart Fitness Band on 1 December. The Fitness Band also has no category at all, which is why <code>clean_sales</code> calls it "Uncategorised" (Day 11). A fair product comparison has to allow for days on sale.</p>
+  <p>Second check: the reviews. Section 4 will use ratings, so make sure they come from real buyers:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)                                          <span class="k">AS</span> reviews,
+       <span class="k">SUM</span>(r.rating <span class="k">IS</span> <span class="k">NULL</span>)                             <span class="k">AS</span> no_rating,
+       <span class="k">SUM</span>(<span class="k">NOT</span> <span class="k">EXISTS</span> (<span class="k">SELECT</span> <span class="n">1</span>
+                       <span class="k">FROM</span> clean_sales s
+                       <span class="k">WHERE</span> s.customer_id = c.master_customer_id
+                         <span class="k">AND</span> s.product_id  = r.product_id)) <span class="k">AS</span> reviewer_never_bought_it
+<span class="k">FROM</span> clean_reviews r
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = r.customer_id;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+-----------+--------------------------+
+| reviews | no_rating | reviewer_never_bought_it |
++---------+-----------+--------------------------+
+|    2097 |        33 |                       69 |
++---------+-----------+--------------------------+</code></pre></div>
+  <p>69 reviews come from customers who never bought that product in a completed order, and 33 have no rating. Reviews are matched on the master customer ID (Day 11), so a customer who bought on one account and reviewed from another still counts as a buyer. From here on, ratings come only from <strong>verified buyers</strong>, the idea behind the "verified purchase" label on big shopping sites.</p>
+  <p>Now the base for sections 3 and 5: one row per product for 2024, including its days on sale. Active products count to 24 December; withdrawn ones to their last sale:</p>
+  <div class="code"><div class="code-bar"><span>Build 1: each product's 2024, with days on sale</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> product_2024 <span class="k">AS</span>
+<span class="k">SELECT</span> s.product_id, s.product_name, s.category_name,
+       <span class="k">SUM</span>(s.quantity)                  <span class="k">AS</span> units,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> s.order_id)       <span class="k">AS</span> orders,
+       <span class="k">SUM</span>(s.line_total)                <span class="k">AS</span> revenue,
+       <span class="k">SUM</span>(s.line_total - s.line_cost)  <span class="k">AS</span> profit,
+       DATEDIFF(<span class="k">IF</span>(p.is_active = <span class="n">1</span>, <span class="s">'2024-12-24'</span>, <span class="t">DATE</span>(<span class="k">MAX</span>(s.order_date))),
+                GREATEST(p.launch_date, <span class="s">'2024-01-01'</span>)) + <span class="n">1</span> <span class="k">AS</span> days_on_sale
+<span class="k">FROM</span> clean_sales s
+<span class="k">JOIN</span> products p <span class="k">ON</span> p.product_id = s.product_id
+<span class="k">WHERE</span> s.order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2024-12-25'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> s.product_id, s.product_name, s.category_name, p.is_active, p.launch_date;</code></pre></div>
+  <p><code>GREATEST</code> picks the later of two dates, so a product launched before 2024 starts on 1 January, and one launched in May starts in May. The <code>+ 1</code> counts both the first and the last day.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>Which products matter?</h2>
+  <p>Sanjay's classic tool is an <strong>ABC analysis</strong>: sort products by profit, keep a running total, and split them into class A (the products that make the first 80% of profit), B (the next 15%) and C (the last 5%). That's a common split; some businesses use 70/20/10 instead. A products get the most stock and attention; C products are the ones to question. The running total is Day 9's window frame:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> ranked <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_name, category_name, revenue, profit, days_on_sale,
+           <span class="n">100</span> * <span class="k">SUM</span>(profit) <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> profit <span class="k">DESC</span>
+                                   <span class="k">ROWS</span> <span class="k">BETWEEN</span> <span class="k">UNBOUNDED</span> <span class="k">PRECEDING</span> <span class="k">AND</span> <span class="k">CURRENT</span> <span class="k">ROW</span>)
+               / <span class="k">SUM</span>(profit) <span class="k">OVER</span> ()                                     <span class="k">AS</span> running_pct
+    <span class="k">FROM</span> product_2024
+),
+classed <span class="k">AS</span> (
+    <span class="k">SELECT</span> *,
+           <span class="k">CASE</span> <span class="k">WHEN</span> running_pct - <span class="n">100</span> * profit / <span class="k">SUM</span>(profit) <span class="k">OVER</span> () &lt; <span class="n">80</span> <span class="k">THEN</span> <span class="s">'A'</span>
+                <span class="k">WHEN</span> running_pct - <span class="n">100</span> * profit / <span class="k">SUM</span>(profit) <span class="k">OVER</span> () &lt; <span class="n">95</span> <span class="k">THEN</span> <span class="s">'B'</span>
+                <span class="k">ELSE</span> <span class="s">'C'</span> <span class="k">END</span> <span class="k">AS</span> abc_class
+    <span class="k">FROM</span> ranked
+)
+<span class="k">SELECT</span> abc_class,
+       <span class="k">COUNT</span>(*)                                             <span class="k">AS</span> products,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(profit) / <span class="k">SUM</span>(<span class="k">SUM</span>(profit)) <span class="k">OVER</span> (), <span class="n">1</span>) <span class="k">AS</span> pct_of_profit,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(revenue) / <span class="k">SUM</span>(<span class="k">SUM</span>(revenue)) <span class="k">OVER</span> (), <span class="n">1</span>) <span class="k">AS</span> pct_of_revenue
+<span class="k">FROM</span> classed
+<span class="k">GROUP</span> <span class="k">BY</span> abc_class
+<span class="k">ORDER</span> <span class="k">BY</span> abc_class;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+----------+---------------+----------------+
+| abc_class | products | pct_of_profit | pct_of_revenue |
++-----------+----------+---------------+----------------+
+| A         |       33 |          80.2 |           78.7 |
+| B         |       16 |          15.5 |           16.8 |
+| C         |       11 |           4.3 |            4.4 |
++-----------+----------+---------------+----------------+</code></pre></div>
+  <p>One detail in <code>classed</code>: a product joins class A if the running total <em>before</em> it is still under 80%, which is why its own share is subtracted. Otherwise the product that crosses the 80% line would be pushed into B.</p>
+  <p>You may have heard of the 80/20 rule: 20% of products make 80% of the profit. Not here. It takes over half the range, 33 products, to reach 80%. With 60 fairly similar products, profit is spread widely. That's worth knowing before anyone suggests cutting the range hard: there's no small core carrying everything. The rule is a pattern seen in many businesses, not a law, so always check it.</p>
+  <p>Profit and revenue also tell different stories. Here are the top ten by profit, with their rank by revenue:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> product_name, category_name,
+       <span class="k">ROUND</span>(profit)                              <span class="k">AS</span> profit,
+       <span class="k">RANK</span>() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> profit <span class="k">DESC</span>)         <span class="k">AS</span> profit_rank,
+       <span class="k">RANK</span>() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> revenue <span class="k">DESC</span>)        <span class="k">AS</span> revenue_rank,
+       <span class="k">ROUND</span>(<span class="n">100</span> * profit / revenue, <span class="n">1</span>)           <span class="k">AS</span> margin_pct
+<span class="k">FROM</span> product_2024
+<span class="k">ORDER</span> <span class="k">BY</span> profit <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">10</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------------------+---------------+--------+-------------+--------------+------------+
+| product_name                | category_name | profit | profit_rank | revenue_rank | margin_pct |
++-----------------------------+---------------+--------+-------------+--------------+------------+
+| Cotton Saree                | Clothing      | 141597 |           1 |            6 |       55.4 |
+| Noise-Cancelling Headphones | Electronics   | 141550 |           2 |            1 |       27.4 |
+| Smartwatch                  | Electronics   | 130012 |           3 |            2 |       32.3 |
+| Kurta Set                   | Clothing      | 126873 |           4 |            8 |       50.8 |
+| Yoga Mat                    | Sports        | 126299 |           5 |            5 |       48.2 |
+| Winter Jacket               | Clothing      | 120534 |           6 |           10 |       55.5 |
+| Dumbbell Set 5kg            | Sports        | 116037 |           7 |            7 |       46.2 |
+| Cricket Bat                 | Sports        | 105301 |           8 |            9 |       47.1 |
+| Denim Jeans                 | Clothing      | 104654 |           9 |           14 |       57.0 |
+| Wireless Earbuds            | Electronics   | 102488 |          10 |            3 |       31.2 |
++-----------------------------+---------------+--------+-------------+--------------+------------+</code></pre></div>
+  <p>The Noise-Cancelling Headphones are the biggest seller by revenue, but the Cotton Saree makes just as much profit on half the revenue: 55% margin against 27% (Day 21 saw the same gap between clothing and electronics). If Sanjay ranks by revenue, he'll overstock electronics. And now the C class, with days on sale, because that's where unfairness hides:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> ordered <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_name, profit, days_on_sale,
+           <span class="k">SUM</span>(profit) <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> profit
+                             <span class="k">ROWS</span> <span class="k">BETWEEN</span> <span class="k">UNBOUNDED</span> <span class="k">PRECEDING</span> <span class="k">AND</span> <span class="k">CURRENT</span> <span class="k">ROW</span>)
+               / <span class="k">SUM</span>(profit) <span class="k">OVER</span> () <span class="k">AS</span> share_from_bottom
+    <span class="k">FROM</span> product_2024
+)
+<span class="k">SELECT</span> product_name,
+       <span class="k">ROUND</span>(profit)                        <span class="k">AS</span> profit,
+       days_on_sale,
+       <span class="k">ROUND</span>(<span class="n">30</span> * profit / days_on_sale)    <span class="k">AS</span> profit_per_30_days
+<span class="k">FROM</span> ordered
+<span class="k">WHERE</span> share_from_bottom &lt;= <span class="n">0.05</span>
+<span class="k">ORDER</span> <span class="k">BY</span> profit;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------+--------+--------------+--------------------+
+| product_name             | profit | days_on_sale | profit_per_30_days |
++--------------------------+--------+--------------+--------------------+
+| HDMI Cable 2m            |   1633 |           82 |                597 |
+| Children's Encyclopedia  |   5115 |          171 |                897 |
+| Excel Formulas Guide     |   8697 |          359 |                727 |
+| Smart Fitness Band       |  10471 |           24 |              13089 |
+| Business Analytics       |  11772 |          359 |                984 |
+| Scented Candles Set      |  14501 |          230 |               1891 |
+| Deep Work                |  14619 |          359 |               1222 |
+| Statistics Made Simple   |  18303 |          359 |               1529 |
+| Data Science Handbook    |  19157 |          359 |               1601 |
+| The Pragmatic Programmer |  19377 |          359 |               1619 |
+| Wall Clock               |  20387 |          359 |               1704 |
++--------------------------+--------+--------------+--------------------+</code></pre></div>
+  <p>Ordering <em>upwards</em> and keeping the bottom 5% gives the C class directly. Look at the days. The Smart Fitness Band is in class C only because it has been on sale for 24 days; per 30 days, it makes more profit than any product in the shop. Three of the others were withdrawn during the year. Judged on a fair basis, the real C class is the slow books: <em>Excel Formulas Guide</em>, <em>Business Analytics</em>, <em>Deep Work</em>. Those are the products Sanjay could stop restocking. (Is the Fitness Band really a star? Try this, question 5.)</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>The problem product</h2>
+  <p>A product can sell well and still cost the shop money, through returns and unhappy customers. Compare each product's return rate with its own category's (clothing is always returned more, Day 15), and add its rating from verified buyers. Day 22's give-or-take shows which gaps are bigger than luck:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> sold <span class="k">AS</span> (
+    <span class="k">SELECT</span> s.product_id, s.product_name, s.category_name,
+           <span class="k">COUNT</span>(*)           <span class="k">AS</span> lines_sold,
+           <span class="k">COUNT</span>(r.return_id) <span class="k">AS</span> returned
+    <span class="k">FROM</span> clean_sales s
+    <span class="k">LEFT</span> <span class="k">JOIN</span> clean_returns r <span class="k">ON</span> r.order_item_id = s.order_item_id
+    <span class="k">WHERE</span> s.order_date &lt; <span class="s">'2024-11-30'</span>              <span class="c">-- full 25-day return window</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> s.product_id, s.product_name, s.category_name
+),
+with_category <span class="k">AS</span> (
+    <span class="k">SELECT</span> *,
+           returned / lines_sold                                       <span class="k">AS</span> rate,
+           <span class="k">SUM</span>(returned) <span class="k">OVER</span> w / <span class="k">SUM</span>(lines_sold) <span class="k">OVER</span> w               <span class="k">AS</span> category_rate
+    <span class="k">FROM</span> sold
+    <span class="k">WINDOW</span> w <span class="k">AS</span> (<span class="k">PARTITION</span> <span class="k">BY</span> category_name)
+),
+ratings <span class="k">AS</span> (
+    <span class="k">SELECT</span> r.product_id, <span class="k">COUNT</span>(*) <span class="k">AS</span> reviews, <span class="k">AVG</span>(r.rating) <span class="k">AS</span> avg_rating
+    <span class="k">FROM</span> clean_reviews r
+    <span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = r.customer_id
+    <span class="k">WHERE</span> r.rating <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+      <span class="k">AND</span> <span class="k">EXISTS</span> (<span class="k">SELECT</span> <span class="n">1</span> <span class="k">FROM</span> clean_sales s
+                  <span class="k">WHERE</span> s.customer_id = c.master_customer_id
+                    <span class="k">AND</span> s.product_id  = r.product_id)       <span class="c">-- verified buyers only</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> r.product_id
+)
+<span class="k">SELECT</span> w.product_name, w.category_name, w.lines_sold,
+       <span class="k">ROUND</span>(<span class="n">100</span> * w.rate, <span class="n">1</span>)                                            <span class="k">AS</span> returned_pct,
+       CAST(<span class="n">200</span> * SQRT(w.rate * (<span class="n">1</span> - w.rate) / w.lines_sold) <span class="k">AS</span> <span class="t">DECIMAL</span>(<span class="n">4</span>,<span class="n">1</span>)) <span class="k">AS</span> give_or_take,
+       <span class="k">ROUND</span>(<span class="n">100</span> * w.category_rate, <span class="n">1</span>)                                   <span class="k">AS</span> category_pct,
+       r.reviews,
+       <span class="k">ROUND</span>(r.avg_rating, <span class="n">2</span>)                                            <span class="k">AS</span> avg_rating
+<span class="k">FROM</span> with_category w
+<span class="k">LEFT</span> <span class="k">JOIN</span> ratings r <span class="k">ON</span> r.product_id = w.product_id
+<span class="k">ORDER</span> <span class="k">BY</span> w.rate / w.category_rate <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">6</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------+----------------+------------+--------------+--------------+--------------+---------+------------+
+| product_name             | category_name  | lines_sold | returned_pct | give_or_take | category_pct | reviews | avg_rating |
++--------------------------+----------------+------------+--------------+--------------+--------------+---------+------------+
+| USB-C Hub                | Electronics    |        185 |         15.7 |          5.3 |          5.1 |      35 |       2.77 |
+| Data Science Handbook    | Books          |        100 |          4.0 |          3.9 |          1.4 |      22 |       3.27 |
+| The Pragmatic Programmer | Books          |         63 |          3.2 |          4.4 |          1.4 |      13 |       3.85 |
+| Bedsheet Set             | Home &amp; Kitchen |        153 |          5.2 |          3.6 |          2.8 |      25 |       3.88 |
+| SQL Fundamentals         | Books          |        167 |          2.4 |          2.4 |          1.4 |      41 |       3.68 |
+| Business Analytics       | Books          |         50 |          2.0 |          4.0 |          1.4 |       8 |       3.63 |
++--------------------------+----------------+------------+--------------+--------------+--------------+---------+------------+</code></pre></div>
+  <p>The <code>WINDOW w AS (...)</code> clause names a window once so two functions can share it, a small tidy-up on Day 9's <code>OVER (PARTITION BY ...)</code>. (The 2023 and 2024 sales are both included, to give each product as many sales as possible.)</p>
+  <p>One product stands out on every measure: the <strong>USB-C Hub</strong>. About 1 in 6 hubs comes back, against about 1 in 20 for electronics as a whole, and even the low end of its range (15.7 − 5.3 = 10.4%) is twice the category's rate. Its verified buyers rate it 2.77 out of 5, across 35 reviews. Compare the next rows: the <em>Data Science Handbook</em> also looks high next to its category, but it rests on four returns out of 100. That's below Day 22's minimum of about 10 for the give-or-take to work, so it's simply too few to tell. One more detail works in the hub's favour: the category's 5.1% <em>includes</em> the hub's own returns, so the rest of electronics comes back even less often than that. Why do the hubs come back?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> r.reason_group, <span class="k">COUNT</span>(*) <span class="k">AS</span> returns
+<span class="k">FROM</span> clean_returns r
+<span class="k">JOIN</span> clean_sales s <span class="k">ON</span> s.order_item_id = r.order_item_id
+<span class="k">WHERE</span> s.product_name = <span class="s">'USB-C Hub'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> r.reason_group
+<span class="k">ORDER</span> <span class="k">BY</span> returns <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------+---------+
+| reason_group      | returns |
++-------------------+---------+
+| Damaged or faulty |      23 |
+| Not as described  |       4 |
+| Changed mind      |       3 |
+| Not given         |       1 |
++-------------------+---------+</code></pre></div>
+  <p>Mostly "damaged or faulty", using Day 11's reason groups, and only a few "not as described", which would point to the product page instead. That's the usual mix for electronics returns; what's unusual is how often it happens. It points to a quality problem. For Sanjay: talk to the supplier before buying more hubs. It's a mid-ranking product by profit (class B in section 3), so it's worth fixing rather than dropping.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>Real growth, or just higher prices?</h2>
+  <p>Revenue grew strongly in 2024, but prices went up too. How much? Since discounts only ever <em>lower</em> a price, the highest price a product sold at in a year is its list price that year, as long as it sold at least once without a discount (true for every product here, with dozens of sales a year) and the list price didn't change mid-year:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> list_prices <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_id,
+           <span class="k">MAX</span>(<span class="k">CASE</span> <span class="k">WHEN</span> <span class="t">YEAR</span>(order_date) = <span class="n">2023</span> <span class="k">THEN</span> unit_price <span class="k">END</span>) <span class="k">AS</span> price_2023,
+           <span class="k">MAX</span>(<span class="k">CASE</span> <span class="k">WHEN</span> <span class="t">YEAR</span>(order_date) = <span class="n">2024</span> <span class="k">THEN</span> unit_price <span class="k">END</span>) <span class="k">AS</span> price_2024
+    <span class="k">FROM</span> clean_sales
+    <span class="k">GROUP</span> <span class="k">BY</span> product_id
+)
+<span class="k">SELECT</span> <span class="k">SUM</span>(price_2024 &gt; price_2023)                                    <span class="k">AS</span> prices_raised,
+       <span class="k">SUM</span>(price_2024 = price_2023)                                    <span class="k">AS</span> prices_unchanged,
+       <span class="k">SUM</span>(price_2024 &lt; price_2023)                                    <span class="k">AS</span> prices_cut,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> price_2024 &gt; price_2023
+                            <span class="k">THEN</span> price_2024 / price_2023 - <span class="n">1</span> <span class="k">END</span>), <span class="n">1</span>)  <span class="k">AS</span> avg_rise_pct
+<span class="k">FROM</span> list_prices;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------+------------------+------------+--------------+
+| prices_raised | prices_unchanged | prices_cut | avg_rise_pct |
++---------------+------------------+------------+--------------+
+|            24 |               32 |          0 |          9.0 |
++---------------+------------------+------------+--------------+</code></pre></div>
+  <p>24 products went up in price, by 9% on average, and the rest stayed the same. (Five products only sold in one of the two years, so they're in none of the columns.) So some growth is price. To measure it, split the change in revenue into parts, like Day 21's orders and order value, but with more pieces. For products sold in both years:</p>
+  <ul>
+    <li><strong>Volume</strong>: more units sold, valued at 2023's average price per unit.</li>
+    <li><strong>Mix</strong>: buying a different mix of products. If customers move to pricier products, revenue rises even at the same prices.</li>
+    <li><strong>Price</strong>: paying more for the same products. This is the price actually paid, so it includes both list price rises and any change in discounts.</li>
+  </ul>
+  <p>Plus products that were new in 2024, and products no longer sold. Same days in both years:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> by_product <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_id,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> quantity <span class="k">END</span>)   <span class="k">AS</span> units_23,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>) <span class="k">AS</span> rev_23,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> quantity <span class="k">END</span>)   <span class="k">AS</span> units_24,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>) <span class="k">AS</span> rev_24
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> (order_date &gt;= <span class="s">'2023-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2023-12-25'</span>)
+       <span class="k">OR</span> (order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-25'</span>)
+    <span class="k">GROUP</span> <span class="k">BY</span> product_id
+),
+continuing <span class="k">AS</span> (                                    <span class="c">-- sold in both years</span>
+    <span class="k">SELECT</span> <span class="k">SUM</span>(units_23) <span class="k">AS</span> u23, <span class="k">SUM</span>(rev_23) <span class="k">AS</span> r23,
+           <span class="k">SUM</span>(units_24) <span class="k">AS</span> u24, <span class="k">SUM</span>(rev_24) <span class="k">AS</span> r24,
+           <span class="k">SUM</span>(units_24 * rev_23 / units_23) <span class="k">AS</span> r24_at_2023_prices
+    <span class="k">FROM</span> by_product
+    <span class="k">WHERE</span> units_23 <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">AND</span> units_24 <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+)
+          <span class="k">SELECT</span> <span class="s">'1. More units (volume)'</span>       <span class="k">AS</span> part, <span class="k">ROUND</span>((u24 - u23) * r23 / u23)          <span class="k">AS</span> rupees <span class="k">FROM</span> continuing
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'2. Pricier products (mix)'</span>,           <span class="k">ROUND</span>(r24_at_2023_prices - u24 * r23 / u23)       <span class="k">FROM</span> continuing
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'3. Higher prices paid (price)'</span>,       <span class="k">ROUND</span>(r24 - r24_at_2023_prices)                   <span class="k">FROM</span> continuing
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'4. New products'</span>,                     <span class="k">ROUND</span>(<span class="k">SUM</span>(rev_24))   <span class="k">FROM</span> by_product <span class="k">WHERE</span> units_23 <span class="k">IS</span> <span class="k">NULL</span>
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'5. Products no longer sold'</span>,          -<span class="k">ROUND</span>(<span class="k">SUM</span>(rev_23))  <span class="k">FROM</span> by_product <span class="k">WHERE</span> units_24 <span class="k">IS</span> <span class="k">NULL</span>
+<span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="s">'Total change'</span>,                        <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">COALESCE</span>(rev_24, <span class="n">0</span>)) - <span class="k">SUM</span>(<span class="k">COALESCE</span>(rev_23, <span class="n">0</span>))) <span class="k">FROM</span> by_product;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------------------+---------+
+| part                          | rupees  |
++-------------------------------+---------+
+| 1. More units (volume)        | 1958945 |
+| 2. Pricier products (mix)     |   29714 |
+| 3. Higher prices paid (price) |  256311 |
+| 4. New products               |  688802 |
+| 5. Products no longer sold    |  -69765 |
+| Total change                  | 2864008 |
++-------------------------------+---------+</code></pre></div>
+  <p>The key line is <code>units_24 * rev_23 / units_23</code>: each product's 2024 units, priced at what that product sold for in 2023. Comparing it with 2024's units at the overall 2023 average price (<code>u24 * r23 / u23</code>) gives the mix; comparing it with what 2024 really brought in gives the price. As always with a bridge, the parts add up to the total change (to within a rupee of rounding), which checks the arithmetic.</p>
+  <p>The answer for Ritu: of the ₹28.6 lakh of growth, about <strong>₹19.6 lakh (two-thirds) is more units</strong>, real demand. New products, mostly the Earbuds and the Dumbbell Set, added ₹6.9 lakh. Higher prices added ₹2.6 lakh, under a tenth. The mix barely moved. So the growth is real: people bought more, not just paid more.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>What sells together?</h2>
+  <p>Ananya's "frequently bought together" idea needs pairs of products in the same order. That's a <strong>self join</strong> (Day 7): join the order lines to themselves on <code>order_id</code>. The condition <code>a.product_id &lt; b.product_id</code> keeps each pair once (not both A–B and B–A) and stops a product pairing with itself. (Careful with names: <code>LINES</code> is a reserved word in MySQL, so the CTE is called <code>basket</code>.)</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> basket <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> order_id, product_id, product_name
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &lt; <span class="s">'2024-12-25'</span>
+),
+total <span class="k">AS</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders <span class="k">FROM</span> basket),
+per_product <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_id, <span class="k">COUNT</span>(*) <span class="k">AS</span> orders_with
+    <span class="k">FROM</span> basket
+    <span class="k">GROUP</span> <span class="k">BY</span> product_id
+),
+pairs <span class="k">AS</span> (
+    <span class="k">SELECT</span> a.product_id <span class="k">AS</span> id_a, b.product_id <span class="k">AS</span> id_b,
+           a.product_name <span class="k">AS</span> product_a, b.product_name <span class="k">AS</span> product_b,
+           <span class="k">COUNT</span>(*) <span class="k">AS</span> together
+    <span class="k">FROM</span> basket a
+    <span class="k">JOIN</span> basket b <span class="k">ON</span> b.order_id = a.order_id
+                 <span class="k">AND</span> a.product_id &lt; b.product_id
+    <span class="k">GROUP</span> <span class="k">BY</span> id_a, id_b, product_a, product_b
+)
+<span class="k">SELECT</span> product_a, product_b, together,
+       <span class="k">ROUND</span>(pa.orders_with * pb.orders_with / t.orders, <span class="n">1</span>)      <span class="k">AS</span> expected,
+       <span class="k">ROUND</span>(together * t.orders / (pa.orders_with * pb.orders_with), <span class="n">2</span>) <span class="k">AS</span> lift
+<span class="k">FROM</span> pairs
+<span class="k">JOIN</span> per_product pa <span class="k">ON</span> pa.product_id = id_a
+<span class="k">JOIN</span> per_product pb <span class="k">ON</span> pb.product_id = id_b
+<span class="k">CROSS</span> <span class="k">JOIN</span> total t
+<span class="k">ORDER</span> <span class="k">BY</span> together <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">8</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------+--------------------+----------+----------+------+
+| product_a           | product_b          | together | expected | lift |
++---------------------+--------------------+----------+----------+------+
+| Cotton T-Shirt      | Yoga Mat           |       25 |     24.1 | 1.04 |
+| Cotton T-Shirt      | Phone Case         |       21 |     27.4 | 0.77 |
+| Cotton T-Shirt      | Polo T-Shirt       |       21 |     20.5 | 1.03 |
+| Cotton T-Shirt      | Ceramic Coffee Mug |       20 |     21.7 | 0.92 |
+| Wireless Mouse      | Cotton T-Shirt     |       20 |     26.9 | 0.74 |
+| Wireless Mouse      | Yoga Mat           |       17 |     18.5 | 0.92 |
+| Cotton T-Shirt      | Track Pants        |       17 |     16.0 | 1.06 |
+| Mechanical Keyboard | Cotton T-Shirt     |       17 |     14.8 | 1.15 |
++---------------------+--------------------+----------+----------+------+</code></pre></div>
+  <p>The most common pair is the Cotton T-Shirt with the Yoga Mat: 25 orders. Should the shop show yoga mats on the T-shirt page? Look at <code>expected</code> first. The T-shirt is the shop's most popular product, and if people chose items completely independently, the two would land in the same order about 24 times anyway, just by being popular. The measure that adjusts for this is <strong>lift</strong>:</p>
+  <ul>
+    <li><code>expected</code> = (orders with A × orders with B) ÷ all orders: how often the pair would meet by chance.</li>
+    <li><code>lift</code> = together ÷ expected. Around 1 means "no connection". Above 1 means they're bought together more than chance; below 1, less.</li>
+  </ul>
+  <p>Every top pair has a lift close to 1 (or below). They're just popular products meeting by chance. A widget built on raw counts would recommend the T-shirt with everything. So sort by lift instead, but only for pairs bought together at least 10 times, because a lift built on one or two orders means nothing:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> basket <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> order_id, product_id, product_name
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &lt; <span class="s">'2024-12-25'</span>
+),
+total <span class="k">AS</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders <span class="k">FROM</span> basket),
+per_product <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_id, <span class="k">COUNT</span>(*) <span class="k">AS</span> orders_with
+    <span class="k">FROM</span> basket
+    <span class="k">GROUP</span> <span class="k">BY</span> product_id
+),
+pairs <span class="k">AS</span> (
+    <span class="k">SELECT</span> a.product_id <span class="k">AS</span> id_a, b.product_id <span class="k">AS</span> id_b,
+           a.product_name <span class="k">AS</span> product_a, b.product_name <span class="k">AS</span> product_b,
+           <span class="k">COUNT</span>(*) <span class="k">AS</span> together
+    <span class="k">FROM</span> basket a
+    <span class="k">JOIN</span> basket b <span class="k">ON</span> b.order_id = a.order_id
+                 <span class="k">AND</span> a.product_id &lt; b.product_id
+    <span class="k">GROUP</span> <span class="k">BY</span> id_a, id_b, product_a, product_b
+)
+<span class="k">SELECT</span> product_a, product_b, together,
+       <span class="k">ROUND</span>(pa.orders_with * pb.orders_with / t.orders, <span class="n">1</span>)      <span class="k">AS</span> expected,
+       <span class="k">ROUND</span>(together * t.orders / (pa.orders_with * pb.orders_with), <span class="n">2</span>) <span class="k">AS</span> lift
+<span class="k">FROM</span> pairs
+<span class="k">JOIN</span> per_product pa <span class="k">ON</span> pa.product_id = id_a
+<span class="k">JOIN</span> per_product pb <span class="k">ON</span> pb.product_id = id_b
+<span class="k">CROSS</span> <span class="k">JOIN</span> total t
+<span class="k">WHERE</span> together &gt;= <span class="n">10</span>
+<span class="k">ORDER</span> <span class="k">BY</span> lift <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------------------+---------------------+----------+----------+------+
+| product_a                    | product_b           | together | expected | lift |
++------------------------------+---------------------+----------+----------+------+
+| Mechanical Keyboard          | USB-C Hub           |       11 |      6.4 | 1.71 |
+| Cotton T-Shirt               | Cycling Gloves      |       10 |      6.8 | 1.46 |
+| Cotton T-Shirt               | Table Lamp          |       10 |      7.1 | 1.41 |
+| Stainless Steel Water Bottle | Power Bank 20000mAh |       14 |     10.3 | 1.36 |
+| Power Bank 20000mAh          | Atomic Habits       |       13 |     10.2 | 1.27 |
++------------------------------+---------------------+----------+----------+------+</code></pre></div>
+  <p>(Remove the <code>WHERE</code> and see for yourself: the top lifts become pairs bought together once or twice, several involving the Smart Fitness Band, whose "expected" is tiny because it was only on sale for 24 days.)</p>
+  <p>Now the top pair has a story: a <strong>Mechanical Keyboard with a USB-C Hub</strong>, two things people plug into a laptop. 11 orders against 6.4 expected, lift 1.7. Is it real? Be careful. The shop's orders contain about 1,500 different pairs, and when you look at that many, a few will reach a lift like this by luck alone (Day 22's warning about checking many groups at once). And 11 orders is a small number. Honest answer for Ananya:</p>
+  <ul>
+    <li>In this data, baskets look mostly like independent choices. A "frequently bought together" widget would have little real pattern to show yet.</li>
+    <li>The keyboard and hub pairing is plausible and cheap to test: show the hub on the keyboard's page to a random half of visitors, and compare the two halves (an A/B test, the same idea as Day 22's holdout). A before-and-after comparison is weaker, because the season changes in between.</li>
+    <li>But not until the hub's quality problem (section 4) is fixed. Recommending a product that 1 in 6 people send back would just mean more returns and more unhappy customers.</li>
+  </ul>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="n">7</span>The website funnel</h2>
+  <p>Day 13 built the funnel for the whole site, and Day 21 checked it month by month. Ananya's question is <em>where</em> to work, so split it by device. Each column is the share who reached a step <em>out of those who reached the step before</em>, so you can see exactly where people drop out:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> sessions <span class="k">AS</span> (
+    <span class="k">SELECT</span> session_id,
+           <span class="k">MIN</span>(event_time)                    <span class="k">AS</span> started,
+           <span class="k">MIN</span>(device)                        <span class="k">AS</span> device,
+           <span class="k">MAX</span>(event_type = <span class="s">'product_view'</span>)   <span class="k">AS</span> viewed,
+           <span class="k">MAX</span>(event_type = <span class="s">'add_to_cart'</span>)    <span class="k">AS</span> carted,
+           <span class="k">MAX</span>(event_type = <span class="s">'checkout_start'</span>) <span class="k">AS</span> checked_out,
+           <span class="k">MAX</span>(event_type = <span class="s">'purchase'</span>)       <span class="k">AS</span> purchased
+    <span class="k">FROM</span> clean_web_events
+    <span class="k">GROUP</span> <span class="k">BY</span> session_id
+    <span class="k">HAVING</span> started &lt; <span class="s">'2024-12-25'</span>
+       <span class="k">AND</span> <span class="k">NOT</span> (started &gt;= <span class="s">'2024-11-19'</span> <span class="k">AND</span> started &lt; <span class="s">'2024-11-20'</span>)    <span class="c">-- tracking outage</span>
+)
+<span class="k">SELECT</span> device,
+       <span class="k">COUNT</span>(*)                                         <span class="k">AS</span> sessions,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(viewed), <span class="n">1</span>)                      <span class="k">AS</span> viewed_pct,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(carted) / <span class="k">SUM</span>(viewed), <span class="n">1</span>)        <span class="k">AS</span> carted_of_viewers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(checked_out) / <span class="k">SUM</span>(carted), <span class="n">1</span>)   <span class="k">AS</span> checkout_of_carts,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(purchased) / <span class="k">SUM</span>(checked_out), <span class="n">1</span>) <span class="k">AS</span> paid_of_checkouts,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(purchased), <span class="n">1</span>)                   <span class="k">AS</span> conversion_pct,
+       <span class="k">SUM</span>(purchased)                                   <span class="k">AS</span> purchases
+<span class="k">FROM</span> sessions
+<span class="k">GROUP</span> <span class="k">BY</span> device
+<span class="k">ORDER</span> <span class="k">BY</span> sessions <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+----------+------------+-------------------+-------------------+-------------------+----------------+-----------+
+| device  | sessions | viewed_pct | carted_of_viewers | checkout_of_carts | paid_of_checkouts | conversion_pct | purchases |
++---------+----------+------------+-------------------+-------------------+-------------------+----------------+-----------+
+| mobile  |    13832 |       62.6 |              24.5 |              54.6 |              64.8 |            5.4 |       752 |
+| desktop |     4554 |       72.9 |              35.3 |              64.4 |              50.7 |            8.4 |       383 |
+| tablet  |      944 |       64.4 |              24.2 |              44.9 |              39.4 |            2.8 |        26 |
++---------+----------+------------+-------------------+-------------------+-------------------+----------------+-----------+</code></pre></div>
+  <p>Mobile is where the shop lives: about 7 in 10 sessions. And mobile converts worst of the big two: 5.4% of mobile sessions end in a purchase, against 8.4% on desktop. The step columns show where the gap opens. Fewer mobile visitors look at a product at all (63% against 73%), far fewer of those who look add to cart (24.5% against 35.3%), and fewer carts reach checkout (55% against 64%). Those first steps, browsing and adding to cart on a small screen, are where Ananya's team should look first.</p>
+  <p>One step goes the other way: mobile's <code>paid_of_checkouts</code> is the <em>highest</em>. That's a quirk of the tracking, not good news. Every app purchase is recorded with the device "mobile" (join the purchase events to <code>clean_orders</code> on <code>order_id</code> and compare <code>channel</code> with <code>device</code> to see it), so "mobile" mixes app shoppers with mobile-website shoppers. For sessions that didn't buy, there's no order to tell them apart. Worth asking Ananya's team to record the app as its own device. (Tablets convert worst of all, but on under 1,000 sessions; fix mobile first.)</p>
+  <p>What would a fix be worth? A rough what-if: if mobile viewers added to cart at desktop's rate, and every later step stayed the same, mobile purchases would rise by about 35.3 ÷ 24.5 ≈ 1.44 times: about 330 more orders over these twelve weeks. Treat that as an upper limit, not a forecast. "Mobile" includes the app, and desktop shoppers may simply be more determined buyers (people often browse on phones and buy on laptops), so some of the gap would never close. The way to know is an A/B test: Day 22's holdout idea, applied to a new design.</p>
+  <p>Last, the products themselves. Which ones turn views into sales, and which are looked at but rarely bought? <code>clean_web_events</code> records a <code>product_id</code> on views and add-to-carts, so count the sessions that looked at each product, and those that added it to the cart in a session that ended in a purchase. (The purchase event itself has no <code>product_id</code>, so this is as close as the tracking gets to "bought it".)</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> product_sessions <span class="k">AS</span> (
+    <span class="k">SELECT</span> session_id, product_id,
+           <span class="k">MAX</span>(event_type = <span class="s">'add_to_cart'</span>) <span class="k">AS</span> carted
+    <span class="k">FROM</span> clean_web_events
+    <span class="k">WHERE</span> product_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+      <span class="k">AND</span> event_time &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> event_time &lt; <span class="s">'2024-12-25'</span>
+      <span class="k">AND</span> <span class="k">NOT</span> (event_time &gt;= <span class="s">'2024-11-19'</span> <span class="k">AND</span> event_time &lt; <span class="s">'2024-11-20'</span>)
+    <span class="k">GROUP</span> <span class="k">BY</span> session_id, product_id
+),
+buying_sessions <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> session_id <span class="k">FROM</span> clean_web_events <span class="k">WHERE</span> event_type = <span class="s">'purchase'</span>
+),
+per_product <span class="k">AS</span> (
+    <span class="k">SELECT</span> ps.product_id,
+           <span class="k">COUNT</span>(*)                                       <span class="k">AS</span> sessions_viewing,
+           <span class="k">SUM</span>(ps.carted <span class="k">AND</span> b.session_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>)    <span class="k">AS</span> bought
+    <span class="k">FROM</span> product_sessions ps
+    <span class="k">LEFT</span> <span class="k">JOIN</span> buying_sessions b <span class="k">ON</span> b.session_id = ps.session_id
+    <span class="k">GROUP</span> <span class="k">BY</span> ps.product_id
+),
+ranked <span class="k">AS</span> (
+    <span class="k">SELECT</span> p.product_name, pp.sessions_viewing, pp.bought,
+           <span class="n">100</span> * pp.bought / pp.sessions_viewing                          <span class="k">AS</span> rate,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> pp.bought / pp.sessions_viewing <span class="k">DESC</span>) <span class="k">AS</span> best,
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> pp.bought / pp.sessions_viewing)      <span class="k">AS</span> worst
+    <span class="k">FROM</span> per_product pp
+    <span class="k">JOIN</span> products p <span class="k">ON</span> p.product_id = pp.product_id
+)
+<span class="k">SELECT</span> product_name, sessions_viewing, bought,
+       <span class="k">ROUND</span>(rate, <span class="n">1</span>) <span class="k">AS</span> bought_per_100_views
+<span class="k">FROM</span> ranked
+<span class="k">WHERE</span> best &lt;= <span class="n">5</span> <span class="k">OR</span> worst &lt;= <span class="n">5</span>
+<span class="k">ORDER</span> <span class="k">BY</span> rate <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------------+------------------+--------+----------------------+
+| product_name             | sessions_viewing | bought | bought_per_100_views |
++--------------------------+------------------+--------+----------------------+
+| Cotton T-Shirt           |              470 |     92 |                 19.6 |
+| Phone Case               |              442 |     75 |                 17.0 |
+| Kurta Set                |              444 |     72 |                 16.2 |
+| Wireless Mouse           |              414 |     65 |                 15.7 |
+| Resistance Bands Set     |              408 |     61 |                 15.0 |
+| Wall Clock               |              368 |     12 |                  3.3 |
+| Cycling Gloves           |              384 |     12 |                  3.1 |
+| Table Lamp               |              368 |     11 |                  3.0 |
+| Business Analytics       |              386 |      8 |                  2.1 |
+| The Pragmatic Programmer |              352 |      7 |                  2.0 |
++--------------------------+------------------+--------+----------------------+</code></pre></div>
+  <p>Two <code>ROW_NUMBER</code>s, one in each direction, give the top five and the bottom five in a single query (Day 9). The striking thing is the first column: every product is viewed a similar number of times, between about 350 and 470 sessions each (all except the Smart Fitness Band, which only arrived in December). Interest is spread almost evenly. What differs is how often a view becomes a sale: about 1 in 5 or 6 for the T-shirt, phone case and Kurta Set, but only 1 in 30 to 1 in 50 for the Wall Clock, Table Lamp, Cycling Gloves and two of the books. Some may simply be niche products; others need a look at price, photos, description or reviews. Either way, the browse pages could show the products that convert first: the same views would then produce more orders.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="n">8</span>Write it up</h2>
+  <p>Three readers this time, so give each one their part, while keeping it to one page:</p>
+  <div class="note"><p><strong>Products and website review, 2024 (to 24 December)</strong></p>
+  <p style="margin-top:8px"><strong>Growth was real.</strong> Revenue grew ₹28.6 lakh on the same days of 2023. Two-thirds came from selling more units, a quarter from new products (Earbuds, Dumbbell Set), and under a tenth from the price rises on 24 products.</p>
+  <p style="margin-top:8px"><strong>For Sanjay (buying).</strong> Profit is spread across the range: 33 of 60 products make 80% of it, so there's no case for cutting deep. Rank by profit, not revenue: electronics sell the most but earn the least per rupee. Stop restocking the slowest books (Excel Formulas Guide, Business Analytics, Deep Work). Take up the USB-C Hub's quality with the supplier before reordering: 1 in 6 come back, mostly faulty, and buyers rate it 2.8 out of 5.</p>
+  <p style="margin-top:8px"><strong>For Ananya (website).</strong> Mobile is 7 in 10 sessions but converts at 5.4% against desktop's 8.4%, losing people at browsing and add-to-cart. That's the place to start, with an A/B test. "Frequently bought together" has little to show yet: popular pairs are just popular products. The keyboard-and-hub pairing is worth a small test once the hub is fixed. On browse pages, show the products that convert best first. And please track the app separately from the mobile site.</p>
+  <p style="margin-top:8px"><strong>Notes.</strong> Like-for-like days in both years. Return rates use orders before 30 November (full return window). Ratings from verified buyers only. Website data covers October to 24 December, without 19 November (tracking outage). New and withdrawn products are judged per day on sale.</p></div>
+  <p>Every claim in it traces back to a query above, and every number has a definition in the notes. That's been the shape of all three case studies: <strong>check the data, define the terms, measure fairly, separate signal from luck, and write for the reader.</strong> The SQL makes it possible; the judgment makes it useful.</p>
+</section>
+
+<!-- Try this -->
+<div class="try" id="try">
+  <h2>✏️ Try this</h2>
+  <ol style="padding-left:22px">
+    <li>Redo the ABC classes using revenue instead of profit. How many products are in class A now, and which category gains the most places?</li>
+    <li>Is the keyboard-and-hub pairing steady over time? Work out its lift in 2023 and in 2024 separately.</li>
+    <li>Does conversion differ by traffic source? Use section 7's sessions, the give-or-take ruler, and Day 22's warning about checking many groups.</li>
+    <li>Sports grew fastest of all the categories in 2024. How much of its growth came from the two new products, the Dumbbell Set and the Foam Roller?</li>
+    <li>The Smart Fitness Band makes the most profit per 30 days. Should Sanjay order a lot more? Compare it with other products over the same days.</li>
+  </ol>
+  <details class="reveal">
+    <summary>Show sample answers</summary>
+    <div class="body">
+      <p><strong>1.</strong> Swap <code>profit</code> for <code>revenue</code> in the running total and the class rule:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> ranked <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_name, category_name, revenue,
+           <span class="n">100</span> * <span class="k">SUM</span>(revenue) <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> revenue <span class="k">DESC</span>
+                                    <span class="k">ROWS</span> <span class="k">BETWEEN</span> <span class="k">UNBOUNDED</span> <span class="k">PRECEDING</span> <span class="k">AND</span> <span class="k">CURRENT</span> <span class="k">ROW</span>)
+               / <span class="k">SUM</span>(revenue) <span class="k">OVER</span> ()                     <span class="k">AS</span> running_pct,
+           <span class="n">100</span> * revenue / <span class="k">SUM</span>(revenue) <span class="k">OVER</span> ()           <span class="k">AS</span> own_pct
+    <span class="k">FROM</span> product_2024
+)
+<span class="k">SELECT</span> category_name,
+       <span class="k">SUM</span>(running_pct - own_pct &lt; <span class="n">80</span>) <span class="k">AS</span> class_a_products,
+       <span class="k">COUNT</span>(*)                        <span class="k">AS</span> products
+<span class="k">FROM</span> ranked
+<span class="k">GROUP</span> <span class="k">BY</span> category_name
+<span class="k">ORDER</span> <span class="k">BY</span> class_a_products <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+------------------+----------+
+| category_name  | class_a_products | products |
++----------------+------------------+----------+
+| Electronics    |               11 |       12 |
+| Clothing       |               10 |       12 |
+| Sports         |                7 |       11 |
+| Home &amp; Kitchen |                4 |       12 |
+| Books          |                1 |       12 |
+| Uncategorised  |                0 |        1 |
++----------------+------------------+----------+</code></pre></div>
+      <p>Class A still has 33 products, but a different 33. Electronics gains the most: ranked by revenue, 11 of its 12 products are in class A (against 7 when ranked by profit), because gadgets are expensive. That's the trap in section 3: a revenue ranking would tell Sanjay to stock up on the lowest-margin category.</p>
+      <p><strong>2.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> basket <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> order_id, product_id, product_name, <span class="t">YEAR</span>(order_date) <span class="k">AS</span> yr
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &lt; <span class="s">'2024-12-25'</span>
+),
+yearly <span class="k">AS</span> (
+    <span class="k">SELECT</span> yr,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id)                                               <span class="k">AS</span> orders,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> product_name = <span class="s">'Mechanical Keyboard'</span> <span class="k">THEN</span> order_id <span class="k">END</span>) <span class="k">AS</span> with_keyboard,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> product_name = <span class="s">'USB-C Hub'</span> <span class="k">THEN</span> order_id <span class="k">END</span>)           <span class="k">AS</span> with_hub
+    <span class="k">FROM</span> basket
+    <span class="k">GROUP</span> <span class="k">BY</span> yr
+),
+both_ <span class="k">AS</span> (
+    <span class="k">SELECT</span> a.yr, <span class="k">COUNT</span>(*) <span class="k">AS</span> together
+    <span class="k">FROM</span> basket a
+    <span class="k">JOIN</span> basket b <span class="k">ON</span> b.order_id = a.order_id
+    <span class="k">WHERE</span> a.product_name = <span class="s">'Mechanical Keyboard'</span>
+      <span class="k">AND</span> b.product_name = <span class="s">'USB-C Hub'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> a.yr
+)
+<span class="k">SELECT</span> y.yr, b.together,
+       <span class="k">ROUND</span>(y.with_keyboard * y.with_hub / y.orders, <span class="n">1</span>)               <span class="k">AS</span> expected,
+       <span class="k">ROUND</span>(b.together * y.orders / (y.with_keyboard * y.with_hub), <span class="n">2</span>) <span class="k">AS</span> lift
+<span class="k">FROM</span> yearly y
+<span class="k">JOIN</span> both_ b <span class="k">ON</span> b.yr = y.yr
+<span class="k">ORDER</span> <span class="k">BY</span> y.yr;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------+----------+----------+------+
+| yr   | together | expected | lift |
++------+----------+----------+------+
+| 2023 |        5 |      2.8 | 1.79 |
+| 2024 |        6 |      3.6 | 1.65 |
++------+----------+----------+------+</code></pre></div>
+      <p>The lift is similar in both years, which is encouraging. But each year rests on 5 or 6 orders, so a couple of orders either way would change the picture. Consistent, but not proof: the page test from section 6 is still the way to know.</p>
+      <p><strong>3.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> sessions <span class="k">AS</span> (
+    <span class="k">SELECT</span> session_id,
+           <span class="k">MIN</span>(event_time)              <span class="k">AS</span> started,
+           <span class="k">MIN</span>(traffic_source)          <span class="k">AS</span> source,
+           <span class="k">MAX</span>(event_type = <span class="s">'purchase'</span>) <span class="k">AS</span> purchased
+    <span class="k">FROM</span> clean_web_events
+    <span class="k">GROUP</span> <span class="k">BY</span> session_id
+    <span class="k">HAVING</span> started &lt; <span class="s">'2024-12-25'</span>
+       <span class="k">AND</span> <span class="k">NOT</span> (started &gt;= <span class="s">'2024-11-19'</span> <span class="k">AND</span> started &lt; <span class="s">'2024-11-20'</span>)
+)
+<span class="k">SELECT</span> source,
+       <span class="k">COUNT</span>(*)                         <span class="k">AS</span> sessions,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(purchased), <span class="n">2</span>)   <span class="k">AS</span> conversion_pct,
+       CAST(<span class="n">200</span> * SQRT(<span class="k">AVG</span>(purchased) * (<span class="n">1</span> - <span class="k">AVG</span>(purchased)) / <span class="k">COUNT</span>(*)) <span class="k">AS</span> <span class="t">DECIMAL</span>(<span class="n">4</span>,<span class="n">2</span>)) <span class="k">AS</span> give_or_take
+<span class="k">FROM</span> sessions
+<span class="k">GROUP</span> <span class="k">BY</span> source
+<span class="k">ORDER</span> <span class="k">BY</span> sessions <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+----------+----------------+--------------+
+| source    | sessions | conversion_pct | give_or_take |
++-----------+----------+----------------+--------------+
+| google    |     6638 |           6.51 |         0.61 |
+| direct    |     4241 |           6.01 |         0.73 |
+| instagram |     3553 |           5.97 |         0.79 |
+| email     |     1935 |           5.17 |         1.01 |
+| facebook  |     1536 |           5.21 |         1.13 |
+| referral  |     1334 |           5.62 |         1.26 |
+| unknown   |       93 |           7.53 |         5.47 |
++-----------+----------+----------------+--------------+</code></pre></div>
+      <p>Google converts best of the big sources and email and Facebook lowest. The biggest gap, Google against email, is about 1.3 points, and the range for that difference is about √(0.61² + 1.01²) ≈ 1.2: just outside. Google against Facebook is also a whisker outside (1.30 against 1.28). Every other gap is inside its range. But with six sources there are fifteen possible pairs to compare, and a gap or two crossing the line by luck is quite likely (Day 22). So: no source is <em>clearly</em> different yet. Check again with more weeks of data before moving budget. (The "unknown" row, 93 sessions with no source recorded, is too small to read.)</p>
+      <p><strong>4.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> sports_2023,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> sports_2024,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span>
+                       <span class="k">AND</span> product_name <span class="k">IN</span> (<span class="s">'Dumbbell Set 5kg'</span>, <span class="s">'Foam Roller'</span>)
+                      <span class="k">THEN</span> line_total <span class="k">END</span>))                                 <span class="k">AS</span> new_products_2024
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> category_name = <span class="s">'Sports'</span>
+  <span class="k">AND</span> ((order_date &gt;= <span class="s">'2023-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2023-12-25'</span>)
+    <span class="k">OR</span> (order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-25'</span>));</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-------------+-------------------+
+| sports_2023 | sports_2024 | new_products_2024 |
++-------------+-------------+-------------------+
+|      604896 |     1599056 |            332244 |
++-------------+-------------+-------------------+</code></pre></div>
+      <p>Sports grew by about ₹10 lakh, and the two new products brought in about ₹3.3 lakh of that: roughly a third. The other two-thirds came from products Sports already had. So the category's growth isn't only the launches; existing sports products sold far more too.</p>
+      <p><strong>5.</strong> Compare like with like: every product over the Fitness Band's own days, 1 to 24 December:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> product_name,
+       <span class="k">SUM</span>(quantity)                          <span class="k">AS</span> units,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(line_total - line_cost))     <span class="k">AS</span> profit,
+       <span class="k">RANK</span>() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> <span class="k">SUM</span>(line_total - line_cost) <span class="k">DESC</span>) <span class="k">AS</span> profit_rank
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-12-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-25'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> product_name
+<span class="k">ORDER</span> <span class="k">BY</span> profit <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">6</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------+-------+--------+-------------+
+| product_name       | units | profit | profit_rank |
++--------------------+-------+--------+-------------+
+| Winter Jacket      |    16 |  30026 |           1 |
+| Denim Jeans        |    14 |  14036 |           2 |
+| Smartwatch         |     8 |  13223 |           3 |
+| Polo T-Shirt       |    29 |  11808 |           4 |
+| Smart Fitness Band |    10 |  10471 |           5 |
+| Yoga Mat           |    21 |   9922 |           6 |
++--------------------+-------+--------+-------------+</code></pre></div>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-12-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>) / <span class="n">24</span>) <span class="k">AS</span> december_per_day,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(line_total) / <span class="n">359</span>)                                             <span class="k">AS</span> whole_year_per_day
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-25'</span>;    <span class="c">-- 359 days</span></code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+--------------------+
+| december_per_day | whole_year_per_day |
++------------------+--------------------+
+|            27067 |              22104 |
++------------------+--------------------+</code></pre></div>
+      <p>Over the same days it ranks fifth, not first. Section 3's "per 30 days" figure flattered it, because it compared a December-only product with full-year averages, and December is busy: the shop took about 22% more per day in December 2024 than its average for the year. Fifth place on its first month is a good launch, but it's based on 10 units. Order a moderate amount, watch January, and give it a category, so it stops showing up as "Uncategorised".</p>
+    </div>
+  </details>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner</h2>
+    <p>Product and funnel questions are common for analyst roles in e-commerce, retail and any company with an app. They test whether you look past the obvious number.</p>
+  </div>
+  <div class="iv-group">
+    <h3>Concept questions</h3>
+    <details class="qa"><summary><span class="q">Q1</span>What is an ABC analysis, and what can go wrong with it?</summary>
+      <div class="body"><p>Sort products by a value (profit is usually better than revenue), keep a running share, and class them A (first ~80%), B (next ~15%) and C (the rest). It goes wrong when products didn't have the same chance to sell: new launches and withdrawn products land in C unfairly. Compare per day on sale, and check the class boundaries with the share <em>before</em> each product.</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>Explain support, confidence and lift.</summary>
+      <div class="body"><p>For a pair A and B: support is the share of all orders containing both. Confidence (A → B) is the share of orders with A that also contain B. Lift is support divided by what chance predicts, P(A) × P(B), or equivalently together ÷ expected. Lift near 1 means no connection. Popular products have high support and confidence with everything, which is why lift matters.</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>Revenue grew 56%. How do you tell how much was price?</summary>
+      <div class="body"><p>A price-volume-mix bridge. For products sold in both periods, value this period's units at last period's prices. The difference between that and last period's revenue splits into volume (more units) and mix (pricier products). The difference between actual revenue and the repriced figure is price. New and discontinued products are separate lines. The parts must add up to the total change.</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>Why show funnel steps as a share of the step before, rather than of all sessions?</summary>
+      <div class="body"><p>Because it shows where people leave. Overall conversion tells you that mobile is worse; step rates tell you <em>which step</em> is worse, which is what a team can actually fix. Always show both.</p></div></details>
+    <details class="qa"><summary><span class="q">Q5</span>Mobile converts at 5% and desktop at 8%. If mobile matched desktop, how many extra orders would that be?</summary>
+      <div class="body"><p>You can work out a what-if (mobile sessions × the gap), but call it an upper limit. The users differ, not just the device: many people browse on phones and buy on laptops. Some of the gap can never close. Only an A/B test of a mobile change tells you what's really gained.</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Practical questions</h3>
+    <details class="qa"><summary><span class="q">P1</span>Write SQL to find pairs of products bought in the same order.</summary>
+      <div class="body"><p>Self join the order lines: <code>FROM order_lines a JOIN order_lines b ON b.order_id = a.order_id AND a.product_id &lt; b.product_id</code>, then <code>GROUP BY</code> the two products and <code>COUNT(*)</code>. The <code>&lt;</code> keeps each pair once and excludes a product paired with itself. Use <code>DISTINCT</code> order lines first if a product can appear twice in one order. (And in MySQL, don't name the table or CTE <code>lines</code>: it's a reserved word.)</p></div></details>
+    <details class="qa"><summary><span class="q">P2</span>A product has lots of page views but few sales. What do you check?</summary>
+      <div class="body"><p>Whether it was in stock and its price compared with similar products; whether it's seasonal; its reviews and return rate; and the step where people drop (viewed but never added to cart points to price, photos or description; added but not bought points to delivery cost or checkout). Compare with similar products over the same days.</p></div></details>
+    <details class="qa"><summary><span class="q">P3</span>Our best-selling product has the highest return rate. Is that bad?</summary>
+      <div class="body"><p>Compare the return rate with its own category's, not the shop's, since some categories always return more (clothing for size). Check whether the gap is bigger than chance for its sales volume, then look at return reasons: "faulty" points to quality, "not as described" to the product page, "wrong size" to sizing information.</p></div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li>Check which products could have sold all period. Launches, withdrawals and missing categories need allowing for: compare per day on sale, over the same days.</li>
+    <li>Use ratings from verified buyers only. Match reviewers on the master customer ID.</li>
+    <li>ABC classes come from a running total. Rank by profit, not revenue, and don't assume 80/20: here 33 of 60 products make 80% of the profit.</li>
+    <li>Judge a product's return rate against its own category, with a give-or-take. The USB-C Hub came back about three times as often as its category, mostly faulty.</li>
+    <li>A price-volume-mix bridge separates real demand from price rises. 2024's growth was mostly more units.</li>
+    <li>For "bought together", raw counts just find popular products. Use lift, demand a minimum number of orders, and remember that some pairs look special by luck when you check hundreds.</li>
+    <li>Split the funnel by device and step. Mobile loses shoppers at browsing and add-to-cart. Treat what-if gains as upper limits, and test changes properly.</li>
+  </ul>
+</div>
+
+<!-- Finale -->
+<div class="note" id="finale">
+  <p><strong>Where you've been, and where next</strong></p>
+  <p style="margin-top:8px">Twenty-three days ago this series started with "what is a database?". Since then you've built tables and filled them (Days 2 to 4), learned to ask questions with <code>SELECT</code>, <code>GROUP BY</code>, joins, subqueries and window functions (Days 5 to 9), met a real, messy dataset and cleaned it (Days 10 and 11), worked with dates, analysis patterns and Python (Days 12 to 14), gone further with advanced patterns, warehouse design, performance and the database's own programs (Days 16 to 19), practised for interviews twice (Days 15 and 20), and put it all to work in three case studies.</p>
+  <p style="margin-top:8px">If you've done the Try this boxes along the way, you can now answer most questions a business will ask of its data. A few good next steps:</p>
+  <ul style="margin-top:8px;padding-left:22px">
+    <li><strong>Make a portfolio piece.</strong> Pick one case study, change the questions, and write it up for your GitHub or a blog. Employers want to see judgment, not just queries.</li>
+    <li><strong>Practise on new data.</strong> Public datasets (Kaggle, government open data) give you fresh mess to clean. Load one into MySQL and ask it Day 21's questions.</li>
+    <li><strong>Learn a dashboard tool</strong>, such as Power BI, Tableau or Looker Studio, and point it at Day 17's warehouse.</li>
+    <li><strong>Go deeper on the statistics</strong> behind Day 22's give-or-take: confidence intervals and A/B testing turn "it might be luck" into a decision.</li>
+  </ul>
+  <p style="margin-top:8px">Thank you for coming this far. Happy querying.</p>
+</div>
+
+
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>
