@@ -372,7 +372,7 @@ footer b{color:var(--ink);font-weight:700}
     <div>
       <h1>Interview prep I + Checkpoint 2</h1>
       <p class="hero-sub">How SQL interviews work, a five-step method for thinking out loud, the classic question types mapped to everything you've learned, and a take-home test on the full dataset.</p>
-      <div class="facts"><span class="fact">28 minute read</span><span class="fact hl">Checkpoint 2</span></div>
+      <div class="facts"><span class="fact">29 minute read</span><span class="fact hl">Checkpoint 2</span></div>
     </div>
     <div class="sqlcard" role="img" aria-label="Five steps for any SQL interview question: clarify, find the grain, plan, build and check, test and explain">
       <p class="hd">Five steps for any SQL question</p>
@@ -397,7 +397,7 @@ footer b{color:var(--ink);font-weight:700}
 
   <article>
 
-<p class="lede">Fourteen days ago, you didn't know what a primary key was. Since then you've designed tables, written every kind of query, cleaned a messy database, worked with dates, built the standard analysis patterns and run SQL from Python. That's the full must-have toolkit for an analyst job. Today you practise using it under interview conditions: what the interviews look like, how to think out loud, the question types that come up again and again, and finally <strong>Checkpoint 2</strong>, a take-home test on the full dataset.</p>
+<p class="lede">Fourteen days ago, you didn't know what a primary key was. Since then you've designed tables, written every kind of query, cleaned a messy database, worked with dates, built the standard analysis patterns and run SQL from Python. That's the full must-have toolkit for an analyst job. Yesterday ended with writing SQL that other people can read and trust. Today, someone is watching while you write it. You'll practise under interview conditions: what the interviews look like, how to think out loud, the question types that come up again and again, and finally <strong>Checkpoint 2</strong>, a take-home test on the full dataset.</p>
 <div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. You'll need the Day 11 clean layer (<code>day11_clean_layer.sql</code>) and Day 13's <code>customer_summary</code> view. The practice questions hide their answers: <strong>try each one yourself first</strong>, out loud if you can, before you open the answer. That's the whole point of today.</p></div>
 
 <!-- 1 -->
@@ -935,7 +935,7 @@ numbered <span class="k">AS</span> (
 | Coupon           |          538 |            2107 |
 | No coupon        |         1577 |            2339 |
 +------------------+--------------+-----------------+</code></pre></div>
-  <p>Even among first orders, coupon orders are smaller, by about 10%: almost exactly the size of the welcome discount. That suggests a simple explanation: <code>line_total</code> is what the customer <em>paid</em>, with the discount already taken off. If so, coupon shoppers put about the same in their baskets, and just pay less for them. Before writing that in a report, confirm with the team how <code>unit_price</code> is recorded. <strong>Finding:</strong> "Coupons don't appear to make people buy more. Coupon orders are about 10% smaller, which matches the discount itself. If the goal of the welcome coupon is bigger first orders, it isn't achieving that. Whether it wins customers who wouldn't otherwise buy needs a test." Careful wording about cause and effect is one of the things take-homes are really testing.</p>
+  <p>Even among first orders, coupon orders are smaller, by about 10%: almost exactly the size of the welcome discount (498 of the 538 coupon first orders used <code>WELCOME10</code>). That suggests a simple explanation: <code>line_total</code> is what the customer <em>paid</em>, with the discount already taken off. If so, coupon shoppers put about the same in their baskets, and just pay less for them. Before writing that in a report, confirm with the team how <code>unit_price</code> is recorded. <strong>Finding:</strong> "Coupons don't appear to make people buy more. Coupon orders are about 10% smaller, which matches the discount itself. If the goal of the welcome coupon is bigger first orders, it isn't achieving that. Whether it wins customers who wouldn't otherwise buy needs a test." Careful wording about cause and effect is one of the things take-homes are really testing.</p>
   </div></details>
 
   <h3 style="margin:28px 0 8px">6. How many valuable customers have gone quiet?</h3>
@@ -958,7 +958,7 @@ numbered <span class="k">AS</span> (
 +--------------------------+------------------+
 |                       81 |          1412755 |
 +--------------------------+------------------+</code></pre></div>
-  <p>Turn the business words into exact rules first, then write the SQL. The brief did that for you here, and in a real take-home you'd write your definitions down yourself. <strong>Finding:</strong> 81 customers who spent ₹14.1 lakh in 2023 haven't bought for at least six months. That's the win-back list from Day 13's "At risk" segment, sized in money. A campaign that brought back even a quarter of them would be worth a lot.</p>
+  <p>Turn the business words into exact rules first, then write the SQL. The brief did that for you here, and in a real take-home you'd write your definitions down yourself. <strong>Finding:</strong> 81 customers who spent ₹14.1 lakh in 2023 haven't bought for at least six months. It's close to Day 13's "At risk" segment, but not the same list: 51 of the 81 are "At risk" there, 24 are "Loyal" and 6 are "Lost", because the brief defines "valuable" and "quiet" differently from the RFM scores. Different definitions give different lists, which is exactly why you write yours down. A campaign that brought back even a quarter of these 81 would be worth a lot.</p>
   </div></details>
 
   <h3 style="margin:28px 0 8px">How to hand in a take-home</h3>
