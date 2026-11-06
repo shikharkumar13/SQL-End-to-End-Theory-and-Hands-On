@@ -372,7 +372,7 @@ footer b{color:var(--ink);font-weight:700}
     <div>
       <h1>Database design and data warehouses</h1>
       <p class="hero-sub">How good tables are designed: relationships and keys, normal forms and when to break them. Then build a real star schema from the shop's data, and see why warehouses are designed so differently.</p>
-      <div class="facts"><span class="fact">26 minute read</span><span class="fact hl">Good-to-have</span></div>
+      <div class="facts"><span class="fact">27 minute read</span><span class="fact hl">Good-to-have</span></div>
     </div>
     <div class="sqlcard" role="img" aria-label="Two designs for two jobs: normalised tables run the shop, a star schema analyses it">
       <p class="hd">Two jobs, two designs</p>
@@ -395,7 +395,7 @@ footer b{color:var(--ink);font-weight:700}
 
   <article>
 
-<p class="lede">For sixteen days, you've worked with tables someone else designed. Today you look at them through the designer's eyes. Why is the shop split into so many tables? What makes a design good, and what makes one cause trouble years later? Then a twist: the analytics world often designs tables in a completely different way, on purpose. You'll build a small <strong>data warehouse</strong> from the shop's clean data, and see why.</p>
+<p class="lede">Yesterday's hierarchy queries only worked because of one design decision: someone gave <code>employees</code> a <code>manager_id</code> that points at another row of the same table. Choices like that are today's subject. For sixteen days, you've worked with tables someone else designed. Today you look at them through the designer's eyes. Why is the shop split into so many tables? What makes a design good, and what makes one cause trouble years later? Then a twist: the analytics world often designs tables in a completely different way, on purpose. You'll build a small <strong>data warehouse</strong> from the shop's clean data, and see why.</p>
 <div class="note"><p><strong>Before you start.</strong> Sections 1 to 4 run on <code>online_store_full</code> (<code>USE online_store_full;</code>). In section 5, a Build box creates a separate database, <code>shop_warehouse</code>, and switches to it. Everything after that runs there. Your original database isn't changed at all.</p></div>
 
 <!-- 1 -->
@@ -520,7 +520,7 @@ footer b{color:var(--ink);font-weight:700}
 +----------------+</code></pre></div>
   <p>The T-shirt was found, because "out<strong>fit</strong>" contains "fit". Searching inside lists is fragile, you can't put a foreign key on a list, counting how many products have each tag needs tricks, and an index can't help. The 1NF design is a separate table with one row per product and tag: <code>product_tag (product_id, tag)</code>, another junction table.</p>
   <p><strong>Second normal form (2NF): every column depends on the whole key.</strong> This only matters for composite keys. Imagine <code>order_items</code> with the key <code>(order_id, product_id)</code> also stored <code>product_name</code>. The name depends only on <code>product_id</code>, half of the key, so it would be copied onto every line that sells that product. Change a product's name, and you're back to the update anomaly. The name belongs in <code>products</code>, where it is.</p>
-  <p><strong>Third normal form (3NF): no column depends on another non-key column.</strong> Imagine <code>customers</code> stored both <code>city</code> and <code>state</code>. The state depends on the city (Pune is always in Maharashtra), not on the customer. Store it once per city, in a table of cities. Day 11's <code>city_lookup</code> was exactly this kind of table.</p>
+  <p><strong>Third normal form (3NF): no column depends on another non-key column.</strong> Imagine <code>customers</code> stored both <code>city</code> and <code>state</code>. The state depends on the city (Pune is always in Maharashtra), not on the customer. Store it once per city, in a table of cities. Day 11's <code>city_lookup</code> is the same idea: a fact about a city (its clean name) stored once, in a table keyed by the city.</p>
   <div class="note"><p><strong>One sentence to remember all three.</strong> Every column should depend on <em>the key</em> (1NF: there is a key, and one value per cell), <em>the whole key</em> (2NF), <em>and nothing but the key</em> (3NF). Higher forms (BCNF, 4NF, 5NF) exist and deal with rarer situations. In interviews, knowing the first three well, with an example of each, is what counts.</p></div>
   <p>Is <code>online_store_full</code> normalised? Mostly, yes, to 3NF. But what about <code>order_items.unit_price</code>, when <code>products</code> already has a price? Day 2 answered that: today's price and the price paid on the day are <em>two different facts</em>, so storing both isn't a violation. Asking "is this really the same fact?" is the heart of design.</p>
 </section>
@@ -790,7 +790,7 @@ footer b{color:var(--ink);font-weight:700}
 |            1 |           1 | Kavya      | Hyderabad | 2023-11-02 | 2024-06-30 |          0 |
 |            2 |           1 | Kavya      | Pune      | 2024-07-01 | 9999-12-31 |          1 |
 +--------------+-------------+------------+-----------+------------+------------+------------+</code></pre></div>
-  <p>Two rows for one person, each with its own key and its own period. <code>'9999-12-31'</code> is a common convention meaning "still true". When a new order arrives, the load looks up the row that's current <em>on the order date</em>: <code>WHERE customer_id = 1 AND order_date BETWEEN valid_from AND valid_to</code> (safe with <code>BETWEEN</code>, because these are <code>DATE</code> columns, Day 12). Her May 2024 order gets key 1 (Hyderabad), and her August 2024 order gets key 2 (Pune). A report of revenue by city is then right for every period.</p>
+  <p>Two rows for one person, each with its own key and its own period. <code>'9999-12-31'</code> is a common convention meaning "still true". When a new order arrives, the load looks up the row that's current <em>on the order date</em>: <code>WHERE customer_id = 1 AND DATE(order_date) BETWEEN valid_from AND valid_to</code>. <code>BETWEEN</code> is safe here only because both sides are dates. <code>order_date</code> is a <code>DATETIME</code>, so <code>DATE()</code> drops its time first. Without it, an order at 3pm on 30 June would come after <code>valid_to</code> (midnight at the start of 30 June) and before the next row's <code>valid_from</code>, and match <em>neither</em> row: Day 12's <code>BETWEEN</code> trap, in a new place. Her May 2024 order gets key 1 (Hyderabad), and her August 2024 order gets key 2 (Pune). A report of revenue by city is then right for every period.</p>
   <p>Our warehouse uses Type 1, which is fine here, because the shop's data has no history of changes to keep. Choosing the type is a business question: "when a customer moves, should their past sales move with them?"</p>
 </section>
 
@@ -985,7 +985,7 @@ footer b{color:var(--ink);font-weight:700}
 +--------------+-----------+
 |            1 | Hyderabad |
 +--------------+-----------+</code></pre></div>
-        <p>The date falls inside exactly one row's period. In a real load, the same condition goes into the join between new sales and the dimension: <code>ON d.customer_id = s.customer_id AND s.order_date BETWEEN d.valid_from AND d.valid_to</code>. A good follow-up point: the periods must never overlap or leave gaps, or a sale could match two rows or none. That's worth a data quality check (Day 11).</p>
+        <p>The date falls inside exactly one row's period. In a real load, the same condition goes into the join between new sales and the dimension: <code>ON d.customer_id = s.customer_id AND DATE(s.order_date) BETWEEN d.valid_from AND d.valid_to</code>, with <code>DATE()</code> because order times are <code>DATETIME</code> and the periods are whole days. A good follow-up point: the periods must never overlap or leave gaps, or a sale could match two rows or none. That's worth a data quality check (Day 11).</p>
       </div></details>
   </div>
 </div>
