@@ -493,9 +493,9 @@ footer b{color:var(--ink);font-weight:700}
 <span class="k">SELECT</span> event_time, event_type
 <span class="k">FROM</span> events
 <span class="k">WHERE</span> customer_id = <span class="n">181</span>;</code></pre></div>
-  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Filter: (`events`.customer_id = 181)  (cost=106048 rows=106048) (actual time=25.2..273 rows=45 loops=1)
-    -&gt; Table scan on events  (cost=106048 rows=1.06e+6) (actual time=0.183..219 rows=1.06e+6 loops=1)</code></pre></div>
-  <p>Read it from the innermost line outward: a <strong>table scan</strong> read about a million rows (<code>rows=1.06e+6</code>), and then a <strong>filter</strong> kept 45. <code>actual time</code> is in milliseconds (the second number is when the step finished): a few hundred milliseconds, on the computer that built this page. That sounds fast, but it's for <em>one</em> customer. A dashboard that looks up thousands of customers, on a table a hundred times bigger, can't work like this. (<code>FLUSH STATUS</code> needs the <code>RELOAD</code> permission. If you're logged in as <code>root</code> on your own computer, you have it.)</p>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Filter: (`events`.customer_id = 181)  (cost=106048 rows=106048) (actual time=21.3..253 rows=45 loops=1)
+    -&gt; Table scan on events  (cost=106048 rows=1.06e+6) (actual time=0.159..202 rows=1.06e+6 loops=1)</code></pre></div>
+  <p>Read it from the innermost line outward: a <strong>table scan</strong> read about a million rows (<code>rows=1.06e+6</code>), and then a <strong>filter</strong> kept 45. <code>actual time</code> is in milliseconds (the second number is when the step finished): a few hundred milliseconds, on the computer that built this page. That sounds fast, but it's for <em>one</em> customer. A dashboard that looks up thousands of customers, on a table a hundred times bigger, can't work like this. (<code>FLUSH STATUS</code> needs the <code>RELOAD</code> privilege, or the narrower <code>FLUSH_STATUS</code> privilege that MySQL 8 added. If you're logged in as <code>root</code> on your own computer, you have it.)</p>
 </section>
 
 <!-- 3 -->
@@ -586,8 +586,8 @@ footer b{color:var(--ink);font-weight:700}
 <span class="k">SELECT</span> event_time, event_type
 <span class="k">FROM</span> events
 <span class="k">WHERE</span> customer_id = <span class="n">181</span>;</code></pre></div>
-  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Index lookup on events using idx_events_customer (customer_id=181)  (cost=5.25 rows=45) (actual time=0.126..0.248 rows=45 loops=1)</code></pre></div>
-  <p>An <strong>index lookup</strong> instead of a table scan, and the time drops from hundreds of milliseconds to a fraction of one millisecond: hundreds of times faster. On a table ten times bigger, the scan would take ten times longer. The lookup would barely change, because the tree would be only a little deeper.</p>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Index lookup on events using idx_events_customer (customer_id=181)  (cost=5.25 rows=45) (actual time=0.0672..0.132 rows=45 loops=1)</code></pre></div>
+  <p>An <strong>index lookup</strong> instead of a table scan, and the time drops from hundreds of milliseconds to a fraction of one millisecond: hundreds to thousands of times faster, depending on the run. On a table ten times bigger, the scan would take ten times longer. The lookup would barely change, because the tree would be only a little deeper.</p>
 </section>
 
 <!-- 4 -->
@@ -651,15 +651,15 @@ footer b{color:var(--ink);font-weight:700}
 <span class="k">SELECT</span> <span class="k">COUNT</span>(event_time)
 <span class="k">FROM</span> events
 <span class="k">WHERE</span> device = <span class="s">'mobile'</span>;</code></pre></div>
-  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Aggregate: count(`events`.event_time)  (cost=109560 rows=1) (actual time=2526..2526 rows=1 loops=1)
-    -&gt; Index lookup on events using idx_events_device (device='mobile')  (cost=56754 rows=528066) (actual time=0.632..2486 rows=730380 loops=1)</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Aggregate: count(`events`.event_time)  (cost=109905 rows=1) (actual time=2870..2870 rows=1 loops=1)
+    -&gt; Index lookup on events using idx_events_device (device='mobile')  (cost=56916 rows=529894) (actual time=0.974..2823 rows=730380 loops=1)</code></pre></div>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>EXPLAIN ANALYZE
 <span class="k">SELECT</span> <span class="k">COUNT</span>(event_time)
 <span class="k">FROM</span> events IGNORE <span class="k">INDEX</span> (idx_events_device)     <span class="c">-- tell MySQL not to use it</span>
 <span class="k">WHERE</span> device = <span class="s">'mobile'</span>;</code></pre></div>
-  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Aggregate: count(`events`.event_time)  (cost=159566 rows=1) (actual time=401..401 rows=1 loops=1)
-    -&gt; Filter: (`events`.device = 'mobile')  (cost=106759 rows=528066) (actual time=0.116..361 rows=730380 loops=1)
-        -&gt; Table scan on events  (cost=106759 rows=1.06e+6) (actual time=0.113..232 rows=1.06e+6 loops=1)</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>-&gt; Aggregate: count(`events`.event_time)  (cost=160114 rows=1) (actual time=490..490 rows=1 loops=1)
+    -&gt; Filter: (`events`.device = 'mobile')  (cost=107125 rows=529894) (actual time=0.105..446 rows=730380 loops=1)
+        -&gt; Table scan on events  (cost=107125 rows=1.06e+6) (actual time=0.102..287 rows=1.06e+6 loops=1)</code></pre></div>
   <p>MySQL chose the index, and it was <strong>several times slower</strong> than a plain table scan, which <code>IGNORE INDEX</code> forced for comparison. Two lessons. First, an index helps when it's <strong>selective</strong>: when each value matches a small share of the rows. <code>customer_id</code> is very selective. <code>device</code>, with three values, isn't. Second, the optimizer isn't perfect. Its decision is based on estimates (here, it expected just over half a million mobile rows, and there were 730,380), and estimates can be wrong. That's why you <em>measure</em>, and don't just trust a plan. A column with only a few different values is usually a poor choice for an index of its own.</p>
 </section>
 
@@ -707,7 +707,7 @@ footer b{color:var(--ink);font-weight:700}
 | Handler_read_next | 25    |
 +-------------------+-------+</code></pre></div>
   <p>45 entries read, then 25. A <strong>composite index</strong> is sorted by the first column, and within each value of it, by the second, like a phone book sorted by surname and then by first name. Inside customer 181's part of the index, the events are already in time order, so MySQL jumps straight to 1 December and reads only the 25 that match. On a customer with thousands of events, that difference is big.</p>
-  <p>The phone book also explains the most important rule, the <strong>leftmost prefix rule</strong>. A phone book sorted by surname, then first name, makes it easy to find "Sharma", and easy to find "Sharma, Priya". It's no help at all for finding everyone called "Priya", because Priyas are scattered across every surname. In the same way, an index on <code>(customer_id, event_time)</code> helps queries on <code>customer_id</code>, or on <code>customer_id</code> and <code>event_time</code> together, but not on <code>event_time</code> alone. So the order of the columns matters: put the column you filter with <code>=</code> first, and the range (<code>&gt;=</code>, <code>BETWEEN</code>) second.</p>
+  <p>The phone book also explains the most important rule, the <strong>leftmost prefix rule</strong>. A phone book sorted by surname, then first name, makes it easy to find "Sharma", and easy to find "Sharma, Priya". It's no help at all for finding everyone called "Priya", because Priyas are scattered across every surname. In the same way, an index on <code>(customer_id, event_time)</code> helps queries on <code>customer_id</code>, or on <code>customer_id</code> and <code>event_time</code> together, but not on <code>event_time</code> alone. (At best, MySQL can read the whole index from start to end, which <code>EXPLAIN</code> shows as <code>type: index</code>. MySQL 8 also has a "skip scan" for when the first column has only a few different values, but with tens of thousands of customers, it doesn't apply.) So the order of the columns matters: put the column you filter with <code>=</code> first, and the range (<code>&gt;=</code>, <code>BETWEEN</code>) second.</p>
 
   <h3 style="margin:28px 0 8px">Covering indexes: skipping the table altogether</h3>
   <p>Remember the second step, from the index back to the table to fetch the row? If every column the query needs is already <em>in</em> the index, MySQL can skip that step. Compare these two plans, which differ only in the column selected:</p>
@@ -756,7 +756,7 @@ footer b{color:var(--ink);font-weight:700}
   <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+----------------+
 | id | select_type | table  | partitions | type | possible_keys | key  | key_len | ref  | rows    | filtered | Extra          |
 +----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+----------------+
-|  1 | SIMPLE      | events | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1056132 |   100.00 | Using filesort |
+|  1 | SIMPLE      | events | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1059789 |   100.00 | Using filesort |
 +----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+----------------+</code></pre></div>
   <p>With the index, MySQL reads it from the end (<code>Backward index scan</code>) and stops after 5 rows. Without it, it has to read the whole table and sort a million rows (<code>Using filesort</code>) just to keep 5. <strong><code>Using filesort</code> on a big table is a warning sign.</strong> (The name is old: it means "a sort done separately", and it doesn't always use a file.)</p>
 
@@ -768,7 +768,7 @@ footer b{color:var(--ink);font-weight:700}
   <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+-----------------+
 | id | select_type | table  | partitions | type | possible_keys | key  | key_len | ref  | rows    | filtered | Extra           |
 +----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+-----------------+
-|  1 | SIMPLE      | events | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1056132 |   100.00 | Using temporary |
+|  1 | SIMPLE      | events | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1059789 |   100.00 | Using temporary |
 +----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+-----------------+</code></pre></div>
   <p><code>Using temporary</code>: MySQL builds a temporary table to hold one row per group while it reads the whole table. With 5 event types, that's harmless. Grouping a big table by a column with millions of different values is where it becomes expensive. An index on the grouping column lets MySQL read the groups already sorted, without a temporary table. Try it in Try this, question 4.</p>
 
@@ -892,7 +892,7 @@ ANALYZE <span class="k">TABLE</span> events;
       <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+-------------+
 | id | select_type | table  | partitions | type | possible_keys | key  | key_len | ref  | rows    | filtered | Extra       |
 +----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+-------------+
-|  1 | SIMPLE      | events | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1057275 |    10.00 | Using where |
+|  1 | SIMPLE      | events | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1052017 |    10.00 | Using where |
 +----+-------------+--------+------------+------+---------------+------+---------+------+---------+----------+-------------+</code></pre></div>
       <p><code>type: ALL</code> and no key: there's no index on <code>product_id</code>, so MySQL has to read every row. Whether to add one depends on how often this question is asked.</p>
       <p><strong>2.</strong></p>
@@ -939,7 +939,7 @@ EXPLAIN
 +----+-------------+--------+------------+------+-----------------------------------------------------------------------+--------------------------+---------+-------------+------+----------+-------+
 |  1 | SIMPLE      | events | NULL       | ref  | idx_events_customer,idx_events_customer_time,idx_events_customer_type | idx_events_customer_type | 127     | const,const |    4 |   100.00 | NULL  |
 +----+-------------+--------+------------+------+-----------------------------------------------------------------------+--------------------------+---------+-------------+------+----------+-------+</code></pre></div>
-      <p>A composite index with both columns compared with <code>=</code>, so MySQL can go straight to "customer 181, purchases" (<code>ref</code>, using both columns of the key). <code>customer_id</code> goes first: it's the more selective column, and the order also lets the index help queries on <code>customer_id</code> alone (the leftmost prefix rule). <code>event_type</code> on its own, with only 5 values, would be a poor index, but as the <em>second</em> column, it's very useful.</p>
+      <p>A composite index with both columns compared with <code>=</code>, so MySQL can go straight to "customer 181, purchases" (<code>ref</code>, using both columns of the key). When both columns are compared with <code>=</code>, their order doesn't change how much this query reads. <code>customer_id</code> goes first because then the same index also helps queries on <code>customer_id</code> alone (the leftmost prefix rule), which are common. <code>event_type</code> on its own, with only 5 values, would be a poor index, but as the <em>second</em> column, it's very useful.</p>
       <p><strong>4.</strong></p>
       <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">INDEX</span> idx_events_type <span class="k">ON</span> events (event_type);
 
@@ -950,7 +950,7 @@ EXPLAIN
       <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----+-------------+--------+------------+-------+------------------------------------------+-----------------+---------+------+---------+----------+-------------+
 | id | select_type | table  | partitions | type  | possible_keys                            | key             | key_len | ref  | rows    | filtered | Extra       |
 +----+-------------+--------+------------+-------+------------------------------------------+-----------------+---------+------+---------+----------+-------------+
-|  1 | SIMPLE      | events | NULL       | index | idx_events_customer_type,idx_events_type | idx_events_type | 122     | NULL | 1057275 |   100.00 | Using index |
+|  1 | SIMPLE      | events | NULL       | index | idx_events_customer_type,idx_events_type | idx_events_type | 122     | NULL | 1052017 |   100.00 | Using index |
 +----+-------------+--------+------------+-------+------------------------------------------+-----------------+---------+------+---------+----------+-------------+</code></pre></div>
       <p><code>Using temporary</code> has gone. The plan is now <code>type: index</code> with <code>Using index</code>: MySQL reads the <code>event_type</code> index from start to end, where the values are already in groups, and counts each group as it passes. It still reads every entry, because counting a million events means looking at a million entries, but it reads the small index instead of the whole table, and needs no temporary table.</p>
       <p><strong>5.</strong> <code>DROP DATABASE perf_lab;</code> removes it completely and frees the disk space. Nothing in the other databases depends on it. Run it only when you're sure: like every <code>DROP</code>, it can't be undone (Day 3).</p>
