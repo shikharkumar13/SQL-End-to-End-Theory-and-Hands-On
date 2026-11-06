@@ -396,7 +396,7 @@ footer b{color:var(--ink);font-weight:700}
   <article>
 
 <p class="lede">Yesterday's cleaning turned text into real dates and fixed the orders from the future. Today you put dates to work. "How did we do this month?" "Is that better than last year?" "Which day of the week is busiest?" Every one of these questions is a date question, and each one hides a trap that gives a wrong answer without any error message. You'll learn the tools, and the traps, on the shop's two years of real orders.</p>
-<div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. Today uses the clean layer from Day 11 (<code>clean_sales</code>, <code>clean_orders</code>, <code>clean_web_events</code>), so if you haven't built it, run <code>day11_clean_layer.sql</code> first. There's one <strong>Build</strong> box today, in section 8. Our data ends on 31 December 2024, so in this article "today" means <strong>31 December 2024</strong>.</p></div>
+<div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. Today uses the clean layer from Day 11 (<code>clean_sales</code>, <code>clean_orders</code>, and <code>clean_web_events</code> from its Try this, question 2), so if you haven't built all of it, run <code>day11_clean_layer.sql</code> first. There's one <strong>Build</strong> box today, in section 8. Our data ends on 31 December 2024, so in this article "today" means <strong>31 December 2024</strong>.</p></div>
 
 <!-- 1 -->
 <section id="s1">
@@ -546,7 +546,7 @@ footer b{color:var(--ink);font-weight:700}
   <ul>
     <li><code>DATEDIFF</code> ignores the times and counts calendar days crossed: 1 March to 2 March is 1.</li>
     <li><code>TIMESTAMPDIFF</code> counts <strong>complete</strong> units. Only 2 hours passed, so that's 0 complete days.</li>
-    <li>The same goes for months: 31 January to 29 February is not a complete month (it would have to reach the 31st), so it's 0. And 15 January to 14 March is only 1.</li>
+    <li>The same goes for months: MySQL counts a month as complete only when the day of the month reaches the starting day again. February has no 31st, so 31 January to 29 February is 0 complete months. And 15 January to 14 March is only 1.</li>
   </ul>
   <p>Neither is wrong. They answer different questions. "Did the payment come the next day?" is a <code>DATEDIFF</code> question. "Did it come within 24 hours?" is <code>TIMESTAMPDIFF(HOUR, ...) &lt; 24</code>.</p>
 
@@ -577,7 +577,7 @@ footer b{color:var(--ink);font-weight:700}
 | 4. 181-365 days       |       451 |
 | 5. Over a year        |       744 |
 +-----------------------+-----------+</code></pre></div>
-  <p>Notice <code>'2024-12-31'</code> where you'd normally write <code>CURDATE()</code>: that's the fixed "today" from section 1. Of the 2,115 customers who have ever completed an order, 744 (about a third) haven't bought anything for over a year. That's a list the marketing team would like to see. (The numbers in the labels, <code>1.</code> to <code>5.</code>, are there so <code>ORDER BY</code> puts the bands in the right order. Text sorts letter by letter, so without them "Over a year" would come in the wrong place.) On Day 13, recency becomes the R in RFM.</p>
+  <p>Notice <code>'2024-12-31'</code> where you'd normally write <code>CURDATE()</code>: that's the fixed "today" from section 1. Of the 2,115 customers who have ever completed an order, 744 (about a third) haven't bought anything for over a year. That's a list the marketing team would like to see. (The numbers in the labels, <code>1.</code> to <code>5.</code>, are there so <code>ORDER BY</code> puts the bands in the right order. Text sorts letter by letter, so without them "181-365 days" would come before "31-90 days", because "1" comes before "3".) On Day 13, recency becomes the R in RFM.</p>
 </section>
 
 <!-- 5 -->
@@ -1080,7 +1080,7 @@ compared <span class="k">AS</span> (
 | 2024 | Pending   |     34 |
 | 2024 | Shipped   |     39 |
 +------+-----------+--------+</code></pre></div>
-  <p>An order only counts as revenue once it's <strong>Completed</strong>, and that takes a few days. The 2023 orders had a whole year to finish. But 39 orders from late December 2024 were still on their way (Shipped), and 34 from the last three days were still Pending. December 2024 isn't a bad month. It's an <strong>unfinished</strong> one. Comparing it with a finished December is unfair.</p>
+  <p>An order only counts as revenue once it's <strong>Completed</strong>, and that takes a few days. The 2023 orders had a whole year to finish (the one still Pending is order 2509, one of the six stuck orders Day 11 left open for the operations team). But 39 orders from late December 2024 were still on their way (Shipped), and 34 from the last three days were still Pending. December 2024 isn't a bad month. It's an <strong>unfinished</strong> one. Comparing it with a finished December is unfair.</p>
   <p>The fix is a <strong>like-for-like</strong> comparison: compare the same days in both years, using only days that have had time to settle. Up to 24 December:</p>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="t">YEAR</span>(order_date)         <span class="k">AS</span> yr,
        <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders,
@@ -1228,13 +1228,15 @@ smoothed <span class="k">AS</span> (
 <span class="k">INSERT</span> <span class="k">INTO</span> tz_demo <span class="k">VALUES</span> (<span class="s">'2024-11-19 10:00:00'</span>, <span class="s">'2024-11-19 10:00:00'</span>);
 
 <span class="k">SET</span> time_zone = <span class="s">'+00:00'</span>;   <span class="c">-- now read it from London</span>
-<span class="k">SELECT</span> * <span class="k">FROM</span> tz_demo;</code></pre></div>
+<span class="k">SELECT</span> * <span class="k">FROM</span> tz_demo;
+
+<span class="k">SET</span> time_zone = <span class="k">DEFAULT</span>;    <span class="c">-- back to the server's setting</span></code></pre></div>
   <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------+---------------------+
 | saved_as_datetime   | saved_as_timestamp  |
 +---------------------+---------------------+
 | 2024-11-19 10:00:00 | 2024-11-19 04:30:00 |
 +---------------------+---------------------+</code></pre></div>
-  <p>Same value saved twice. Read from a different time zone, the <code>DATETIME</code> still says 10:00, but the <code>TIMESTAMP</code> now says 4:30, which is the same moment on a London clock. (A <code>TEMPORARY</code> table disappears when you disconnect, which makes it handy for experiments like this.) <code>TIMESTAMP</code> is great for "when did this happen" in systems used across countries. Its limits: it only covers 1970 to January 2038, and the same row can look different to different users, which surprises people. Many teams store everything as <code>DATETIME</code> in UTC, and convert only for display.</p>
+  <p>Same value saved twice. Read from a different time zone, the <code>DATETIME</code> still says 10:00, but the <code>TIMESTAMP</code> now says 4:30, which is the same moment on a London clock. (A <code>TEMPORARY</code> table disappears when you disconnect, which makes it handy for experiments like this. The last line puts your session's time zone back, so <code>NOW()</code> and any <code>TIMESTAMP</code> columns behave normally again.) <code>TIMESTAMP</code> is great for "when did this happen" in systems used across countries. Its limits: it only covers 1970 to January 2038, and the same row can look different to different users, which surprises people. Many teams store everything as <code>DATETIME</code> in UTC, and convert only for display.</p>
 
   <h3 style="margin:28px 0 8px">The date traps checklist</h3>
   <p>Every trap from today, in one place. Run through it before you send any report with a date in it:</p>
@@ -1350,7 +1352,7 @@ smoothed <span class="k">AS</span> (
 | 4. 31-90 days       |        47 |
 | 5. Over 90 days     |        91 |
 +---------------------+-----------+</code></pre></div>
-      <p>Most customers buy within a week of signing up: 389 on the same day and 1,238 within 7 days. After a month, very few do. That's useful for marketing: the welcome emails in the first week matter most. (<code>customer_id</code> in <code>clean_sales</code> is the master ID from Day 11, so the join finds the sign-up date of each person's first account.)</p>
+      <p>Most customers buy within a week of signing up: 389 on the same day, and another 1,238 within the next 7 days. After a month, very few do. That's useful for marketing: the welcome emails in the first week matter most. (<code>customer_id</code> in <code>clean_sales</code> is the master ID from Day 11, so the join finds the sign-up date of each person's first account.)</p>
       <p><strong>4.</strong></p>
       <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> c.cal_date, c.day_name
 <span class="k">FROM</span> calendar c
@@ -1463,7 +1465,7 @@ smoothed <span class="k">AS</span> (
         <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> numbered <span class="k">AS</span> (
     <span class="k">SELECT</span> customer_id,
            order_date,
-           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id <span class="k">ORDER</span> <span class="k">BY</span> order_date) <span class="k">AS</span> order_number
+           <span class="k">ROW_NUMBER</span>() <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id <span class="k">ORDER</span> <span class="k">BY</span> order_date, order_id) <span class="k">AS</span> order_number
     <span class="k">FROM</span> (<span class="k">SELECT</span> <span class="k">DISTINCT</span> customer_id, order_id, order_date <span class="k">FROM</span> clean_sales) <span class="k">AS</span> orders_only
 )
 <span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">AS</span> customers_back_within_30_days
@@ -1478,7 +1480,7 @@ smoothed <span class="k">AS</span> (
 +-------------------------------+
 |                           302 |
 +-------------------------------+</code></pre></div>
-        <p>The <code>DISTINCT</code> gets one row per order (<code>clean_sales</code> has one row per order <em>line</em>), and <code>ROW_NUMBER</code> numbers each customer's orders by date. Then join order 1 to order 2 and compare the dates. Using <code>LAG(order_date)</code> instead of the self-join works too. Day 13 builds on this to measure repeat purchase properly.</p>
+        <p>The <code>DISTINCT</code> gets one row per order (<code>clean_sales</code> has one row per order <em>line</em>), and <code>ROW_NUMBER</code> numbers each customer's orders by date, with <code>order_id</code> as the tie-breaker in case two orders share a timestamp (Day 9). Then join order 1 to order 2 and compare the dates. Using <code>LAG(order_date)</code> instead of the self-join works too. Day 13 builds on this to measure repeat purchase properly.</p>
       </div></details>
     <details class="qa"><summary><span class="q">P3</span>Show the 7-day rolling average of daily orders for the first week of December 2024.</summary>
       <div class="body">
