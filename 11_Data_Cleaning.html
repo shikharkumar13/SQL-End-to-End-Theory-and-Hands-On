@@ -455,7 +455,7 @@ footer b{color:var(--ink);font-weight:700}
 +-------------+----------------+------------------+</code></pre></div>
   <p>Read the formula from the inside out: <code>TRIM</code> removes the spaces, <code>LEFT(..., 1)</code> takes the first letter and <code>UPPER</code> makes it a capital, then <code>SUBSTRING(..., 2)</code> takes the rest and <code>LOWER</code> makes it small. <code>CONCAT</code> glues the two back together. MySQL has no ready-made "capitalise the first letter" function, so this little pattern is worth remembering.</p>
   <div class="note sun"><p><strong>Don't do this to every name.</strong> It's safe on our first names, which are single words. Try it on last names, and <code>D'Souza</code> becomes <code>D'souza</code>, <code>Al-Mansoori</code> becomes <code>Al-mansoori</code>, and <code>O'Brien</code> becomes <code>O'brien</code>. All three are in our data. A cleaning rule that breaks good data is worse than no rule. Only fix what's actually broken.</p></div>
-  <p>Emails are simpler: capitals don't matter in an email address, so the clean version is all lower case, with no spaces. <code>LOWER(TRIM(email))</code> is exactly what you used to find the duplicates yesterday.</p>
+  <p>Emails are simpler. In practice, email providers ignore capitals, so <code>Aditi.Patil@gmail.com</code> and <code>aditi.patil@gmail.com</code> reach the same inbox, and the clean version is all lower case, with no spaces. (Strictly, the email standard allows the part before the <code>@</code> to be case-sensitive, but providers almost never use that, so lower case is the normal way to store and compare addresses.) <code>LOWER(TRIM(email))</code> is exactly what you used to find the duplicates yesterday.</p>
 
   <h3 style="margin:28px 0 8px">Extra characters: REPLACE and REGEXP_REPLACE</h3>
   <p>Phone numbers came in at least four shapes. The trick is to throw away everything that isn't a digit, then build the number back up in one standard format. <code>REPLACE(text, 'find', 'replace with')</code> swaps one exact piece of text, so <code>REPLACE(phone, ' ', '')</code> removes spaces. But you'd need another <code>REPLACE</code> for <code>+</code>, another for <code>-</code>, and so on. <code>REGEXP_REPLACE</code> does it in one go with a pattern: <code>[^0-9]</code> means "any character that is <em>not</em> a digit".</p>
@@ -479,7 +479,7 @@ footer b{color:var(--ink);font-weight:700}
 | +1 2920848108   | US      | 12920848108  | +12920848108  |
 | +91 61829 97536 | India   | 916182997536 | +916182997536 |
 +-----------------+---------+--------------+---------------+</code></pre></div>
-  <p>The four Indian numbers arrived in four different shapes: ten bare digits, <code>+91</code> stuck on the front, <code>+91</code> with spaces, and a leading <code>0</code>. Indian mobile numbers are always 10 digits, so <code>RIGHT(digits, 10)</code> keeps the last 10, whatever came in front. Then <code>+91</code> goes on the front. All four became one shape: <code>+91</code> followed by ten digits. That's the format most phone and messaging systems expect. The US number already starts with its country code, so it just gets a <code>+</code>. And a missing phone stays NULL, which is why the <code>CASE</code> checks for that first.</p>
+  <p>The four Indian numbers arrived in four different shapes: ten bare digits, <code>+91</code> stuck on the front, <code>+91</code> with spaces, and a leading <code>0</code>. Indian mobile numbers are always 10 digits, so <code>RIGHT(digits, 10)</code> keeps the last 10, whatever came in front. Then <code>+91</code> goes on the front. All four became one shape: <code>+91</code> followed by ten digits. That's the format most phone and messaging systems expect. The US number already starts with its country code, so it just gets a <code>+</code>. And a missing phone stays NULL. <code>CONCAT</code> would return NULL anyway, because anything joined to NULL is NULL, but the first <code>WHEN</code> makes that rule visible to the next person who reads the SQL.</p>
 </section>
 
 <!-- 3 -->
@@ -543,7 +543,7 @@ footer b{color:var(--ink);font-weight:700}
 | Australia     |        18 |
 | Germany       |        16 |
 +---------------+-----------+</code></pre></div>
-  <p>Fourteen raw spellings (twelve if you ignore capitals, as MySQL does) became eight real countries. The UK more than doubled from the 56 rows spelled "UK" to 87, and the USA went from 48 to 102. A "customers by country" chart built on the raw column would have been badly wrong. (Here we used <code>ELSE TRIM(country)</code> on purpose: the other countries, like UAE and Singapore, were already clean. A check in section 10 still catches any new spelling.)</p>
+  <p>Fourteen raw spellings (twelve if you ignore capitals, as MySQL does) became eight real countries. The USA more than doubled, from the 48 rows spelled "USA" to 102, and the UK grew by more than half, from 56 rows spelled "UK" to 87. A "customers by country" chart built on the raw column would have been badly wrong. (Here we used <code>ELSE TRIM(country)</code> on purpose: the other countries, like UAE and Singapore, were already clean. A check in section 10 still catches any new spelling.)</p>
 </section>
 
 <!-- 4 -->
@@ -590,7 +590,7 @@ footer b{color:var(--ink);font-weight:700}
 | Kolkata    |       175 | [Calcutta] [Kolkata]                 |
 | Gurugram   |        79 | [Gurgaon] [Gurugram]                 |
 +------------+-----------+--------------------------------------+</code></pre></div>
-  <p>Bengaluru is now 299 customers, not the 187 the raw data showed: that's 60% more. Mumbai and Delhi grow too. (The <code>GROUP_CONCAT(DISTINCT ...)</code> list uses the same case-insensitive collation, so it treats <code>Mumbai</code> and <code>mumbai</code> as one spelling and shows just one of them. Trailing spaces do count, which is why <code>[Bengaluru ]</code> appears on its own. Either way, every row is in the count.)</p>
+  <p>Bengaluru is now 299 customers, not the 187 the raw data showed: that's 60% more. Mumbai and Delhi grow too. (The <code>GROUP_CONCAT(DISTINCT ...)</code> list uses the same case-insensitive collation, so it treats <code>Mumbai</code> and <code>mumbai</code> as one spelling and shows just one of them. Spaces are different: the brackets put a character after the space, so <code>[Bengaluru ]</code> is a different value from <code>[Bengaluru]</code> and appears on its own. (Even without brackets it would, because this collation doesn't ignore trailing spaces, as Day 10 showed.) Either way, every row is in the count.)</p>
   <p>The best part of a lookup table is that it tells you what it <em>doesn't</em> know. Any city whose tidied spelling has no row is a new spelling you haven't mapped yet. Section 10 turns that into a check that should always return 0.</p>
 </section>
 
@@ -661,7 +661,7 @@ footer b{color:var(--ink);font-weight:700}
 | 02-Dec-2022 | 2022-12-02 |
 +-------------+------------+</code></pre></div>
   <p>It's the same <code>CASE</code> and <code>REGEXP</code> you used yesterday to <em>count</em> the formats, now used to <em>read</em> them. Each format gets the matching pattern, and they all come out as proper dates.</p>
-  <div class="note sun"><p><strong>Two dangers with STR_TO_DATE.</strong> First, if the text doesn't match the pattern, or the date is impossible (31 February), you get <strong>NULL</strong> and only a warning, not an error. So always count how many NULLs your conversion produced (section 10 does). Second, <code>03/04/2024</code> means 3 April in India and 4 March in the US, and SQL can't tell which one the system meant. We used <code>%d/%m/%Y</code> (day first) because this shop is Indian, and the data agrees: 272 of the slash dates start with a number above 12, like <code>21/07/2024</code>, which can only be a day, and none has a middle number above 12. Still, it's a decision. Write it down.</p></div>
+  <div class="note sun"><p><strong>Two dangers with STR_TO_DATE.</strong> First, if the text doesn't match the pattern, or the date is impossible (31 February), a <code>SELECT</code> (and so a view) gives <strong>NULL</strong> and only a warning, not an error. So always count how many NULLs your conversion produced (section 10 does). (Inside an <code>INSERT</code> or <code>UPDATE</code>, MySQL's default strict mode turns the same problem into an error, error 1411, which stops the whole statement.) Second, <code>03/04/2024</code> means 3 April in India and 4 March in the US, and SQL can't tell which one the system meant. We used <code>%d/%m/%Y</code> (day first) because this shop is Indian, and the data agrees: 272 of the slash dates start with a number above 12, like <code>21/07/2024</code>, which can only be a day, and none has a middle number above 12. Still, it's a decision. Write it down.</p></div>
   <p>Now <code>MIN</code> and <code>MAX</code> finally mean something:</p>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">MIN</span>(real_date) <span class="k">AS</span> first_signup,
        <span class="k">MAX</span>(real_date) <span class="k">AS</span> last_signup,
@@ -753,7 +753,7 @@ footer b{color:var(--ink);font-weight:700}
 |        1247 | reyansh.kapoor@gmail.com   |               1247 |
 |        3012 | reyansh.kapoor@gmail.com   |               1247 |
 +-------------+----------------------------+--------------------+</code></pre></div>
-  <p><code>MIN(customer_id) OVER (PARTITION BY ...)</code> is a window function (Day 9): for each row, the smallest ID among all accounts with the same tidied email. Reyansh's second account, 3012, gets master 1247. Kavya has only one account, so she is her own master. Now an order placed on account 3012 can be counted as Reyansh's, and "orders per customer" becomes right. Across the whole table, 34 orders move to their master account.</p>
+  <p><code>MIN(customer_id) OVER (PARTITION BY ...)</code> is a window function (Day 9): for each row, the smallest ID among all accounts with the same tidied email. Reyansh's second account, 3012, gets master 1247. Kavya has only one account, so she is her own master. Now an order placed on account 3012 can be counted as Reyansh's, and "orders per customer" becomes right. Across the whole table, 34 orders move to their master account. (This works because every customer here has an email. <code>PARTITION BY</code> puts all NULLs in one group, so if some emails were missing, all those customers would share one master ID. In that case, wrap the window function in a <code>CASE</code>: <code>WHEN email IS NULL THEN customer_id</code>, so each of them keeps their own ID.)</p>
 
   <h3 style="margin:28px 0 8px">3. Double-submitted orders</h3>
   <p>On Day 10 you found 15 pairs of orders from the same customer less than five minutes apart, and said Day 11 would compare the items. Two orders a few minutes apart could be a real second purchase ("oh, I forgot the charger"). It's only a double submit if the <em>basket</em> is the same. So first, build a basket "fingerprint" for every order: its products and quantities as one piece of text.</p>
@@ -1177,7 +1177,7 @@ double_submits <span class="k">AS</span> (
 | referral       |     1433 |
 | unknown        |      106 |
 +----------------+----------+</code></pre></div>
-      <p>Why does <code>(none)</code> mean direct? Analytics tools write "(none)" when a visit came with no referring website: someone typed the address or used a bookmark. That's what "direct" means, so they belong together. It's still a decision, though, so it's written in the view where anyone can see it. Day 13 builds the website funnel on this view.</p>
+      <p>Why does <code>(none)</code> mean direct? Analytics tools use "(none)" for a visit with no referring website and no campaign: someone typed the address or used a bookmark. Google Analytics, for example, records these visits with the source "(direct)" and the medium "(none)". That's what "direct" means, so they belong together. It's still a decision, though, so it's written in the view where anyone can see it. Day 13 builds the website funnel on this view.</p>
       <p><strong>3.</strong></p>
       <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> payment_method,
        <span class="k">COUNT</span>(*)                                        <span class="k">AS</span> attempts,
@@ -1213,7 +1213,7 @@ double_submits <span class="k">AS</span> (
 | Not given         |      21 |  3.8 |
 | Late delivery     |      12 |  2.2 |
 +-------------------+---------+------+</code></pre></div>
-      <p>Size problems are about 44% of all returns. In the raw data they were spread across five spellings, and the biggest one, "wrong size", looked like only about a quarter. Grouping free text is often where the real insight is hiding.</p>
+      <p>Size problems are about 44% of all returns. In the raw data they were spread across five spellings, and the biggest one, "wrong size" (with either capitalisation), looked like only about a quarter. Grouping free text is often where the real insight is hiding.</p>
       <p><strong>5.</strong></p>
       <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> (<span class="k">SELECT</span> <span class="k">COUNT</span>(*) <span class="k">FROM</span> customers
         <span class="k">WHERE</span> city COLLATE utf8mb4_0900_bin = <span class="s">'Bengaluru'</span>)  <span class="k">AS</span> raw_exact_match,
@@ -1244,7 +1244,7 @@ double_submits <span class="k">AS</span> (
     <details class="qa"><summary><span class="q">Q3</span>How do you find and remove duplicate rows?</summary>
       <div class="body"><p>To find them: <code>GROUP BY</code> the columns that define "the same", with <code>HAVING COUNT(*) &gt; 1</code>. To keep one of each: <code>ROW_NUMBER() OVER (PARTITION BY those columns ORDER BY something)</code> and keep row number 1, where the <code>ORDER BY</code> decides which copy survives (for example the earliest). The hard part is defining "the same": exact copies, the same customer with a different email spelling, or two orders with the same basket a minute apart all need different rules.</p></div></details>
     <details class="qa"><summary><span class="q">Q4</span>What does STR_TO_DATE return for a value that doesn't match the format?</summary>
-      <div class="body"><p>NULL, with a warning, not an error, so bad conversions can pass silently. Always count the NULLs your conversion produces. Also, formats like <code>03/04/2024</code> are ambiguous (day-first or month-first), so check the data (a first number above 12, like <code>21/07/2024</code>, proves day-first) and document the choice.</p></div></details>
+      <div class="body"><p>In a <code>SELECT</code>, NULL with a warning, not an error, so bad conversions can pass silently. (When inserting into a table in strict mode, the default, it's an error instead.) Always count the NULLs your conversion produces. Also, formats like <code>03/04/2024</code> are ambiguous (day-first or month-first), so check the data (a first number above 12, like <code>21/07/2024</code>, proves day-first) and document the choice.</p></div></details>
     <details class="qa"><summary><span class="q">Q5</span>What's the difference between REPLACE and REGEXP_REPLACE?</summary>
       <div class="body"><p><code>REPLACE(text, 'a', 'b')</code> swaps one exact piece of text for another. <code>REGEXP_REPLACE(text, pattern, 'b')</code> swaps anything matching a pattern, so <code>REGEXP_REPLACE(phone, '[^0-9]', '')</code> removes every non-digit in one go. <code>REGEXP_REPLACE</code> needs MySQL 8.0 or newer.</p></div></details>
     <details class="qa"><summary><span class="q">Q6</span>When would you use a lookup table instead of CASE?</summary>
