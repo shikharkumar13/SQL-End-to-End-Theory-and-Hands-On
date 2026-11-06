@@ -90,13 +90,13 @@ The 23 days are split into four parts. The order is planned so that you can stop
 | 17 | [Database design and warehousing](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/17_Database_Design_Warehousing.html) | Normal forms (1NF to 3NF), ER diagrams, OLTP vs OLAP, star schema, fact and dimension tables |
 | 18 | [Query performance](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/18_Performance_Indexes_EXPLAIN.html) | How indexes work, composite and covering indexes, `EXPLAIN`, writing index-friendly filters |
 | 19 | [Beyond SELECT](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/19_Beyond_SELECT.html) | Stored procedures, functions, triggers, users and permissions, isolation levels |
-| 20 | Interview prep II | Hard problems, a step-by-step way to solve any SQL question, common mistakes, a timed mock interview |
+| 20 | [Interview prep II](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/20_Interview_Prep_II.html) | Hard problems, a step-by-step way to solve any SQL question, common mistakes, a timed mock interview |
 
 ### Part 4: Case studies
 
 | Day | Case study | What you do |
 |-----|------------|-------------|
-| 21 | Monthly business review | Build the monthly report a leadership team reads |
+| 21 | [Monthly business review](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/21_Case_Study_Monthly_Business_Review.html) | Build the monthly report a leadership team reads |
 | 22 | Customer retention and churn | Find who keeps buying, who stops, and why |
 | 23 | Product and funnel performance | Find what sells, what doesn't, and where website visitors drop off |
 
