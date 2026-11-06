@@ -446,7 +446,7 @@ footer b{color:var(--ink);font-weight:700}
 | 2024       | All channels |   3319 |  7982433 |
 | Both years | All channels |   5662 | 13172860 |
 +------------+--------------+--------+----------+</code></pre></div>
-  <p>The year is worked out in a subquery first, so <code>ROLLUP</code> groups by a plain column. (Grouping directly by <code>YEAR(order_date)</code> and then labelling it with <code>GROUPING()</code> runs into error 1055, the same rule as on Days 10 and 14.) The subtotals tell a story: in 2023, the website took more orders than the app, and in 2024 the app overtook it. That's the kind of shift a two-level summary makes easy to spot.</p>
+  <p>The year is worked out in a subquery first, so <code>ROLLUP</code> groups by a plain column. (Grouping directly by <code>YEAR(order_date)</code> and then labelling it with <code>GROUPING()</code> runs into error 1055, the GROUP BY rule from Days 6 and 14.) The subtotals tell a story: in 2023, the website took more orders than the app, and in 2024 the app overtook it. That's the kind of shift a two-level summary makes easy to spot.</p>
 
   <h3 style="margin:28px 0 8px">Unpivoting: columns back into rows</h3>
   <p>Sometimes you get data the other way round: one column per year, and you need one row per year, because charts and tools like pandas (Day 14) prefer this <strong>long</strong> shape. That's an <strong>unpivot</strong>, and in MySQL it's a <code>UNION ALL</code>, one <code>SELECT</code> per column:</p>
@@ -509,7 +509,7 @@ DEALLOCATE PREPARE pivot_stmt;</code></pre></div>
 <span class="k">GROUP</span> <span class="k">BY</span> channel
 <span class="k">ORDER</span> <span class="k">BY</span> channel</code></pre></div>
   <p>Stage 2: <code>PREPARE</code> turns the text into a statement, <code>EXECUTE</code> runs it, and <code>DEALLOCATE</code> tidies up. Add a category tomorrow, and the pivot grows a column without anyone editing the SQL.</p>
-  <div class="note sun"><p><strong>Three warnings before you use this.</strong> First, <code>GROUP_CONCAT</code> stops at 1,024 characters by default and <em>silently</em> cuts off the rest, which is why the first line raises the limit. Second, never build dynamic SQL from values a user typed: that's SQL injection again (Day 14). Here, the values come from our own table. Third, dynamic SQL is hard to read, test and debug. In real work, most teams pivot in Python or the BI tool instead, and keep SQL for the summarising. It's worth knowing for interviews, and for the occasional job where SQL is all you have.</p></div>
+  <div class="note sun"><p><strong>Three warnings before you use this.</strong> First, <code>GROUP_CONCAT</code> stops at 1,024 characters by default and cuts off the rest. All you get is a warning (1260, "Row ... was cut by GROUP_CONCAT()") that's easy to miss, and the query it builds then breaks or loses columns. That's why the first line raises the limit. Second, never build dynamic SQL from values a user typed: that's SQL injection again (Day 14). Here, the values come from our own table. Third, dynamic SQL is hard to read, test and debug. In real work, most teams pivot in Python or the BI tool instead, and keep SQL for the summarising. It's worth knowing for interviews, and for the occasional job where SQL is all you have.</p></div>
 </section>
 
 <!-- 2 -->
@@ -1076,7 +1076,7 @@ streaks <span class="k">AS</span> (
     <details class="qa"><summary><span class="q">Q7</span>What can go wrong with recursive CTEs?</summary>
       <div class="body"><p>Infinite loops if the data has a cycle (A manages B, B manages A), which hit the recursion limit. Column types fixed by the anchor, so text built up in later rounds can be too long (error 1406). The fix is to <code>CAST</code> in the anchor. And performance on very large or deep trees. Guard against cycles with a level limit or a path check.</p></div></details>
     <details class="qa"><summary><span class="q">Q8</span>What is dynamic SQL, and what are its risks?</summary>
-      <div class="body"><p>SQL built as text at run time and then executed, in MySQL with <code>PREPARE</code> and <code>EXECUTE</code>. It allows things like pivots whose columns aren't known in advance. Risks: SQL injection if any part comes from user input, silent truncation (<code>group_concat_max_len</code>), and code that's hard to read and debug. Often a reporting tool or Python is the better place for it.</p></div></details>
+      <div class="body"><p>SQL built as text at run time and then executed, in MySQL with <code>PREPARE</code> and <code>EXECUTE</code>. It allows things like pivots whose columns aren't known in advance. Risks: SQL injection if any part comes from user input, text cut off by <code>group_concat_max_len</code> with only an easy-to-miss warning, and code that's hard to read and debug. Often a reporting tool or Python is the better place for it.</p></div></details>
   </div>
   <div class="iv-group">
     <h3>Practical questions</h3>
@@ -1161,7 +1161,7 @@ expected <span class="k">AS</span> (
 | Books          | 1244529 |  9.4 |           99.8 |
 | Uncategorised  |   28491 |  0.2 |          100.0 |
 +----------------+---------+------+----------------+</code></pre></div>
-        <p>Window functions over grouped results (Day 9): <code>SUM(SUM(line_total)) OVER ()</code> is the grand total of the category totals, and the same with an <code>ORDER BY</code> and a <code>ROWS</code> frame is the running total. Electronics and Clothing together make up 58% of revenue. This is the 80/20 pattern at the category level, in a single query.</p>
+        <p>Window functions over grouped results (Day 9): <code>SUM(SUM(line_total)) OVER ()</code> is the grand total of the category totals, and the same with an <code>ORDER BY</code> and a <code>ROWS</code> frame is the running total. Electronics and Clothing together make up 58.5% of revenue. This is the 80/20 pattern at the category level, in a single query.</p>
       </div></details>
   </div>
 </div>
