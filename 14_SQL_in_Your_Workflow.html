@@ -372,7 +372,7 @@ footer b{color:var(--ink);font-weight:700}
     <div>
       <h1>SQL in your workflow</h1>
       <p class="hero-sub">SQL rarely works alone. Run your queries from Python, load files into MySQL, read error messages calmly, and carry your skills to PostgreSQL, SQL Server and SQLite.</p>
-      <div class="facts"><span class="fact">34 minute read</span><span class="fact hl">SQL + Python + other databases</span></div>
+      <div class="facts"><span class="fact">35 minute read</span><span class="fact hl">SQL + Python + other databases</span></div>
     </div>
     <div class="sqlcard" role="img" aria-label="An analyst's workflow: SQL pulls and summarises the data, Python shapes and shows it, people act on it">
       <p class="hd">Move the question to the data</p>
@@ -395,7 +395,7 @@ footer b{color:var(--ink);font-weight:700}
 
   <article>
 
-<p class="lede">So far, every query you've written ran in MySQL Workbench, and the answer stayed on your screen. Real analytics work doesn't stop there. The answer goes into a chart, a spreadsheet, a dashboard or a model, usually through Python. Files arrive that need loading. Queries break, and you need to understand why. And your next job may not use MySQL at all. Today covers all four, using the shop data you already know.</p>
+<p class="lede">Yesterday ended with a health check for the owner, including a warning that Facebook customers bring in less profit than the others. Is Facebook still worth what the shop pays for it? The database can't say, because the ad spend lives in the marketing team's spreadsheet. Questions like this are where SQL has to work with other tools, and section 5 answers this one. So far, every query you've written ran in MySQL Workbench, and the answer stayed on your screen. Real analytics work doesn't stop there. The answer goes into a chart, a spreadsheet, a dashboard or a model, usually through Python. Files arrive that need loading. Queries break, and you need to understand why. And your next job may not use MySQL at all. Today covers all four, using the shop data you already know.</p>
 <div class="note"><p><strong>Before you start.</strong> You'll need Python 3 and four packages: <code>pip install pandas sqlalchemy pymysql matplotlib</code>. Everything was tested with pandas 3.0 and SQLAlchemy 2.1. Older versions (pandas 2.x) work too, and the small differences in the printed output are pointed out where they appear. The SQL parts run on <code>online_store_full</code> with the Day 11 clean layer and the Day 13 views. For section 5, download <code>marketing_spend_2023.csv</code> from the repo into the folder where you run Python.</p></div>
 
 <!-- 1 -->
@@ -432,7 +432,7 @@ footer b{color:var(--ink);font-weight:700}
   <ul>
     <li><strong>pandas</strong> holds the results as tables (called DataFrames).</li>
     <li><strong>PyMySQL</strong> is the <strong>driver</strong>: the piece that actually speaks MySQL's language over the network.</li>
-    <li><strong>SQLAlchemy</strong> manages the connection. Think of it as a universal travel adapter: your code plugs into SQLAlchemy, and SQLAlchemy plugs into whichever database you use, through the right driver. Switching to PostgreSQL later means changing one line.</li>
+    <li><strong>SQLAlchemy</strong> manages the connection. Think of it as a universal travel adapter: your code plugs into SQLAlchemy, and SQLAlchemy plugs into whichever database you use, through the right driver. Switching to PostgreSQL later means changing one line of connection code (the SQL itself may need small changes too, section 7).</li>
   </ul>
 
   <h3 style="margin:28px 0 8px">Keep the password out of your code</h3>
@@ -684,7 +684,7 @@ dtype: object
 | channel | text   | YES  |     | NULL    |       |
 | spend   | bigint | YES  |     | NULL    |       |
 +---------+--------+------+-----+---------+-------+</code></pre></div>
-  <p>It worked, but look at what pandas chose: <code>TEXT</code> for both text columns, a huge <code>BIGINT</code> for money, every column allowed to be NULL, and no primary key. pandas can only guess from the data, and it guesses loosely. Nothing stops the same month being loaded twice, or <code>spend</code> being left empty. Everything Day 3 taught about good table design is missing. (<code>index=False</code> stops pandas adding its row numbers as an extra column.)</p>
+  <p>It worked, but look at what pandas chose: <code>TEXT</code> for both text columns, a huge <code>BIGINT</code> for money, every column allowed to be NULL, and no primary key. (<code>BIGINT</code> only because this file happens to have whole rupees. With paise, pandas would choose <code>DOUBLE</code>, the approximate type Day 2 said never to use for money.) pandas can only guess from the data, and it guesses loosely. Nothing stops the same month being loaded twice, or <code>spend</code> being left empty. Everything Day 3 taught about good table design is missing. (<code>index=False</code> stops pandas adding its row numbers as an extra column.)</p>
 
   <h3 style="margin:28px 0 8px">The proper way: design the table in SQL, then append</h3>
   <p>Create the table yourself, with the right types and a primary key, exactly as on Day 3. One month and one channel can only have one spend figure, so those two columns together are the key:</p>
@@ -773,7 +773,7 @@ spend_by_channel <span class="k">AS</span> (
 | Facebook   |  251000.00 |            93 |              2699 |       2406 |              -293 |
 +------------+------------+---------------+-------------------+------------+-------------------+</code></pre></div>
   <p>Four CTEs, each doing one job, all things you've built before. And a clear answer: email and referrals win customers cheaply. Google Ads is solidly profitable, and Instagram less so. <strong>Facebook costs about ₹2,700 to win a customer who brings in about ₹2,400 of profit in their first year: it loses money in year one.</strong> That's the kind of finding that changes a marketing budget.</p>
-  <div class="note sun"><p><strong>Before anyone acts on this, say what it rests on.</strong> The channel is whatever the customer chose at sign-up, which isn't the full story of what persuaded them. "First-year profit" leaves out delivery and staff costs. Some customers keep buying after year one, so Facebook may still pay off later. And email has only 50 new customers behind its number (Day 13's small-group warning). Good analysts state the limits next to the result.</p></div>
+  <div class="note sun"><p><strong>Before anyone acts on this, say what it rests on.</strong> The channel is whatever the customer chose at sign-up, which isn't the full story of what persuaded them. "First-year profit" leaves out delivery and staff costs. Some customers keep buying after year one, so Facebook may still pay off later. And email has only 50 new customers behind its number (Day 13's small-group warning). Good analysts state the limits next to the result.</p><p style="margin-top:10px"><strong>Why isn't this Day 13's number?</strong> Day 13 found about ₹2,300 for Facebook, using only customers whose first year had fully settled by 24 December 2024. Here the spend covers all of 2023, so the cost per customer must use <em>every</em> customer won in 2023, and the profit has to describe the same people. That includes a few who joined in the last days of December 2023, whose first year runs into Day 12's unsettled last week. Their profit may be slightly understated, and in a real report you'd say so. Either way, the conclusion holds: Facebook customers cost more to win than they bring back in their first year.</p></div>
 </section>
 
 <!-- 6 -->
@@ -785,7 +785,7 @@ spend_by_channel <span class="k">AS</span> (
   <div class="code err"><div class="code-bar"><span>MySQL says</span></div><pre><code>ERROR 1054 (42S22): Unknown column 'order_status' in 'field list'</code></pre></div>
   <ul>
     <li><strong><code>1054</code></strong> is MySQL's own error number. Searching "MySQL error 1054" always finds help.</li>
-    <li><strong><code>42S22</code></strong> is the <strong>SQLSTATE</strong>, a five-character code from the SQL standard. Other databases use the same codes, so programs can handle errors the same way everywhere.</li>
+    <li><strong><code>42S22</code></strong> is the <strong>SQLSTATE</strong>, a five-character code based on the SQL standard. The first two characters are the <em>class</em>, and they're shared across databases: <code>42</code> means a problem with the SQL itself, and <code>23</code> means a broken rule, like a duplicate key. The last three can differ: PostgreSQL reports this same mistake as <code>42703</code>. So programs can handle errors by class in any database, but the full code isn't always the same.</li>
     <li><strong>The message</strong> names the problem and where it is: an unknown column, <code>'order_status'</code>, in the <code>'field list'</code> (MySQL's name for the list of columns after <code>SELECT</code>). Other places you'll see are <code>'where clause'</code>, <code>'on clause'</code> and <code>'order clause'</code>.</li>
   </ul>
 
@@ -800,7 +800,7 @@ spend_by_channel <span class="k">AS</span> (
 <span class="k">FROM</span> orders o
 <span class="k">JOIN</span> order_items oi <span class="k">ON</span> oi.order_id = o.order_id;</code></pre></div>
   <div class="code err"><div class="code-bar"><span>MySQL says</span></div><pre><code>ERROR 1052 (23000): Column 'order_id' in field list is ambiguous</code></pre></div>
-  <p>The fix is to name the table: <code>o.order_id</code>. <strong>1055, the GROUP BY rule</strong> (you met it on Days 10 and 11): every column in <code>SELECT</code> must be grouped or inside an aggregate:</p>
+  <p>The fix is to name the table: <code>o.order_id</code>. <strong>1055, the GROUP BY rule</strong> (you met it on Day 6): every column in <code>SELECT</code> must be grouped or inside an aggregate:</p>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> customer_id, order_date, <span class="k">COUNT</span>(*)
 <span class="k">FROM</span> orders
 <span class="k">GROUP</span> <span class="k">BY</span> customer_id;</code></pre></div>
@@ -954,7 +954,7 @@ LINE 1: SELECT 'abc' + 1;
   <p>Strictness can feel annoying, but it's often protective: an error is better than a silently wrong number.</p>
 
   <h3 style="margin:28px 0 8px">The cheat sheet</h3>
-  <p>Day 2's small table, grown up. The MySQL, PostgreSQL and SQLite columns were all checked on real servers. SQL Server shows its default settings.</p>
+  <p>Day 2's small table, grown up. The MySQL, PostgreSQL and SQLite columns were all checked on real servers. SQL Server shows its default settings. SQLite's answers are for a recent version: <code>CONCAT</code> only exists from SQLite 3.44 (2023) and <code>FULL OUTER JOIN</code> from 3.39 (2022), and the SQLite inside an older Python may be older than that. In Python, <code>import sqlite3; print(sqlite3.sqlite_version)</code> tells you.</p>
   <div class="dbt prose">
     <div class="dbt-scroll"><table>
       <thead><tr><th>What you want</th><th>MySQL</th><th>PostgreSQL</th><th>SQL Server</th><th>SQLite</th></tr></thead>
@@ -1130,7 +1130,7 @@ HINT:  No function matches the given name and argument types. You might need to 
     <details class="qa"><summary><span class="q">Q3</span>When would you do work in SQL, and when in pandas?</summary>
       <div class="body"><p>Filter, join and aggregate in SQL, close to the data, so only a small result travels, especially on large tables. Use pandas for what SQL does poorly: charts, statistics and models, pivots with unknown columns, combining with files or APIs, and automation. Shared business logic belongs in the database (views) so every tool uses the same definition.</p></div></details>
     <details class="qa"><summary><span class="q">Q4</span>What's the difference between a MySQL error number and an SQLSTATE?</summary>
-      <div class="body"><p>The error number (like 1054) is MySQL's own, specific code. The SQLSTATE (like <code>42S22</code>) is a five-character code from the SQL standard that other databases share, so programs can handle error types the same way across databases. Both appear in the message: <code>ERROR 1054 (42S22): Unknown column ...</code>.</p></div></details>
+      <div class="body"><p>The error number (like 1054) is MySQL's own, specific code. The SQLSTATE (like <code>42S22</code>) is a five-character code based on the SQL standard. Its first two characters, the class (<code>42</code>: a problem with the SQL itself), are shared across databases, so programs can handle types of error the same way everywhere. The last three can differ: PostgreSQL calls an unknown column <code>42703</code>. Both appear in the message: <code>ERROR 1054 (42S22): Unknown column ...</code>.</p></div></details>
     <details class="qa"><summary><span class="q">Q5</span>How do you debug a long query that gives the wrong answer?</summary>
       <div class="body"><p>Break it into steps and check each one: run each CTE on its own, count rows after every join to spot multiplication, compare totals with a number you trust, and test one record you can verify by hand. For syntax errors, read the "near" text and look just before it.</p></div></details>
     <details class="qa"><summary><span class="q">Q6</span>Name some differences between MySQL and PostgreSQL.</summary>
