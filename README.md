@@ -75,21 +75,21 @@ The 23 days are split into four parts. The order is planned so that you can stop
 | 7 | [Joining tables](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/7_DQL_Joins.html) | `INNER`, `LEFT`, `RIGHT`, self and cross joins, `USING`, the ON vs WHERE trap, joins with `GROUP BY`, `UNION` |
 | 8 | [Subqueries, CTEs and CASE](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/8_DQL_Subqueries_CTEs_CASE.html) | Scalar, multi-row and correlated subqueries, `ANY` / `ALL`, `EXISTS` / `NOT EXISTS`, CTEs, `CASE`, `COALESCE`, conditional aggregation |
 | 9 | [Window functions + Checkpoint 1](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/9_DQL_Window_Functions_Capstone.html) | `ROW_NUMBER`, `RANK`, `DENSE_RANK`, `NTILE`, `LAG` / `LEAD`, `FIRST_VALUE` / `LAST_VALUE`, running totals, moving averages, views, 8-question capstone |
-| 10 | The real dataset | A large, messy `online_store_full` database, loading data, and how to explore a database you have never seen |
-| 11 | Data cleaning in SQL | Fixing text and types, `STR_TO_DATE`, handling NULLs, removing duplicates, data quality checks |
-| 12 | Dates and time | Date maths, week, month and quarter grouping, year-over-year comparisons, filling empty months |
-| 13 | Core analysis patterns | Cohort retention, conversion funnels, RFM segmentation, repeat purchase, customer lifetime value |
-| 14 | SQL in the real workflow | Running SQL from Python (pandas, SQLAlchemy), reading and fixing common MySQL errors, MySQL vs PostgreSQL vs BigQuery vs Snowflake |
-| 15 | Interview prep I + Checkpoint 2 | About 60 concept questions with answers, plus the classic coding problems |
+| 10 | [The real dataset](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/10_Real_Dataset.html) | A large, messy `online_store_full` database, loading data, and how to explore a database you have never seen |
+| 11 | [Data cleaning in SQL](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/11_Data_Cleaning.html) | Fixing text and types, `STR_TO_DATE`, handling NULLs, removing duplicates, data quality checks |
+| 12 | [Dates and time](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/12_Dates_and_Time.html) | Date maths, week, month and quarter grouping, year-over-year comparisons, filling empty months |
+| 13 | [Core analysis patterns](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/13_Core_Analysis_Patterns.html) | Cohort retention, conversion funnels, RFM segmentation, repeat purchase, customer lifetime value |
+| 14 | [SQL in the real workflow](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/14_SQL_in_Your_Workflow.html) | Running SQL from Python (pandas, SQLAlchemy), reading and fixing common MySQL errors, MySQL vs PostgreSQL vs BigQuery vs Snowflake |
+| 15 | [Interview prep I + Checkpoint 2](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/15_Interview_Prep_Checkpoint_2.html) | About 60 concept questions with answers, plus the classic coding problems |
 
 ### Part 3: Good-to-haves
 
 | Day | Article | Topics |
 |-----|---------|--------|
-| 16 | Advanced analysis patterns | Pivoting, median and percentiles, Pareto / ABC analysis, streaks (gaps and islands), recursive CTEs |
-| 17 | Database design and warehousing | Normal forms (1NF to 3NF), ER diagrams, OLTP vs OLAP, star schema, fact and dimension tables |
-| 18 | Query performance | How indexes work, composite and covering indexes, `EXPLAIN`, writing index-friendly filters |
-| 19 | Beyond SELECT | Stored procedures, functions, triggers, users and permissions, isolation levels |
+| 16 | [Advanced analysis patterns](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/16_Advanced_Query_Patterns.html) | Pivoting, median and percentiles, Pareto / ABC analysis, streaks (gaps and islands), recursive CTEs |
+| 17 | [Database design and warehousing](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/17_Database_Design_Warehousing.html) | Normal forms (1NF to 3NF), ER diagrams, OLTP vs OLAP, star schema, fact and dimension tables |
+| 18 | [Query performance](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/18_Performance_Indexes_EXPLAIN.html) | How indexes work, composite and covering indexes, `EXPLAIN`, writing index-friendly filters |
+| 19 | [Beyond SELECT](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/19_Beyond_SELECT.html) | Stored procedures, functions, triggers, users and permissions, isolation levels |
 | 20 | Interview prep II | Hard problems, a step-by-step way to solve any SQL question, common mistakes, a timed mock interview |
 
 ### Part 4: Case studies
