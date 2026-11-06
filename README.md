@@ -98,7 +98,7 @@ The 23 days are split into four parts. The order is planned so that you can stop
 |-----|------------|-------------|
 | 21 | [Monthly business review](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/21_Case_Study_Monthly_Business_Review.html) | Build the monthly report a leadership team reads |
 | 22 | [Customer retention and churn](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/22_Case_Study_Retention_Churn.html) | Find who keeps buying, who stops, and why |
-| 23 | Product and funnel performance | Find what sells, what doesn't, and where website visitors drop off |
+| 23 | [Product and funnel performance](https://shikharkumar13.github.io/SQL-End-to-End-Theory-and-Hands-On/23_Case_Study_Product_Funnel.html) | Find what sells, what doesn't, and where website visitors drop off |
 
 Each case study follows the real analyst loop: understand the question, check assumptions, explore the data, write the SQL, check the numbers, and write a short recommendation.
 
