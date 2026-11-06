@@ -397,7 +397,7 @@ footer b{color:var(--ink);font-weight:700}
 
   <article>
 
-<p class="lede">Over twelve days you've collected a full toolbox: joins, CTEs, <code>CASE</code>, window functions, a clean layer you can trust, and a calendar. Today you use them the way analysts do every week, on the five questions that come up in every online business. Each question has a standard answer, a <strong>pattern</strong>, and once you know the five patterns, you'll recognise them in almost every analytics job.</p>
+<p class="lede">Over twelve days you've collected a full toolbox: joins, CTEs, <code>CASE</code>, window functions, a clean layer you can trust, and yesterday's calendar, period comparisons and recency. Day 12 ended with a warning that a period which hasn't finished looks worse than it is. Today that warning comes back in a new form, with customers instead of months. You'll use the toolbox the way analysts do every week, on the five questions that come up in every online business. Each question has a standard answer, a <strong>pattern</strong>, and once you know the five patterns, you'll recognise them in almost every analytics job.</p>
 <div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. Today builds on the clean layer from Day 11 (run <code>day11_clean_layer.sql</code> if you haven't) and uses <code>clean_web_events</code> for the website. There are two <strong>Build</strong> boxes, in sections 1 and 5. As on Day 12, "today" means <strong>31 December 2024</strong>, the day our data ends.</p></div>
 
 <!-- 1 -->
@@ -440,7 +440,7 @@ footer b{color:var(--ink);font-weight:700}
 |      2115 |   5662 | 13172860 |      5411119 |
 +-----------+--------+----------+--------------+</code></pre></div>
   <p>₹1,31,72,860: exactly Day 11's clean revenue. Nothing was lost or counted twice. The shop keeps about 41% of its revenue as gross profit.</p>
-  <div class="note sun"><p><strong>The thread running through today: has everyone had the same chance?</strong> On Day 12, December 2024 looked weak because it wasn't finished. Customers have the same problem. Someone who first bought on 20 December 2024 has had 11 days to come back. Someone who first bought in January 2023 has had two years. Compare them directly and new customers will always look worse. You'll meet this trap in three of today's patterns, and the fix is always the same idea: give everyone the same amount of time.</p></div>
+  <div class="note sun"><p><strong>The thread running through today: has everyone had the same chance?</strong> On Day 12, December 2024 looked weak because it wasn't finished. Customers have the same problem. Someone who first bought on 20 December 2024 has had 11 days to come back. Someone who first bought in January 2023 has had two years. Compare them directly and new customers will always look worse. And Day 12 showed that the last week of December hasn't settled yet: some of those orders are still Pending or Shipped. You'll meet this trap in three of today's patterns, and the fix is always the same idea: give everyone the same amount of time.</p></div>
 </section>
 
 <!-- 2 -->
@@ -473,7 +473,7 @@ footer b{color:var(--ink);font-weight:700}
 +-----------+------------------+-----------------+
 |      2115 |              819 |            38.7 |
 +-----------+------------------+-----------------+</code></pre></div>
-  <p><code>orders &gt;= 2</code> is 1 or 0 for each customer, so <code>SUM</code> counts the repeaters and <code>AVG</code> gives their share: Day 6's trick.</p>
+  <p><code>orders &gt;= 2</code> is 1 or 0 for each customer, so <code>SUM</code> counts the repeaters (Day 6's trick), and <code>AVG</code> of the same 1s and 0s gives their share directly.</p>
 
   <h3 style="margin:28px 0 8px">How quickly do they come back?</h3>
   <p>Day 7 promised this: repeat purchase <em>speed</em>. For every order after a customer's first, how many days since their previous one? <code>LAG</code> (Day 9) puts the previous order's date on the same row:</p>
@@ -513,7 +513,7 @@ gaps <span class="k">AS</span> (
   <p>Three steps you've seen before: <code>DISTINCT</code> turns order lines into orders, <code>LAG</code> finds each customer's previous order, and each customer's first order has no previous one, so its gap is NULL and gets filtered out. Almost half of all repeat orders came within 30 days of the one before, and 83% within 90 days. In other words, <strong>customers who come back tend to come back fast</strong>. If someone hasn't returned after three months, the chance that they will is getting small. That's useful for marketing: a "we miss you" email at 60 days is likely to work better than one at 300.</p>
 
   <h3 style="margin:28px 0 8px">A fair repeat rate</h3>
-  <p>Here's the trap from section 1. The 38.7% includes customers who only discovered the shop last week. They haven't had time to come back yet, so they drag the rate down, and the more new customers the shop wins, the worse its repeat rate looks. The fix: count only repeats within a <strong>fixed window</strong>, say 90 days after the first order, and only for customers who have had at least 90 days. Our data ends on 31 December 2024, so that's customers whose first order was before 2 October 2024:</p>
+  <p>Here's the trap from section 1. The 38.7% includes customers who only discovered the shop last week. They haven't had time to come back yet, so they drag the rate down, and the more new customers the shop wins, the worse its repeat rate looks. The fix: count only repeats within a <strong>fixed window</strong>, say 90 days after the first order, and only for customers who have had at least 90 days. Our data ends on 31 December 2024, but as Day 12 found, orders from the last week haven't all settled, so the window has to end by 24 December, the last day Day 12 trusted. That means customers whose first order was before 26 September 2024:</p>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> orders_only <span class="k">AS</span> (
     <span class="k">SELECT</span> <span class="k">DISTINCT</span> customer_id, order_id, order_date
     <span class="k">FROM</span> clean_sales
@@ -531,13 +531,13 @@ gaps <span class="k">AS</span> (
                            <span class="k">AND</span> o.order_date  &lt; c.first_order_date + INTERVAL <span class="n">90</span> DAY)) * <span class="n">100</span>
              / <span class="k">COUNT</span>(*), <span class="n">1</span>) <span class="k">AS</span> pct
 <span class="k">FROM</span> customer_summary c
-<span class="k">WHERE</span> c.first_order_date &lt; <span class="s">'2024-10-02'</span>;</code></pre></div>
+<span class="k">WHERE</span> c.first_order_date &lt; <span class="s">'2024-09-26'</span>;   <span class="c">-- 90 days later is 25 December</span></code></pre></div>
   <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+---------------------+------+
 | customers | back_within_90_days | pct  |
 +-----------+---------------------+------+
-|      1830 |                 537 | 29.3 |
+|      1796 |                 529 | 29.5 |
 +-----------+---------------------+------+</code></pre></div>
-  <p><code>EXISTS</code> (Day 8) asks a yes-or-no question for each customer: "is there an order after the first one, but within 90 days?" It gives 1 or 0, so <code>SUM</code> counts the yeses. The answer, 29.3%, is lower than 38.7%, and that's fine, because it measures something different and more useful: <strong>"what share of new customers come back within 90 days?"</strong> Every customer was given the same chance, so you can compare this number across months, channels or years, and it means the same thing each time.</p>
+  <p><code>EXISTS</code> (Day 8) asks a yes-or-no question for each customer: "is there an order after the first one, but within 90 days?" It gives 1 or 0, so <code>SUM</code> counts the yeses. The answer, 29.5%, is lower than 38.7%, and that's fine, because it measures something different and more useful: <strong>"what share of new customers come back within 90 days?"</strong> Every customer was given the same chance, so you can compare this number across months, channels or years, and it means the same thing each time.</p>
 </section>
 
 <!-- 3 -->
@@ -709,7 +709,7 @@ steps <span class="k">AS</span> (
   <ul>
     <li><strong>Desktop</strong> converts best overall, but loses half of its checkouts. Something in the desktop checkout is worth a look.</li>
     <li><strong>Mobile</strong> brings almost three-quarters of all visits, and once mobile shoppers start checking out, they finish more often than anyone. Their problem is earlier: only about 1 in 4 mobile product views becomes an add to cart. A better mobile product page would pay off more than anything else on this list, simply because there are so many mobile visitors.</li>
-    <li><strong>Tablet</strong> is weak at every step, but it's only about 5% of visits.</li>
+    <li><strong>Tablet</strong> is the weakest at every step after the product page, but it's only about 5% of visits.</li>
   </ul>
   <p>This is the real value of a funnel: not the 6% at the bottom, but knowing <em>which step</em> to fix, for <em>which</em> visitors.</p>
 </section>
@@ -800,7 +800,7 @@ scored <span class="k">AS</span> (
 |        1247 |          413 |         6 |    10268 |       2 |       5 |       5 | At risk   |
 |        2688 |            7 |        11 |    18553 |       5 |       5 |       5 | Champions |
 +-------------+--------------+-----------+----------+---------+---------+---------+-----------+</code></pre></div>
-  <p>Kavya (1) and Aditi (2688) are Champions: recent, frequent, big spenders. Reyansh (1247) has spent nearly as much as Kavya, over 6 orders, but hasn't ordered for 413 days. He's exactly the kind of customer the shop should be calling.</p>
+  <p>Kavya (1) and Aditi (2688) are Champions: recent, frequent, big spenders. Reyansh (1247) has spent over ₹10,000, across 6 orders, not far behind Kavya, but hasn't ordered for 413 days. He's exactly the kind of customer the shop should be calling.</p>
 
   <h3 style="margin:28px 0 8px">The segments</h3>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> segment,
@@ -872,11 +872,11 @@ scored <span class="k">AS</span> (
   <p>Customers from 2023 look almost twice as valuable as customers from 2024. Are the new customers worse? Not necessarily: the 2023 customers have simply had a year longer to keep buying. A "lifetime" average that mixes old and new customers isn't a lifetime value at all.</p>
 
   <h3 style="margin:28px 0 8px">A fair version: the first 12 months</h3>
-  <p>Give everyone the same window: <strong>the value of each customer in the 12 months after their first order</strong>. Only customers who first bought in 2023 have had a full 12 months in our data, so we use them. And since the real question is "how much can we spend to win a customer?", let's split by how they found the shop, and use profit, not revenue:</p>
+  <p>Give everyone the same window: <strong>the value of each customer in the 12 months after their first order</strong>. Only customers whose first 12 months ended by 24 December 2024, the last settled day, have had a full window, so we use the customers who first bought before 25 December 2023. And since the real question is "how much can we spend to win a customer?", let's split by how they found the shop, and use profit, not revenue:</p>
   <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> first_year_customers <span class="k">AS</span> (
     <span class="k">SELECT</span> customer_id, first_order_date
     <span class="k">FROM</span> customer_summary
-    <span class="k">WHERE</span> first_order_date &lt; <span class="s">'2024-01-01'</span>
+    <span class="k">WHERE</span> first_order_date &lt; <span class="s">'2023-12-25'</span>
 ),
 first_12_months <span class="k">AS</span> (
     <span class="k">SELECT</span> f.customer_id,
@@ -904,19 +904,19 @@ first_12_months <span class="k">AS</span> (
   <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+-----------+------------+-------------+------------+
 | found_us_through | customers | orders_12m | revenue_12m | profit_12m |
 +------------------+-----------+------------+-------------+------------+
-| Email            |        50 |        3.2 |        7148 |       2921 |
-| Organic Search   |       292 |        3.1 |        6897 |       2847 |
-| Google Ads       |       204 |        2.9 |        6901 |       2756 |
-| Direct           |        89 |        2.9 |        6793 |       2702 |
-| All channels     |      1089 |        2.9 |        6629 |       2685 |
-| Instagram        |       206 |        2.9 |        6431 |       2622 |
-| Referral         |       123 |        3.0 |        6397 |       2552 |
-| Facebook         |        93 |        2.6 |        5996 |       2406 |
+| Email            |        49 |        3.2 |        7168 |       2928 |
+| Organic Search   |       284 |        3.1 |        6900 |       2848 |
+| Google Ads       |       199 |        2.9 |        6978 |       2786 |
+| All channels     |      1065 |        2.9 |        6611 |       2676 |
+| Instagram        |       202 |        2.9 |        6463 |       2634 |
+| Direct           |        87 |        2.8 |        6508 |       2590 |
+| Referral         |       121 |        3.0 |        6419 |       2559 |
+| Facebook         |        91 |        2.5 |        5790 |       2307 |
 | Not recorded     |        32 |        2.6 |        5174 |       2075 |
 +------------------+-----------+------------+-------------+------------+</code></pre></div>
-  <p>How it works: <code>first_year_customers</code> picks the customers who have had 12 full months. The join brings in only their orders from <em>before</em> first order + 12 months, a half-open window that's different for every customer (Day 12). Then we average by channel, and <code>UNION ALL</code> adds an "All channels" row for comparison. (<code>clean_customers</code> has one row per account, and our <code>customer_id</code> is the master ID, so the join picks up the channel from each person's first account.)</p>
-  <p>So: <strong>a new customer is worth about ₹2,685 in gross profit in their first year</strong>. Customers from email and organic search are worth a little more, Facebook a little less. If winning a customer through Facebook ads costs more than about ₹2,400, those customers lose money in their first year, before delivery and other costs are even counted. That's a sentence a marketing manager can act on.</p>
-  <div class="note sun"><p><strong>Watch the group sizes.</strong> Email tops the table, but with only 50 customers. A handful of big spenders could put it there by luck. Organic search has 292, so its number is far more reliable. Before you say "email customers are the most valuable", check how many customers stand behind the number. And notice that the differences between channels are fairly small: the honest summary is "Facebook customers are worth a bit less", not "email is the best channel".</p></div>
+  <p>How it works: <code>first_year_customers</code> picks the customers who have had 12 full, settled months. The join brings in only their orders from <em>before</em> first order + 12 months, a half-open window that's different for every customer (Day 12). Then we average by channel, and <code>UNION ALL</code> adds an "All channels" row for comparison. (<code>clean_customers</code> has one row per account, and our <code>customer_id</code> is the master ID, so the join picks up the channel from each person's first account.)</p>
+  <p>So: <strong>a new customer is worth about ₹2,676 in gross profit in their first year</strong>. Customers from email, organic search and Google Ads are worth a little more, Facebook a little less. If winning a customer through Facebook ads costs more than about ₹2,300, those customers lose money in their first year, before delivery and other costs are even counted. That's a sentence a marketing manager can act on.</p>
+  <div class="note sun"><p><strong>Watch the group sizes.</strong> Email tops the table, but with only 49 customers. A handful of big spenders could put it there by luck. Organic search has 284, so its number is far more reliable. Before you say "email customers are the most valuable", check how many customers stand behind the number. And notice that the differences between channels are fairly small: the honest summary is "Facebook customers are worth a bit less", not "email is the best channel".</p></div>
   <div class="note"><p><strong>Real CLV models.</strong> What we built is <em>historical</em> value: what customers actually spent. Data science teams also <em>predict</em> future value with statistical models, using exactly the facts in <code>customer_summary</code> (recency, frequency, spend, first order date) as inputs. The SQL you wrote today is the first half of that work.</p></div>
 </section>
 
@@ -926,12 +926,12 @@ first_12_months <span class="k">AS</span> (
   <p>Five tables of numbers are not an answer. The last step of every analysis is to turn the numbers into a few sentences that someone can act on. Lead with the finding, give the number that proves it, and say what to do. Here's what you could send the owner today:</p>
   <div class="note"><p><strong>Customer health check, as of 31 December 2024</strong></p>
   <ul>
-    <li><strong>Most customers buy once.</strong> 61% of customers have placed only one order. Those who do return come back fast: 29% of new customers order again within 90 days, and almost half of all repeat orders come within a month of the previous one. <em>Action: focus follow-up on the first 30 to 90 days after a first order.</em></li>
+    <li><strong>Most customers buy once.</strong> 61% of customers have placed only one order. Those who do return come back fast: about 3 in 10 new customers order again within 90 days, and almost half of all repeat orders come within a month of the previous one. <em>Action: focus follow-up on the first 30 to 90 days after a first order.</em></li>
     <li><strong>Retention is steady, not falling.</strong> Each quarter, between 22% and 35% of the previous quarter's new customers buy again, with no downward trend across cohorts.</li>
     <li><strong>A small group carries the business.</strong> 295 Champions (14% of buyers) bring in 43% of revenue. <em>Action: protect them.</em></li>
     <li><strong>136 valuable customers are slipping away.</strong> They used to order about 5 times and spend about ₹11,000 each, but have been quiet for over a year on average. <em>Action: a win-back campaign, starting with the biggest spenders.</em></li>
     <li><strong>The website loses most people between the product page and the cart</strong>, especially on mobile, which brings almost three-quarters of all visits. And 4 in 10 checkouts are abandoned. <em>Action: improve the mobile product page, and find out why checkouts fail.</em></li>
-    <li><strong>A new customer is worth about ₹2,700 in gross profit in their first year</strong> (₹2,400 if they came from Facebook). <em>Action: keep the cost of winning a customer well below this.</em></li>
+    <li><strong>A new customer is worth about ₹2,700 in gross profit in their first year</strong> (about ₹2,300 if they came from Facebook). <em>Action: keep the cost of winning a customer well below this.</em></li>
   </ul></div>
   <p>Every sentence points back to a query you wrote, so if anyone asks "how do you know?", you can show them. That's what makes an analyst trusted.</p>
 </section>
@@ -1195,7 +1195,7 @@ gaps <span class="k">AS</span> (
   <h2>Quick recap</h2>
   <ul>
     <li>Most business questions are about customers or sessions, so first build a table at that grain (<code>customer_summary</code>), and check it adds up to a number you trust.</li>
-    <li><strong>Repeat purchase:</strong> share with 2+ orders, and the gaps between orders with <code>LAG</code>. 61% buy once, and those who return mostly do so within 30 to 60 days.</li>
+    <li><strong>Repeat purchase:</strong> share with 2+ orders, and the gaps between orders with <code>LAG</code>. 61% buy once, and those who return mostly come back fast: almost half of repeat orders arrive within 30 days of the previous one, and 83% within 90.</li>
     <li><strong>Give everyone the same time.</strong> Recent customers haven't had time to come back. Use fixed windows (90 days, 12 months), include only customers who've had the full window, and show "not yet known" as NULL, not 0.</li>
     <li><strong>Cohorts:</strong> group customers by when they first bought, pivot with <code>COUNT(DISTINCT CASE ...)</code>, and read rows (ageing), columns (comparing cohorts) and diagonals (calendar effects).</li>
     <li><strong>Funnels:</strong> roll events up to sessions with <code>MAX(event_type = ...)</code>, check for skipped steps, stack the steps with <code>UNION ALL</code>, and compare with <code>LAG</code> and <code>FIRST_VALUE</code>. Split by device to find which step to fix.</li>
