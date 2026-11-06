@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 21: Case Study: Monthly Review | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 21 of 23</span><span class="part-pill">Case studies</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Case study 1: the monthly business review</h1>
+      <p class="hero-sub">The report every manager reads first. Agree the definitions, check the data, build a scorecard you can rerun every month, then explain what changed and why, in plain words.</p>
+      <div class="facts"><span class="fact">28 minute read</span><span class="fact hl">Case study 1</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="The monthly review in four steps: a scorecard, two comparisons, and explanations for revenue and margin">
+      <p class="hd">November 2024, reviewed</p>
+      <ul class="reads">
+        <li><code>CALL monthly_scorecard()</code><span>The headline numbers, for any month</span></li>
+        <li><code>-8% vs Oct, +26% vs 2023</code><span>Two comparisons, two different stories</span></li>
+        <li><code>orders × order value</code><span>Why revenue moved</span></li>
+        <li><code>mix + rate</code><span>Why the margin rose</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>The brief</a></li><li><a href="#s2"><span class="n">2</span>Check the data first</a></li><li><a href="#s3"><span class="n">3</span>The scorecard</a></li><li><a href="#s4"><span class="n">4</span>Why revenue moved</a></li><li><a href="#s5"><span class="n">5</span>What sold, and the margin</a></li><li><a href="#s6"><span class="n">6</span>Customers and channels</a></li><li><a href="#s7"><span class="n">7</span>Returns and operations</a></li><li><a href="#s8"><span class="n">8</span>Write it up</a></li><li class="gap"></li><li><a href="#try"><span class="n"></span>Try this</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">The good-to-haves are done. Day 20 ended with a mock interview, and in section 4 you investigated a falling number from scratch. In a real job, nobody should have to discover a 23% drop by accident: there's a <strong>monthly business review</strong> that shows it, explains it, and is on the manager's desk in the first week of the month. That's today's case study. It's the first of three, and they're different from every earlier day: there are no new SQL features. Instead, you'll see how the pieces from Days 1 to 20 fit together into work someone actually reads.</p>
+<div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. You'll use the Day 11 clean layer, Day 12's <code>calendar</code>, Day 13's <code>customer_summary</code>, and from Day 19 the <code>fiscal_year()</code> function, the <code>monthly_sales</code> table and its <code>refresh_monthly_sales()</code> procedure. One check in section 2 also reads Day 17's <code>shop_warehouse</code>. If you've deleted any of these, rerun that day's Build boxes.</p></div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>The brief</h2>
+  <p>Ritu Malhotra, the shop's CEO (she's employee 1, at the top of Day 16's org chart), sends a short message:</p>
+  <div class="note"><p><strong>"Can you send me a one-page review of last month? How did we do, what changed and why, and anything I should worry about. I'd like the same every month from now on."</strong></p></div>
+  <p>Before writing a single query, settle three things. Day 15's take-home and Day 20's interviews made the same point: the thinking you do before the SQL decides whether the answer is right.</p>
+  <p><strong>1. Which month?</strong> Our data ends on 31 December 2024. Day 12 showed that December isn't settled: orders from the last week are still Pending or Shipped, and their returns haven't arrived. So the latest month we can review properly is <strong>November 2024</strong>. In real life, you'd send it in the first days of December, and mark some numbers as provisional (Try this, question 5 shows which).</p>
+  <p><strong>2. Compared with what?</strong> A number on its own means nothing. Every metric gets two comparisons, and they tell different stories (Day 12):</p>
+  <ul>
+    <li><strong>Last month (October 2024)</strong>: is the business moving up or down right now? But October was Diwali, the busiest month of the year, so November will almost always look worse.</li>
+    <li><strong>The same month last year (November 2023)</strong>: is it growing, with the season taken out? This is usually the fairer test.</li>
+    <li>And for the bigger picture, <strong>the year so far</strong>, both by calendar year and by financial year (April to March, Day 19's <code>fiscal_year()</code>).</li>
+  </ul>
+  <p><strong>3. What exactly does each word mean?</strong> Write the definitions down, and put them at the bottom of the review. When two people get different numbers, this table is the first place to look (Day 20, scenario 2):</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Metric</th><th>Definition</th><th>From</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td>What customers paid for completed orders placed in the month, before returns (no test or duplicate orders)</td><td><code>clean_sales</code> (Day 11)</td></tr>
+        <tr><td>Orders</td><td>Completed orders placed in the month: <code>COUNT(DISTINCT order_id)</code>, because <code>clean_sales</code> has one row per line (Day 10's grain)</td><td><code>clean_sales</code></td></tr>
+        <tr><td>Average order value</td><td>Revenue ÷ orders</td><td></td></tr>
+        <tr><td>Buyers</td><td>Different customers with a completed order in the month (master IDs, Day 11)</td><td><code>clean_sales</code></td></tr>
+        <tr><td>New customers</td><td>Customers whose first completed order was in the month</td><td><code>customer_summary</code> (Day 13)</td></tr>
+        <tr><td>Gross margin</td><td>(Revenue − cost of the items) ÷ revenue</td><td><code>clean_sales</code></td></tr>
+        <tr><td>Net revenue</td><td>Revenue minus refunds on that month's orders</td><td><code>clean_returns</code> (Day 11)</td></tr>
+        <tr><td>Cancellation rate</td><td>Cancelled ÷ all orders placed in the month</td><td><code>clean_orders</code></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Check the data first</h2>
+  <p>The fastest way to lose a manager's trust is a number that turns out to be wrong. So before any analysis, three quick checks, all things you've done before. First, did the shop record sales every day (Day 12's calendar finds missing days)?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)               <span class="k">AS</span> days_in_november,
+       <span class="k">SUM</span>(d.orders <span class="k">IS</span> <span class="k">NULL</span>)  <span class="k">AS</span> days_without_orders,
+       <span class="k">MIN</span>(d.orders)          <span class="k">AS</span> quietest_day,
+       <span class="k">MAX</span>(d.orders)          <span class="k">AS</span> busiest_day
+<span class="k">FROM</span> calendar c
+<span class="k">LEFT</span> <span class="k">JOIN</span> (<span class="k">SELECT</span> <span class="t">DATE</span>(order_date) <span class="k">AS</span> order_day, <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders
+           <span class="k">FROM</span> clean_sales
+           <span class="k">GROUP</span> <span class="k">BY</span> order_day) d <span class="k">ON</span> d.order_day = c.cal_date
+<span class="k">WHERE</span> c.cal_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> c.cal_date &lt; <span class="s">'2024-12-01'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+---------------------+--------------+-------------+
+| days_in_november | days_without_orders | quietest_day | busiest_day |
++------------------+---------------------+--------------+-------------+
+|               30 |                   0 |            6 |          24 |
++------------------+---------------------+--------------+-------------+</code></pre></div>
+  <p>Thirty days, all with orders. Second, is November finished, with no orders still open?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> status, <span class="k">COUNT</span>(*) <span class="k">AS</span> orders
+<span class="k">FROM</span> clean_orders
+<span class="k">WHERE</span> is_test = <span class="n">0</span> <span class="k">AND</span> is_duplicate = <span class="n">0</span>
+  <span class="k">AND</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> status;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+--------+
+| status    | orders |
++-----------+--------+
+| Cancelled |     25 |
+| Completed |    397 |
++-----------+--------+</code></pre></div>
+  <p>Every order is either Completed or Cancelled. Nothing is waiting. Third, do the different places that hold sales agree? The shop now has three: the clean views, Day 17's warehouse and Day 19's summary table. Refresh the summary table first, then compare:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL refresh_monthly_sales();     <span class="c">-- Day 19: rebuild the summary table</span>
+
+<span class="k">SELECT</span> <span class="s">'clean_sales (Day 11)'</span>    <span class="k">AS</span> source, <span class="k">ROUND</span>(<span class="k">SUM</span>(line_total)) <span class="k">AS</span> revenue, <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'fact_sales (Day 17)'</span>, <span class="k">ROUND</span>(<span class="k">SUM</span>(revenue)), <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id)
+<span class="k">FROM</span> shop_warehouse.fact_sales
+<span class="k">WHERE</span> date_key <span class="k">BETWEEN</span> <span class="n">20241101</span> <span class="k">AND</span> <span class="n">20241130</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'monthly_sales (Day 19)'</span>, <span class="k">ROUND</span>(<span class="k">SUM</span>(revenue)), <span class="k">SUM</span>(orders)
+<span class="k">FROM</span> monthly_sales
+<span class="k">WHERE</span> month_start = <span class="s">'2024-11-01'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-------------+------------+---------------+
+| rows_loaded | first_month | last_month | total_revenue |
++-------------+-------------+------------+---------------+
+|         121 | 2023-01-01  | 2024-12-01 |   13172860.47 |
++-------------+-------------+------------+---------------+
++------------------------+---------+--------+
+| source                 | revenue | orders |
++------------------------+---------+--------+
+| clean_sales (Day 11)   |  984300 |    397 |
+| fact_sales (Day 17)    |  984300 |    397 |
+| monthly_sales (Day 19) |  984300 |    570 |
++------------------------+---------+--------+</code></pre></div>
+  <p>The first table is the refresh procedure's own report. In the second, revenue matches in all three places, to the rupee. But <code>monthly_sales</code> says 570 orders, not 397. It isn't wrong: it has one row per month <em>and category</em>, and an order with a book and a shirt is counted once in Books and once in Clothing. Adding its <code>orders</code> column across categories counts those orders twice. It's the grain mistake from Day 20's mock interview, in a table you built yourself. The lesson: a summary table is safe for the measures that add up (revenue), and not for counts of distinct things. So the scorecard counts orders from <code>clean_sales</code>.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>The scorecard</h2>
+  <p>The top of the review is a <strong>scorecard</strong>: one row per metric, with the month, the comparisons, and the change. Since Ritu wants this every month, save it as a procedure from the start (Day 19), with the month as its input. Here it is, and then a walk through how it works:</p>
+  <div class="code"><div class="code-bar"><span>Build 1: the scorecard procedure</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">DROP</span> PROCEDURE <span class="k">IF</span> <span class="k">EXISTS</span> monthly_scorecard;
+
+DELIMITER $$
+
+<span class="k">CREATE</span> PROCEDURE monthly_scorecard(<span class="k">IN</span> p_month <span class="t">DATE</span>)    <span class="c">-- the first day of the month to review</span>
+BEGIN
+    <span class="k">WITH</span> monthly <span class="k">AS</span> (                                   <span class="c">-- step 1: one row per month</span>
+        <span class="k">SELECT</span> DATE_FORMAT(order_date, <span class="s">'%Y-%m-01'</span>)                <span class="k">AS</span> month_start,
+               <span class="k">SUM</span>(line_total)                                     <span class="k">AS</span> revenue,
+               <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id)                            <span class="k">AS</span> orders,
+               <span class="k">SUM</span>(line_total) / <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id)          <span class="k">AS</span> avg_order_value,
+               <span class="k">COUNT</span>(<span class="k">DISTINCT</span> customer_id)                         <span class="k">AS</span> buyers,
+               <span class="n">100</span> * <span class="k">SUM</span>(line_total - line_cost) / <span class="k">SUM</span>(line_total) <span class="k">AS</span> gross_margin_pct
+        <span class="k">FROM</span> clean_sales
+        <span class="k">WHERE</span> order_date &gt;= p_month - INTERVAL <span class="n">1</span> <span class="t">YEAR</span>
+          <span class="k">AND</span> order_date &lt;  p_month + INTERVAL <span class="n">1</span> MONTH
+        <span class="k">GROUP</span> <span class="k">BY</span> month_start
+    ), new_buyers <span class="k">AS</span> (
+        <span class="k">SELECT</span> DATE_FORMAT(first_order_date, <span class="s">'%Y-%m-01'</span>) <span class="k">AS</span> month_start,
+               <span class="k">COUNT</span>(*)                                   <span class="k">AS</span> new_customers
+        <span class="k">FROM</span> customer_summary
+        <span class="k">GROUP</span> <span class="k">BY</span> month_start
+    ), long_form <span class="k">AS</span> (                                   <span class="c">-- step 2: one row per month and metric</span>
+                  <span class="k">SELECT</span> month_start, <span class="n">1</span> <span class="k">AS</span> sort_order, <span class="s">'Revenue'</span> <span class="k">AS</span> metric, revenue <span class="k">AS</span> value <span class="k">FROM</span> monthly
+        <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> month_start, <span class="n">2</span>, <span class="s">'Orders'</span>,          orders           <span class="k">FROM</span> monthly
+        <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> month_start, <span class="n">3</span>, <span class="s">'Avg order value'</span>, avg_order_value  <span class="k">FROM</span> monthly
+        <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> month_start, <span class="n">4</span>, <span class="s">'Buyers'</span>,          buyers           <span class="k">FROM</span> monthly
+        <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> month_start, <span class="n">5</span>, <span class="s">'New customers'</span>,   new_customers    <span class="k">FROM</span> new_buyers
+        <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> month_start, <span class="n">6</span>, <span class="s">'Gross margin %'</span>,  gross_margin_pct <span class="k">FROM</span> monthly
+    ), wide <span class="k">AS</span> (                                        <span class="c">-- step 3: the three months side by side</span>
+        <span class="k">SELECT</span> sort_order, metric,
+               <span class="k">MAX</span>(<span class="k">CASE</span> <span class="k">WHEN</span> month_start = p_month                    <span class="k">THEN</span> value <span class="k">END</span>) <span class="k">AS</span> this_month,
+               <span class="k">MAX</span>(<span class="k">CASE</span> <span class="k">WHEN</span> month_start = p_month - INTERVAL <span class="n">1</span> MONTH <span class="k">THEN</span> value <span class="k">END</span>) <span class="k">AS</span> last_month,
+               <span class="k">MAX</span>(<span class="k">CASE</span> <span class="k">WHEN</span> month_start = p_month - INTERVAL <span class="n">1</span> <span class="t">YEAR</span>  <span class="k">THEN</span> value <span class="k">END</span>) <span class="k">AS</span> last_year
+        <span class="k">FROM</span> long_form
+        <span class="k">GROUP</span> <span class="k">BY</span> sort_order, metric
+    )
+    <span class="k">SELECT</span> metric,                                      <span class="c">-- step 4: format and compare</span>
+           FORMAT(this_month, <span class="k">IF</span>(sort_order = <span class="n">6</span>, <span class="n">1</span>, <span class="n">0</span>), <span class="s">'en_IN'</span>) <span class="k">AS</span> this_month,
+           FORMAT(last_month, <span class="k">IF</span>(sort_order = <span class="n">6</span>, <span class="n">1</span>, <span class="n">0</span>), <span class="s">'en_IN'</span>) <span class="k">AS</span> last_month,
+           FORMAT(last_year,  <span class="k">IF</span>(sort_order = <span class="n">6</span>, <span class="n">1</span>, <span class="n">0</span>), <span class="s">'en_IN'</span>) <span class="k">AS</span> same_month_last_year,
+           <span class="k">ROUND</span>(<span class="k">IF</span>(sort_order = <span class="n">6</span>, this_month - last_month,
+                                    <span class="n">100</span> * (this_month / last_month - <span class="n">1</span>)), <span class="n">1</span>) <span class="k">AS</span> vs_last_month,
+           <span class="k">ROUND</span>(<span class="k">IF</span>(sort_order = <span class="n">6</span>, this_month - last_year,
+                                    <span class="n">100</span> * (this_month / last_year - <span class="n">1</span>)), <span class="n">1</span>)  <span class="k">AS</span> vs_last_year
+    <span class="k">FROM</span> wide
+    <span class="k">ORDER</span> <span class="k">BY</span> sort_order;
+<span class="k">END</span>$$
+
+DELIMITER ;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL monthly_scorecard(<span class="s">'2024-11-01'</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------+------------+------------+----------------------+---------------+--------------+
+| metric          | this_month | last_month | same_month_last_year | vs_last_month | vs_last_year |
++-----------------+------------+------------+----------------------+---------------+--------------+
+| Revenue         | 9,84,300   | 10,69,768  | 7,80,842             |          -8.0 |         26.1 |
+| Orders          | 397        | 426        | 315                  |          -6.8 |         26.0 |
+| Avg order value | 2,479      | 2,511      | 2,479                |          -1.3 |          0.0 |
+| Buyers          | 322        | 325        | 263                  |          -0.9 |         22.4 |
+| New customers   | 111        | 100        | 96                   |          11.0 |         15.6 |
+| Gross margin %  | 43.3       | 37.7       | 39.5                 |           5.7 |          3.9 |
++-----------------+------------+------------+----------------------+---------------+--------------+</code></pre></div>
+  <p>Four steps, each one a pattern you know:</p>
+  <ol style="padding-left:22px;margin-bottom:18px">
+    <li><strong><code>monthly</code></strong> works out every metric for each month from November 2023 to November 2024, grouped with Day 6's <code>DATE_FORMAT</code> and Day 12's half-open range. <code>new_buyers</code> counts first orders from Day 13's <code>customer_summary</code>.</li>
+    <li><strong><code>long_form</code></strong> turns the six metric <em>columns</em> into <em>rows</em>, one per month and metric, with <code>UNION ALL</code> (Day 16). This is the opposite of a pivot, often called an <strong>unpivot</strong>.</li>
+    <li><strong><code>wide</code></strong> then pivots the months into columns with <code>MAX(CASE ...)</code>, exactly as on Days 8 and 16. Unpivot, then pivot: that's how you turn "a row per month" into "a row per metric".</li>
+    <li>The last <code>SELECT</code> formats the numbers the Indian way with <code>FORMAT(..., 'en_IN')</code> (9,84,300, like Day 11's ₹1,31,72,860), and works out the changes. The margin is already a percentage, so its change is shown in <em>percentage points</em> (43.34 − 37.69 = 5.65, shown rounded as 5.7). Saying "margin rose 15%" for a move from 37.7% to 43.3% would confuse everyone.</li>
+  </ol>
+  <p>Now read it the way Ritu will. <strong>Against October</strong>, almost everything is down: revenue −8%, orders −7%. <strong>Against last November</strong>, almost everything is up: revenue +26%, orders +26%, buyers +22%. Both are true. October was the Diwali month, so the fair reading is the second one: November grew strongly on last year, and dipped after the festive peak, as expected. And two numbers stand out on <em>both</em> comparisons: 111 new customers (the second-best month the shop has had, after October 2023's 114), and a gross margin of 43.3%, up almost 6 points in a month. Sections 4 and 5 explain the big moves.</p>
+  <p>Finally, the bigger picture, by calendar year and by financial year. Notice that the filters are plain date ranges, and the functions only <em>label</em> the rows (Day 19's advice):</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'Calendar year, Jan to Nov'</span> <span class="k">AS</span> period,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> last_year,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> this_year
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> (order_date &gt;= <span class="s">'2023-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2023-12-01'</span>)
+   <span class="k">OR</span> (order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>)
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Financial year, Apr to Nov'</span>,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> fiscal_year(order_date) = <span class="s">'FY2023-24'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)),
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> fiscal_year(order_date) = <span class="s">'FY2024-25'</span> <span class="k">THEN</span> line_total <span class="k">END</span>))
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> (order_date &gt;= <span class="s">'2023-04-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2023-12-01'</span>)
+   <span class="k">OR</span> (order_date &gt;= <span class="s">'2024-04-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------------------+-----------+-----------+
+| period                     | last_year | this_year |
++----------------------------+-----------+-----------+
+| Calendar year, Jan to Nov  |   4562389 |   7285884 |
+| Financial year, Apr to Nov |   3813628 |   5735450 |
++----------------------------+-----------+-----------+</code></pre></div>
+  <p>About ₹72.9 lakh so far this calendar year, up about 60% on the same eleven months of 2023, and ₹57.4 lakh in the financial year so far, up about 50%. The growth rates differ because January to March 2024 more than doubled on a small start in early 2023, and the financial year leaves those months out. Say which "year" you mean, every time.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>Why revenue moved</h2>
+  <p>Revenue is <strong>orders × average order value</strong>, so any change in revenue comes from more (or fewer) orders, bigger (or smaller) orders, or both. Day 20 did this split by eye. Here's a version that puts a rupee figure on each part:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> monthly <span class="k">AS</span> (
+    <span class="k">SELECT</span> DATE_FORMAT(order_date, <span class="s">'%Y-%m-01'</span>) <span class="k">AS</span> month_start,
+           <span class="k">SUM</span>(line_total)          <span class="k">AS</span> revenue,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> order_id) <span class="k">AS</span> orders
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> month_start
+), pairs <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="s">'vs October 2024'</span> <span class="k">AS</span> comparison,
+           b.revenue <span class="k">AS</span> revenue_before, b.orders <span class="k">AS</span> orders_before,
+           a.revenue <span class="k">AS</span> revenue_now,    a.orders <span class="k">AS</span> orders_now
+    <span class="k">FROM</span> monthly a <span class="k">JOIN</span> monthly b <span class="k">ON</span> a.month_start = <span class="s">'2024-11-01'</span> <span class="k">AND</span> b.month_start = <span class="s">'2024-10-01'</span>
+    <span class="k">UNION</span> <span class="k">ALL</span>
+    <span class="k">SELECT</span> <span class="s">'vs November 2023'</span>, b.revenue, b.orders, a.revenue, a.orders
+    <span class="k">FROM</span> monthly a <span class="k">JOIN</span> monthly b <span class="k">ON</span> a.month_start = <span class="s">'2024-11-01'</span> <span class="k">AND</span> b.month_start = <span class="s">'2023-11-01'</span>
+)
+<span class="k">SELECT</span> comparison,
+       <span class="k">ROUND</span>(revenue_now - revenue_before) <span class="k">AS</span> revenue_change,
+       <span class="k">ROUND</span>((orders_now - orders_before) * (revenue_before / orders_before))         <span class="k">AS</span> from_number_of_orders,
+       <span class="k">ROUND</span>((revenue_now / orders_now - revenue_before / orders_before) * orders_now) <span class="k">AS</span> from_order_size
+<span class="k">FROM</span> pairs;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+----------------+-----------------------+-----------------+
+| comparison       | revenue_change | from_number_of_orders | from_order_size |
++------------------+----------------+-----------------------+-----------------+
+| vs October 2024  |         -85468 |                -72825 |          -12643 |
+| vs November 2023 |         203458 |                203267 |             191 |
++------------------+----------------+-----------------------+-----------------+</code></pre></div>
+  <p>How the split works: first, price the <em>change in orders</em> at the old order value ("if each order had been the same size as before, what would the extra orders be worth?"). Then the <em>change in order value</em> is applied to this month's orders. The two parts always add up exactly to the total change, which is a good check that the arithmetic is right (−72,825 − 12,643 = −85,468).</p>
+  <ul>
+    <li><strong>Against October</strong>, revenue fell by about ₹85,000, and 85% of that is fewer orders. Orders also got slightly smaller, but that's the smaller part.</li>
+    <li><strong>Against last November</strong>, revenue rose by about ₹2 lakh, and <em>all</em> of it is more orders. The average order is the same size as a year ago, to the rupee (₹2,479). The shop isn't selling bigger baskets. It's selling to more people.</li>
+  </ul>
+  <p>That last point is the kind of sentence a CEO remembers. It also tells her where growth comes from, and so where to look if it stops: in the number of orders, which Day 13's funnel and new-customer numbers explain.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>What sold, and the margin</h2>
+  <p>Next, the categories, side by side for the three months, with each category's margin in October and November. It's Day 16's pivot, built straight from <code>clean_sales</code>:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> category_name,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> nov_2024,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-11-01'</span>
+                      <span class="k">THEN</span> line_total <span class="k">END</span>))                                  <span class="k">AS</span> oct_2024,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2023-12-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> nov_2023,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-11-01'</span>
+                            <span class="k">THEN</span> line_total - line_cost <span class="k">END</span>)
+                 / <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-11-01'</span>
+                            <span class="k">THEN</span> line_total <span class="k">END</span>), <span class="n">1</span>)                         <span class="k">AS</span> oct_margin,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total - line_cost <span class="k">END</span>)
+                 / <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> nov_margin
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> (order_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2023-12-01'</span>)
+   <span class="k">OR</span> (order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> category_name
+<span class="k">ORDER</span> <span class="k">BY</span> nov_2024 <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+----------+----------+------------+------------+
+| category_name  | nov_2024 | oct_2024 | nov_2023 | oct_margin | nov_margin |
++----------------+----------+----------+----------+------------+------------+
+| Clothing       |   373715 |   273359 |   309400 |       51.6 |       54.0 |
+| Electronics    |   311832 |   442090 |   253701 |       25.2 |       28.8 |
+| Sports         |   142306 |   182595 |    66988 |       46.2 |       47.9 |
+| Home &amp; Kitchen |    98469 |   101364 |    84944 |       39.0 |       44.1 |
+| Books          |    57978 |    70360 |    65808 |       38.3 |       40.2 |
++----------------+----------+----------+----------+------------+------------+</code></pre></div>
+  <p>Two things happened between October and November. <strong>Electronics fell by about ₹1.3 lakh</strong>: October's Diwali gadget buying was over. <strong>Clothing rose by about ₹1 lakh</strong>, and became the biggest category. Which clothing? Day 12's favourite seasonal product is back:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> product_name,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> oct_2024,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)) <span class="k">AS</span> nov_2024
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> category_name = <span class="s">'Clothing'</span>
+  <span class="k">AND</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> product_name
+<span class="k">ORDER</span> <span class="k">BY</span> nov_2024 <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">3</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------+----------+----------+
+| product_name  | oct_2024 | nov_2024 |
++---------------+----------+----------+
+| Winter Jacket |     9972 |    88778 |
+| Kurta Set     |    53808 |    71678 |
+| Cotton Saree  |    63837 |    67098 |
++---------------+----------+----------+</code></pre></div>
+  <p>Winter arrived: the Winter Jacket sold almost nine times as much as in October. Against last year, every category grew except Books, and Sports more than doubled (Day 15 saw the same trend across the whole year).</p>
+
+  <h3 style="margin:28px 0 8px">Why did the margin jump almost 6 points?</h3>
+  <p>Look at the margin columns. Clothing earns over 50% margin, and Electronics under 30%. So when spending moves from Electronics to Clothing, the shop's overall margin rises even if no single product's margin changes. That's a <strong>mix effect</strong>. But every category's own margin also went up a little, which is a <strong>rate effect</strong>. How much of the jump is each? Recalculate October's margin twice, changing one thing at a time:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> by_category <span class="k">AS</span> (
+    <span class="k">SELECT</span> category_name,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)             <span class="k">AS</span> oct_revenue,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total - line_cost <span class="k">END</span>) <span class="k">AS</span> oct_profit,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>)             <span class="k">AS</span> nov_revenue,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total - line_cost <span class="k">END</span>) <span class="k">AS</span> nov_profit
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> category_name
+), shares <span class="k">AS</span> (
+    <span class="k">SELECT</span> *,
+           oct_revenue / <span class="k">SUM</span>(oct_revenue) <span class="k">OVER</span> () <span class="k">AS</span> oct_share,     <span class="c">-- each category's share of the month</span>
+           nov_revenue / <span class="k">SUM</span>(nov_revenue) <span class="k">OVER</span> () <span class="k">AS</span> nov_share
+    <span class="k">FROM</span> by_category
+)
+<span class="k">SELECT</span> <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(oct_profit) / <span class="k">SUM</span>(oct_revenue), <span class="n">1</span>)        <span class="k">AS</span> october_margin,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(nov_share * oct_profit / oct_revenue), <span class="n">1</span>) <span class="k">AS</span> november_mix_october_margins,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(oct_share * nov_profit / nov_revenue), <span class="n">1</span>) <span class="k">AS</span> october_mix_november_margins,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(nov_profit) / <span class="k">SUM</span>(nov_revenue), <span class="n">1</span>)        <span class="k">AS</span> november_margin
+<span class="k">FROM</span> shares;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+------------------------------+------------------------------+-----------------+
+| october_margin | november_mix_october_margins | october_mix_november_margins | november_margin |
++----------------+------------------------------+------------------------------+-----------------+
+|           37.7 |                         40.4 |                         40.7 |            43.3 |
++----------------+------------------------------+------------------------------+-----------------+</code></pre></div>
+  <p>Read it left to right. October's actual margin was 37.7%. Keep October's margins but switch to November's <em>mix</em> of categories, and it rises to 40.4%: about 2.7 points come from selling more clothing. Keep October's mix but use November's <em>margins</em>, and it rises to 40.7%: about 3 points come from better margins inside the categories. The two together explain the move to 43.3%. (They don't add up perfectly, because mix and rate changed at the same time. That small overlap is normal.)</p>
+  <p>And why did margins inside the categories improve? Remember Day 15's clue: <code>line_total</code> is what the customer paid, with any coupon discount already taken off, while the cost stays the same. So heavy discounting lowers the margin:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COALESCE</span>(coupon_code, <span class="s">'No coupon'</span>) <span class="k">AS</span> coupon,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-11-01'</span> <span class="k">THEN</span> order_id <span class="k">END</span>) <span class="k">AS</span> oct_orders,
+       <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> order_id <span class="k">END</span>) <span class="k">AS</span> nov_orders,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(line_total - line_cost) / <span class="k">SUM</span>(line_total), <span class="n">1</span>)           <span class="k">AS</span> margin_both_months
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> coupon
+<span class="k">ORDER</span> <span class="k">BY</span> oct_orders <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------+------------+------------+--------------------+
+| coupon    | oct_orders | nov_orders | margin_both_months |
++-----------+------------+------------+--------------------+
+| No coupon |        357 |        348 |               42.2 |
+| FESTIVE15 |         48 |         20 |               21.1 |
+| WELCOME10 |         21 |         29 |               33.9 |
++-----------+------------+------------+--------------------+</code></pre></div>
+  <p><code>FESTIVE15</code> orders earn only about 21% margin. In October there were 48 of them, in November 20. Fewer festive discounts, higher margins.</p>
+  <p>One more check before calling a 6-point jump good news: was November unusually high, or October unusually low? A month-on-month change can't tell you. The longer trend can:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> DATE_FORMAT(order_date, <span class="s">'%Y-%m'</span>)                          <span class="k">AS</span> month,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(line_total - line_cost) / <span class="k">SUM</span>(line_total), <span class="n">1</span>) <span class="k">AS</span> gross_margin_pct
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> month
+<span class="k">ORDER</span> <span class="k">BY</span> month;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+------------------+
+| month   | gross_margin_pct |
++---------+------------------+
+| 2024-01 |             42.5 |
+| 2024-02 |             43.6 |
+| 2024-03 |             44.2 |
+| 2024-04 |             43.3 |
+| 2024-05 |             43.6 |
+| 2024-06 |             43.0 |
+| 2024-07 |             42.5 |
+| 2024-08 |             42.1 |
+| 2024-09 |             40.6 |
+| 2024-10 |             37.7 |
+| 2024-11 |             43.3 |
++---------+------------------+</code></pre></div>
+  <p>October was the odd one out: its 37.7% was the lowest margin of the year, pulled down by Diwali gadgets and discounts. Most months of 2024 sat between about 42% and 44%, and November is simply back in that range. So the honest summary is: <strong>the margin didn't jump, it recovered</strong>. Don't tell Ritu it's a new record, and don't promise more of the same. (Section 7 adds one more catch: clothing gets returned a lot.)</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>Customers and channels</h2>
+  <p>Where did the extra orders come from: new customers or returning ones? One row per order first, with a flag for "first order", then group (the same shape as Day 20's investigation):</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> orders <span class="k">AS</span> (
+    <span class="k">SELECT</span> s.order_id,
+           <span class="k">MIN</span>(s.order_date)                        <span class="k">AS</span> order_date,
+           <span class="k">MIN</span>(s.channel)                           <span class="k">AS</span> channel,
+           <span class="k">SUM</span>(s.line_total)                        <span class="k">AS</span> revenue,
+           <span class="k">MIN</span>(s.order_date) = <span class="k">MIN</span>(c.first_order_date) <span class="k">AS</span> is_first_order
+    <span class="k">FROM</span> clean_sales s
+    <span class="k">JOIN</span> customer_summary c <span class="k">ON</span> c.customer_id = s.customer_id
+    <span class="k">WHERE</span> (s.order_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2023-12-01'</span>)
+       <span class="k">OR</span> (s.order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2024-12-01'</span>)
+    <span class="k">GROUP</span> <span class="k">BY</span> s.order_id
+)
+<span class="k">SELECT</span> DATE_FORMAT(order_date, <span class="s">'%Y-%m'</span>)                              <span class="k">AS</span> month,
+       <span class="k">SUM</span>(is_first_order)                                           <span class="k">AS</span> first_orders,
+       <span class="k">SUM</span>(<span class="k">NOT</span> is_first_order)                                       <span class="k">AS</span> repeat_orders,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> <span class="k">NOT</span> is_first_order <span class="k">THEN</span> revenue <span class="k">END</span>)
+                 / <span class="k">SUM</span>(revenue), <span class="n">1</span>)                                  <span class="k">AS</span> repeat_revenue_pct,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(channel = <span class="s">'app'</span>), <span class="n">1</span>)                          <span class="k">AS</span> app_orders_pct
+<span class="k">FROM</span> orders
+<span class="k">GROUP</span> <span class="k">BY</span> month
+<span class="k">ORDER</span> <span class="k">BY</span> month;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+--------------+---------------+--------------------+----------------+
+| month   | first_orders | repeat_orders | repeat_revenue_pct | app_orders_pct |
++---------+--------------+---------------+--------------------+----------------+
+| 2023-11 |           96 |           219 |               66.5 |           46.0 |
+| 2024-10 |          100 |           326 |               78.1 |           48.6 |
+| 2024-11 |          111 |           286 |               71.7 |           50.1 |
++---------+--------------+---------------+--------------------+----------------+</code></pre></div>
+  <ul>
+    <li><strong>Against last November</strong>, both kinds of order grew: first orders by 15 (96 to 111), and repeat orders by 67 (219 to 286). Most of the growth is customers coming <em>back</em>, the thing Day 13 said the shop most needed.</li>
+    <li><strong>Against October</strong>, first orders went <em>up</em> and repeat orders went down by 40. The post-Diwali dip is entirely returning customers taking a break, which is normal after a big shopping month. (That's also why Day 22's question, "who stays and who leaves?", matters so much.)</li>
+    <li>About 7 in 10 rupees still come from repeat orders. And the app now takes half of all orders, against 46% a year ago (Day 16 saw the app overtake the website in 2024).</li>
+  </ul>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="n">7</span>Returns and operations</h2>
+  <p>Day 11 left a question open: is "revenue" before or after returns? The review should show both. Every return in our data arrives within 25 days of its order, so by now November's orders have had their full return window. Match each sold line to its return, if any, with a <code>LEFT JOIN</code> (Day 15's returns question):</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> DATE_FORMAT(s.order_date, <span class="s">'%Y-%m'</span>)                       <span class="k">AS</span> month,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(s.line_total))                                  <span class="k">AS</span> revenue,
+       <span class="k">ROUND</span>(<span class="k">COALESCE</span>(<span class="k">SUM</span>(r.refund_amount), <span class="n">0</span>))                  <span class="k">AS</span> refunded,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(s.line_total) - <span class="k">COALESCE</span>(<span class="k">SUM</span>(r.refund_amount), <span class="n">0</span>)) <span class="k">AS</span> net_revenue,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">COUNT</span>(r.return_id) / <span class="k">COUNT</span>(*), <span class="n">1</span>)             <span class="k">AS</span> lines_returned_pct
+<span class="k">FROM</span> clean_sales s
+<span class="k">LEFT</span> <span class="k">JOIN</span> clean_returns r <span class="k">ON</span> r.order_item_id = s.order_item_id
+<span class="k">WHERE</span> (s.order_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2023-12-01'</span>)
+   <span class="k">OR</span> (s.order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2024-12-01'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> month
+<span class="k">ORDER</span> <span class="k">BY</span> month;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+---------+----------+-------------+--------------------+
+| month   | revenue | refunded | net_revenue | lines_returned_pct |
++---------+---------+----------+-------------+--------------------+
+| 2023-11 |  780842 |    63603 |      717239 |                8.2 |
+| 2024-10 | 1069768 |    80853 |      988914 |                6.7 |
+| 2024-11 |  984300 |    59164 |      925136 |                6.3 |
++---------+---------+----------+-------------+--------------------+</code></pre></div>
+  <p>About ₹9.25 lakh after returns. The return rate is the lowest of the three months. But where do November's refunds come from?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> s.category_name,
+       <span class="k">COUNT</span>(*)                                       <span class="k">AS</span> lines_sold,
+       <span class="k">COUNT</span>(r.return_id)                             <span class="k">AS</span> returned,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">COUNT</span>(r.return_id) / <span class="k">COUNT</span>(*), <span class="n">1</span>)  <span class="k">AS</span> returned_pct,
+       <span class="k">ROUND</span>(<span class="k">COALESCE</span>(<span class="k">SUM</span>(r.refund_amount), <span class="n">0</span>))       <span class="k">AS</span> refunded
+<span class="k">FROM</span> clean_sales s
+<span class="k">LEFT</span> <span class="k">JOIN</span> clean_returns r <span class="k">ON</span> r.order_item_id = s.order_item_id
+<span class="k">WHERE</span> s.order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> s.category_name
+<span class="k">ORDER</span> <span class="k">BY</span> refunded <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+------------+----------+--------------+----------+
+| category_name  | lines_sold | returned | returned_pct | refunded |
++----------------+------------+----------+--------------+----------+
+| Clothing       |        225 |       29 |         12.9 |    44509 |
+| Electronics    |        144 |        6 |          4.2 |     8312 |
+| Sports         |        121 |        2 |          1.7 |     3846 |
+| Home &amp; Kitchen |         80 |        2 |          2.5 |     2098 |
+| Books          |         69 |        1 |          1.4 |      399 |
++----------------+------------+----------+--------------+----------+</code></pre></div>
+  <p>Clothing: about 1 line in 8 comes back, three-quarters of all refunds. It's the same pattern Day 15's take-home found for the whole two years, and Day 11 found that size problems are the most common reason for returns. This is the catch in section 5: the shift to clothing raised the margin, but it also raises returns. A size guide on the clothing pages would protect November's gains.</p>
+  <p>Last, the operational health checks: cancellations and failed payments. Notice the trick in this query: <code>CASE</code> without an <code>ELSE</code> gives NULL for rows outside the month, and <code>AVG</code> skips NULLs, so each column averages only its own month. Day 20 showed how that NULL-skipping can mislead. Here, it's exactly what we want:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="s">'Orders cancelled %'</span> <span class="k">AS</span> measure,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+                            <span class="k">THEN</span> status = <span class="s">'Cancelled'</span> <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> nov_2024,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-11-01'</span>
+                            <span class="k">THEN</span> status = <span class="s">'Cancelled'</span> <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> oct_2024,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2023-12-01'</span>
+                            <span class="k">THEN</span> status = <span class="s">'Cancelled'</span> <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> nov_2023
+<span class="k">FROM</span> clean_orders
+<span class="k">WHERE</span> is_test = <span class="n">0</span> <span class="k">AND</span> is_duplicate = <span class="n">0</span>
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Payment attempts failed %'</span>,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> payment_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> payment_date &lt; <span class="s">'2024-12-01'</span>
+                            <span class="k">THEN</span> payment_status = <span class="s">'failed'</span> <span class="k">END</span>), <span class="n">1</span>),
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> payment_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> payment_date &lt; <span class="s">'2024-11-01'</span>
+                            <span class="k">THEN</span> payment_status = <span class="s">'failed'</span> <span class="k">END</span>), <span class="n">1</span>),
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> payment_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> payment_date &lt; <span class="s">'2023-12-01'</span>
+                            <span class="k">THEN</span> payment_status = <span class="s">'failed'</span> <span class="k">END</span>), <span class="n">1</span>)
+<span class="k">FROM</span> clean_payments;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------------+----------+----------+----------+
+| measure                   | nov_2024 | oct_2024 | nov_2023 |
++---------------------------+----------+----------+----------+
+| Orders cancelled %        |      5.9 |      5.8 |      7.8 |
+| Payment attempts failed % |      3.3 |      3.5 |      5.4 |
++---------------------------+----------+----------+----------+</code></pre></div>
+  <p>Both are steady or better: cancellations in line with October, and below last November. Failed payments are down to about 1 in 30 attempts, from more than 1 in 20 a year ago.</p>
+  <p>And the website (Day 13's funnel). One trap: Day 12's issue log says the tracking was down on the morning of 19 November, so sessions from that day are left out, exactly as Day 13 did:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> sessions <span class="k">AS</span> (
+    <span class="k">SELECT</span> session_id,
+           <span class="k">MIN</span>(event_time)                    <span class="k">AS</span> started,
+           <span class="k">MAX</span>(event_type = <span class="s">'product_view'</span>)   <span class="k">AS</span> viewed,
+           <span class="k">MAX</span>(event_type = <span class="s">'add_to_cart'</span>)    <span class="k">AS</span> carted,
+           <span class="k">MAX</span>(event_type = <span class="s">'checkout_start'</span>) <span class="k">AS</span> checked_out,
+           <span class="k">MAX</span>(event_type = <span class="s">'purchase'</span>)       <span class="k">AS</span> purchased
+    <span class="k">FROM</span> clean_web_events
+    <span class="k">GROUP</span> <span class="k">BY</span> session_id
+    <span class="k">HAVING</span> <span class="k">NOT</span> (started &gt;= <span class="s">'2024-11-19'</span> <span class="k">AND</span> started &lt; <span class="s">'2024-11-20'</span>)   <span class="c">-- issue #13</span>
+)
+<span class="k">SELECT</span> DATE_FORMAT(started, <span class="s">'%Y-%m'</span>)                      <span class="k">AS</span> month,
+       <span class="k">COUNT</span>(*)                                           <span class="k">AS</span> sessions,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(carted) / <span class="k">SUM</span>(viewed), <span class="n">1</span>)          <span class="k">AS</span> viewers_who_carted_pct,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(purchased) / <span class="k">SUM</span>(checked_out), <span class="n">1</span>)  <span class="k">AS</span> checkouts_paid_pct,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(purchased), <span class="n">1</span>)                     <span class="k">AS</span> conversion_pct
+<span class="k">FROM</span> sessions
+<span class="k">WHERE</span> started &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> month
+<span class="k">ORDER</span> <span class="k">BY</span> month;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+----------+------------------------+--------------------+----------------+
+| month   | sessions | viewers_who_carted_pct | checkouts_paid_pct | conversion_pct |
++---------+----------+------------------------+--------------------+----------------+
+| 2024-10 |     7564 |                   27.3 |               59.6 |            6.0 |
+| 2024-11 |     6872 |                   27.8 |               56.5 |            6.0 |
++---------+----------+------------------------+--------------------+----------------+</code></pre></div>
+  <p>Fewer sessions in November, but November has one day fewer than October, and we left out 19 November. Per day, it's about 244 sessions in October against 237 in November, a dip of about 3%. The share of viewers who added to cart held steady, and so did the overall conversion: 6% of visits ended in a purchase in both months. Fewer checkouts were paid for (56.5% against 59.6%), a small dip worth keeping an eye on next month. But the main story is that the drop in orders against October comes from fewer visitors, not a broken website. (Tracking only started in October 2024, so there's no year-on-year comparison yet: say so in the review rather than leaving a blank.)</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="n">8</span>Write it up</h2>
+  <p>You now have far more numbers than Ritu wants to read. The skill is choosing. Day 20's advice applies: lead with the answer, round the numbers, separate what the data shows from what you think, and end with actions. Here's the page:</p>
+  <div class="note"><p><strong>Monthly review: November 2024</strong></p>
+  <p style="margin-top:8px"><strong>Headline.</strong> Revenue was ₹9.8 lakh: up 26% on November 2023, and down 8% on October's Diwali peak, as expected after a festive month. All of the growth on last year is more orders. The average order is the same size as a year ago. Calendar year to date: ₹72.9 lakh, up about 60%.</p>
+  <p style="margin-top:8px"><strong>Going well.</strong> 111 new customers, our second-best month ever. Repeat orders up 31% on last November. Gross margin back to 43%. Failed payments down to about 3% of attempts.</p>
+  <p style="margin-top:8px"><strong>To watch.</strong> The margin's 6-point rise is a recovery, not a record: October (38%) was our lowest month of the year, pulled down by Diwali gadgets and discounts, and November is back in our usual 42 to 44%. Winter clothing helped (the Winter Jacket sold nine times October's amount). Clothing returns: 1 line in 8 comes back, three-quarters of all refunds, mostly about size. Returning customers took a break after Diwali: 40 fewer repeat orders than in October.</p>
+  <p style="margin-top:8px"><strong>Suggested actions.</strong> Add a size guide to the clothing pages. Plan a gentle win-back message for October's festive buyers who haven't returned (Day 13's segments can pick them).</p>
+  <p style="margin-top:8px"><strong>Notes.</strong> Revenue is completed orders before returns (₹9.25 lakh after returns). Website figures leave out 19 November (tracking outage). Definitions are listed below this page.</p></div>
+  <p>Notice what's <em>not</em> there: no SQL, no tables with ten columns, no number with more than three significant figures. Every number in it, though, is one you can point to in a query above. If Ritu asks "why?", you have the answer one level down.</p>
+
+  <h3 style="margin:28px 0 8px">Next month, in one line</h3>
+  <p>Because the scorecard is a procedure, next month's review starts with one <code>CALL</code>. It works for any month. Here's February 2024, the month you investigated by hand on Day 20:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL monthly_scorecard(<span class="s">'2024-02-01'</span>);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------+------------+------------+----------------------+---------------+--------------+
+| metric          | this_month | last_month | same_month_last_year | vs_last_month | vs_last_year |
++-----------------+------------+------------+----------------------+---------------+--------------+
+| Revenue         | 4,56,942   | 5,92,610   | 2,05,905             |         -22.9 |        121.9 |
+| Orders          | 200        | 245        | 102                  |         -18.4 |         96.1 |
+| Avg order value | 2,285      | 2,419      | 2,019                |          -5.5 |         13.2 |
+| Buyers          | 177        | 207        | 86                   |         -14.5 |        105.8 |
+| New customers   | 58         | 47         | 64                   |          23.4 |         -9.4 |
+| Gross margin %  | 43.6       | 42.5       | 41.8                 |           1.2 |          1.9 |
++-----------------+------------+------------+----------------------+---------------+--------------+</code></pre></div>
+  <p>Revenue −22.9%, orders from 245 to 200, order value −5.5%: the same numbers Day 20 found, in one line instead of three queries. To take it further, you could schedule it with a MySQL event (Day 19), send it from Python with pandas (Day 14), or point a dashboard at Day 17's warehouse. And if Ritu's assistant should run it too, <code>GRANT EXECUTE ON PROCEDURE online_store_full.monthly_scorecard</code> gives her the answer without access to the tables behind it (Day 19).</p>
+</section>
+
+<!-- Try this -->
+<div class="try" id="try">
+  <h2>✏️ Try this before Day 22</h2>
+  <ol style="padding-left:22px">
+    <li>Run the scorecard for September 2024 and write a two-sentence headline for it.</li>
+    <li>Which acquisition channels brought November's 111 new customers, compared with November 2023?</li>
+    <li>Show November's five best-selling products by revenue, with their October revenue and the change.</li>
+    <li>A colleague says: "The margin only jumped because the Diwali coupons ended." Test it: what was the margin on orders <em>without</em> a coupon, in October and in November?</li>
+    <li>In real life, this review would go out on 3 December. Which numbers would still have been incomplete then, and by how much?</li>
+  </ol>
+  <details class="reveal">
+    <summary>Show sample answers</summary>
+    <div class="body">
+      <p><strong>1.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code>CALL monthly_scorecard(<span class="s">'2024-09-01'</span>);</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------+------------+------------+----------------------+---------------+--------------+
+| metric          | this_month | last_month | same_month_last_year | vs_last_month | vs_last_year |
++-----------------+------------+------------+----------------------+---------------+--------------+
+| Revenue         | 6,79,043   | 6,75,868   | 4,58,861             |           0.5 |         48.0 |
+| Orders          | 308        | 289        | 212                  |           6.6 |         45.3 |
+| Avg order value | 2,205      | 2,339      | 2,164                |          -5.7 |          1.9 |
+| Buyers          | 268        | 252        | 188                  |           6.3 |         42.6 |
+| New customers   | 98         | 104        | 91                   |          -5.8 |          7.7 |
+| Gross margin %  | 40.6       | 42.1       | 41.0                 |          -1.5 |         -0.4 |
++-----------------+------------+------------+----------------------+---------------+--------------+</code></pre></div>
+      <p>"Revenue was ₹6.8 lakh, up 48% on September 2023 and flat on August. Orders rose 45% on last year, but each order was about 6% smaller than in August, and margin slipped 1.5 points." Notice that the year-on-year growth is stronger than November's: September 2023 was a smaller base.</p>
+      <p><strong>2.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COALESCE</span>(c.acquisition_channel, <span class="s">'Not recorded'</span>)    <span class="k">AS</span> channel,
+       <span class="k">SUM</span>(s.first_order_date &gt;= <span class="s">'2024-11-01'</span>)              <span class="k">AS</span> nov_2024,
+       <span class="k">SUM</span>(s.first_order_date &lt;  <span class="s">'2023-12-01'</span>)              <span class="k">AS</span> nov_2023
+<span class="k">FROM</span> customer_summary s
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = s.customer_id
+<span class="k">WHERE</span> (s.first_order_date &gt;= <span class="s">'2023-11-01'</span> <span class="k">AND</span> s.first_order_date &lt; <span class="s">'2023-12-01'</span>)
+   <span class="k">OR</span> (s.first_order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> s.first_order_date &lt; <span class="s">'2024-12-01'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> channel
+<span class="k">ORDER</span> <span class="k">BY</span> nov_2024 <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+----------+----------+
+| channel        | nov_2024 | nov_2023 |
++----------------+----------+----------+
+| Organic Search |       27 |       24 |
+| Google Ads     |       27 |       14 |
+| Instagram      |       16 |       23 |
+| Facebook       |       12 |        7 |
+| Referral       |        9 |       16 |
+| Not recorded   |        7 |        2 |
+| Direct         |        7 |        8 |
+| Email          |        6 |        2 |
++----------------+----------+----------+</code></pre></div>
+      <p>Google Ads almost doubled (14 to 27), and organic search stayed strong. Instagram and referrals brought fewer new customers than a year ago. Day 14 found that Google Ads customers are solidly profitable, so that's good news. The numbers are small, so treat single-channel changes with care (Day 13).</p>
+      <p><strong>3.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> by_product <span class="k">AS</span> (
+    <span class="k">SELECT</span> product_name,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>) <span class="k">AS</span> nov_2024,
+           <span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> order_date &lt;  <span class="s">'2024-11-01'</span> <span class="k">THEN</span> line_total <span class="k">END</span>) <span class="k">AS</span> oct_2024
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> product_name
+)
+<span class="k">SELECT</span> product_name,
+       <span class="k">ROUND</span>(nov_2024)                         <span class="k">AS</span> nov_2024,
+       <span class="k">ROUND</span>(oct_2024)                         <span class="k">AS</span> oct_2024,
+       <span class="k">ROUND</span>(<span class="n">100</span> * (nov_2024 / oct_2024 - <span class="n">1</span>), <span class="n">1</span>) <span class="k">AS</span> change_pct
+<span class="k">FROM</span> by_product
+<span class="k">ORDER</span> <span class="k">BY</span> nov_2024 <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">5</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------------------+----------+----------+------------+
+| product_name                | nov_2024 | oct_2024 | change_pct |
++-----------------------------+----------+----------+------------+
+| Winter Jacket               |    88778 |     9972 |      790.3 |
+| Kurta Set                   |    71678 |    53808 |       33.2 |
+| Noise-Cancelling Headphones |    68171 |    69551 |       -2.0 |
+| Cotton Saree                |    67098 |    63837 |        5.1 |
+| Wireless Earbuds            |    40104 |    69877 |      -42.6 |
++-----------------------------+----------+----------+------------+</code></pre></div>
+      <p>The Winter Jacket went from outside October's top ten to first place, and wireless earbuds lost over 40% of their October sales: winter clothing in, festive gadgets out, the same story as section 5 at product level.</p>
+      <p><strong>4.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> DATE_FORMAT(order_date, <span class="s">'%Y-%m'</span>) <span class="k">AS</span> month,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(line_total - line_cost) / <span class="k">SUM</span>(line_total), <span class="n">1</span>) <span class="k">AS</span> margin_without_coupons
+<span class="k">FROM</span> clean_sales
+<span class="k">WHERE</span> coupon_code <span class="k">IS</span> <span class="k">NULL</span>
+  <span class="k">AND</span> order_date &gt;= <span class="s">'2024-10-01'</span> <span class="k">AND</span> order_date &lt; <span class="s">'2024-12-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> month;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+------------------------+
+| month   | margin_without_coupons |
++---------+------------------------+
+| 2024-10 |                   39.6 |
+| 2024-11 |                   45.0 |
++---------+------------------------+</code></pre></div>
+      <p>Even on orders with no coupon at all, the margin rose by over 5 points. So the end of the Diwali coupons isn't the whole story: the shift from gadgets to clothing, and October's unusually low margins, show up in full-price orders too. When someone offers a one-cause explanation, test it by holding that cause fixed.</p>
+      <p><strong>5.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)                                                     <span class="k">AS</span> november_returns,
+       <span class="k">SUM</span>(r.return_date &gt; <span class="s">'2024-12-03'</span>)                            <span class="k">AS</span> arrived_after_3_dec,
+       <span class="k">ROUND</span>(<span class="k">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> r.return_date &gt; <span class="s">'2024-12-03'</span> <span class="k">THEN</span> r.refund_amount <span class="k">END</span>)) <span class="k">AS</span> refunds_after_3_dec
+<span class="k">FROM</span> clean_returns r
+<span class="k">JOIN</span> clean_sales s <span class="k">ON</span> s.order_item_id = r.order_item_id
+<span class="k">WHERE</span> s.order_date &gt;= <span class="s">'2024-11-01'</span> <span class="k">AND</span> s.order_date &lt; <span class="s">'2024-12-01'</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+---------------------+---------------------+
+| november_returns | arrived_after_3_dec | refunds_after_3_dec |
++------------------+---------------------+---------------------+
+|               40 |                  13 |               20285 |
++------------------+---------------------+---------------------+</code></pre></div>
+      <p>A third of November's returns (13 of 40, about ₹20,000 of refunds) hadn't arrived by 3 December. So on 3 December, net revenue and the return rate would have looked better than they really were. Mark them "provisional, final on 1 January" in the review, and update them next month. Also check, on the day, that no November orders are still Pending or Shipped (section 2's status check): the figures for the whole month aren't final until every order is.</p>
+    </div>
+  </details>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner</h2>
+    <p>Reporting case questions test structure and judgment: which numbers, compared with what, and how you explain a change. These come up in analyst interviews more often than any single SQL feature.</p>
+  </div>
+  <div class="iv-group">
+    <h3>Concept questions</h3>
+    <details class="qa"><summary><span class="q">Q1</span>How would you structure a monthly business review?</summary>
+      <div class="body"><p>Check the data first. Then a scorecard of a few agreed metrics, each against last month and the same month last year, with the year to date. Then explanations of the biggest moves, broken into their parts (orders and order value, mix and rate, new and returning). Then risks and suggested actions. Then notes: definitions, data issues, and anything provisional.</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>Month-on-month or year-on-year: which is better?</summary>
+      <div class="body"><p>They answer different questions. Month-on-month shows direction right now, but seasonality (a festive peak, a short February) can dominate it. Year-on-year compares like with like, so it's usually the fairer measure of growth. Show both, and explain any difference between them.</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>Revenue went up. How do you explain why?</summary>
+      <div class="body"><p>Break it into parts that multiply to revenue: orders × average order value, or customers × orders per customer × order value. Put a rupee figure on each part by changing one at a time. Then split the biggest part by segment (new and returning, channel, category) until the change sits in a few places.</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>What's a mix effect?</summary>
+      <div class="body"><p>A change in an overall rate caused by a change in the make-up of the total, rather than in any of the parts. If high-margin clothing becomes a bigger share of sales, the overall margin rises even if no category's margin changes. To separate mix from rate, recalculate holding one of them fixed.</p></div></details>
+    <details class="qa"><summary><span class="q">Q5</span>Why reconcile numbers before publishing?</summary>
+      <div class="body"><p>Because the same number often lives in several places (views, a warehouse, summary tables), and they can disagree through filters, timing or grain. Checking that they match catches mistakes before a manager does. Reconciling also tells you which measures a summary table can safely give: sums yes, distinct counts usually no.</p></div></details>
+    <details class="qa"><summary><span class="q">Q6</span>How do you handle a month that isn't complete yet?</summary>
+      <div class="body"><p>Either wait until it settles, or report it with the incomplete parts clearly marked as provisional (open orders, returns still arriving) and update them later. Never compare an unfinished period directly with a finished one without saying so.</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Practical questions</h3>
+    <details class="qa"><summary><span class="q">P1</span>Revenue is flat month on month, but orders are up 10%. What happened, and what do you check?</summary>
+      <div class="body"><p>Average order value fell by about 9%, since revenue = orders × order value. Check whether the mix shifted towards cheaper categories or products, whether discounts or coupons increased, whether a new low-priced product launched, and whether new customers (who often buy less) made up a bigger share of orders.</p></div></details>
+    <details class="qa"><summary><span class="q">P2</span>Turn a table with one row per month and columns for revenue, orders and buyers into one row per metric, with a column per month.</summary>
+      <div class="body"><p>Unpivot, then pivot: <code>UNION ALL</code> one <code>SELECT</code> per metric to get (month, metric, value) rows, then <code>GROUP BY metric</code> with <code>MAX(CASE WHEN month = ... THEN value END)</code> for each month. That's the scorecard in section 3.</p></div></details>
+    <details class="qa"><summary><span class="q">P3</span>Gross margin went from 37.7% to 43.3%. How do you report the change?</summary>
+      <div class="body"><p>As "up about 5.7 percentage points", not "up 15%" (which is the relative change, 5.7 ÷ 37.7). Then explain it: how much came from the mix of categories, and how much from margins within them. And look at the longer trend before celebrating: in section 5, October turned out to be the unusual month.</p></div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li>Before any SQL: pick a month that has settled, decide the comparisons (last month, last year, year to date), and write down a definition for every metric.</li>
+    <li>Check the data first: no missing days, no open orders, and the same totals in every place that stores them. Summary tables are safe for sums, not for distinct counts.</li>
+    <li>A scorecard procedure (unpivot with <code>UNION ALL</code>, then pivot with <code>MAX(CASE ...)</code>) turns next month's review into one <code>CALL</code>. Show margin changes in percentage points.</li>
+    <li>Explain revenue as orders × order value, with a rupee figure for each part. November grew 26% on last year, all from more orders.</li>
+    <li>Explain margin as mix and rate. November's rise was about half the shift to clothing and half better margins within categories. And check the longer trend: it was a recovery from an unusually low October, not a record.</li>
+    <li>Show revenue after returns too, and check the operational basics: cancellations, failed payments, the website funnel, with known data gaps left out and stated.</li>
+    <li>The written review leads with the answer, rounds the numbers, separates facts from suggestions, and ends with actions and notes.</li>
+  </ul>
+</div>
+
+<div class="next"><div><small>Coming up next</small><h3>Day 22: Case study 2, retention and churn</h3><p>Who stays and who leaves: monthly cohorts, a careful definition of churn, what a first order tells you about a second, and which customers to win back first.</p></div><a class="btn" href="Day22_Case_Study_Retention_Churn.html">Read Day 22</a></div>
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>
