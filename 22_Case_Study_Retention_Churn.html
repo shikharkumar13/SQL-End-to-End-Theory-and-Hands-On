@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 22: Case Study: Retention & Churn | Databases &amp; SQL for Analysts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.er{width:100%;height:auto;max-width:520px;justify-self:end}
+.er .tname{font-family:var(--display);font-weight:700;font-size:17px;fill:#fff}
+.er .col{font-family:var(--mono);font-size:14px;fill:var(--ink)}
+.er .pk{fill:var(--saffron-800);font-weight:600}
+.er .fk{fill:var(--indigo);font-weight:600}
+.er .tag{font-family:var(--display);font-weight:600;font-size:13px}
+.er .link{fill:none;stroke:var(--indigo);stroke-width:2.5;stroke-linecap:round}
+@media (prefers-reduced-motion:no-preference){
+  .er .link{stroke-dasharray:320;stroke-dashoffset:320;animation:draw 1.1s .5s ease-out forwards}
+  .er .end{opacity:0;animation:fade .3s 1.5s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page grid ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:220px minmax(0,700px);gap:72px;justify-content:center}
+.rail{position:sticky;top:96px;align-self:start;font-family:var(--display)}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:6px 0 6px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:12px}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text blocks ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3}
+
+.note{background:var(--lagoon-50);border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7}
+.note p:last-child{margin-bottom:0}
+.note.sun{background:var(--saffron-50)}
+.note strong{color:var(--ink)}
+
+/* Roadmap track */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin-bottom:6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink-3);position:relative}
+.step.now .dot{background:var(--lagoon);border-color:var(--lagoon);color:#fff;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+
+/* Definitions (DB / DBMS / RDBMS) */
+.defs{border-top:1px solid var(--line);margin:22px 0}
+.def{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.def .term{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.def:nth-child(1) .term{color:var(--lagoon)}
+.def:nth-child(2) .term{color:var(--indigo)}
+.def:nth-child(3) .term{color:var(--saffron-800)}
+.def p{margin:0;font-size:17px}
+
+/* Going deeper */
+.deeper{background:var(--indigo-50);border-radius:18px;padding:26px;margin:32px 0}
+.deeper h3{color:var(--indigo);margin-bottom:10px}
+.deeper p{font-size:17px}
+.deeper p:last-child{margin-bottom:0}
+.acid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}
+.acid div{background:var(--surface);border-radius:12px;padding:16px 14px}
+.acid b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-weight:800;color:var(--indigo)}
+.acid span{display:block;font-family:var(--display);font-weight:700;font-size:15px;margin:8px 0 4px}
+.acid em{display:block;font-style:normal;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+
+/* Reasons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin:26px 0}
+.reason .ic{width:44px;height:44px;border-radius:12px;background:var(--lagoon-50);display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+.reason h3{font-size:18px;margin-bottom:4px}
+.reason p{font-size:16.5px;line-height:1.65;color:var(--ink-2);margin:0}
+
+/* Two-way compare */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.side h3{font-size:18px;padding:14px 18px;color:#fff;background:var(--lagoon)}
+.side.alt h3{background:var(--ink-2)}
+.side ul{list-style:none;padding:14px 18px 6px}
+.side li{font-size:16px;line-height:1.55;padding:6px 0 6px 18px;position:relative}
+.side li::before{content:'';position:absolute;left:0;top:15px;width:7px;height:7px;border-radius:2px;background:var(--lagoon-100)}
+.side.alt li::before{background:var(--line)}
+.side .eg{font-family:var(--display);font-size:13.5px;color:var(--ink-3);border-top:1px solid var(--line-2);padding:10px 18px 14px}
+
+/* Data tables */
+.dbt{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.dbt-cap{font-family:var(--display);font-size:15px;font-weight:700;padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.dbt-cap small{font-weight:500;color:var(--ink-3);font-size:13px}
+.dbt-scroll{overflow-x:auto}
+.dbt table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.dbt th{text-align:left;font-weight:600;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap;font-size:13px}
+.dbt td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top}
+.dbt th.pk{color:var(--saffron-800);background:var(--saffron-50)}
+.dbt th.fk{color:var(--indigo);background:var(--indigo-50)}
+.dbt td.pk{color:var(--saffron-800);font-weight:600;background:#FFFBEC}
+.dbt td.fk{color:var(--indigo);font-weight:600}
+.dbt td.bad{color:var(--coral-700);background:var(--coral-50)}
+.dbt.wrap td{white-space:normal;line-height:1.5}
+
+/* Vocabulary */
+.vocab{margin:26px 0}
+.word{padding:20px 0 18px 20px;border-left:3px solid var(--line);margin-bottom:6px}
+.word h3{font-size:21px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.word h3 small{font-family:var(--text);font-weight:400;font-size:14.5px;font-style:italic;color:var(--ink-3)}
+.word p{margin:0;font-size:17px}
+.word.pk{border-left-color:var(--saffron)} .word.pk h3{color:var(--saffron-800)}
+.word.fk{border-left-color:var(--indigo)} .word.fk h3{color:var(--indigo)}
+.word.rel{border-left-color:var(--lagoon)} .word.rel h3{color:var(--lagoon-700)}
+.word code.k{background:var(--saffron-50);color:var(--saffron-800)}
+.word code.f{background:var(--indigo-50);color:var(--indigo)}
+
+/* Normalization */
+.verdict{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:14.5px;padding:5px 12px;border-radius:99px;margin-top:10px}
+.verdict.bad{background:var(--coral-50);color:var(--coral-700)}
+.verdict.good{background:var(--lagoon-50);color:var(--lagoon-700)}
+.marks{list-style:none;margin:6px 0 10px}
+.marks li{font-size:16.5px;line-height:1.6;padding:6px 0 6px 30px;position:relative}
+.marks li::before{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:800}
+.marks.bad li::before{content:'✕';background:var(--coral-50);color:var(--coral-700)}
+.marks.good li::before{content:'✓';background:var(--lagoon-50);color:var(--lagoon-700)}
+
+/* Try this */
+.try{background:var(--saffron-50);border:1px solid var(--saffron-100);border-radius:18px;padding:26px;margin:64px 0 0}
+.try h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+.try > p{font-size:17px}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+.reveal summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:9px 16px;border-radius:10px}
+.reveal summary::after{content:'+';font-size:18px;line-height:1}
+.reveal[open] summary::after{content:'−'}
+.reveal[open] summary{margin-bottom:14px}
+.reveal .body p,.reveal .body li{font-size:16.5px}
+.reveal .body ul{padding-left:22px;margin-bottom:4px}
+.reveal .body li{margin-bottom:6px}
+
+/* Interview corner */
+.interview{margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.iv-head{background:var(--indigo);color:#fff;padding:24px 26px}
+.iv-head h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.iv-head p{font-size:16.5px;line-height:1.6;color:#DCDBF6;margin:0}
+.iv-group{padding:6px 26px 14px}
+.iv-group h3{font-size:17px;color:var(--indigo);padding:18px 0 8px}
+.qa{border-top:1px solid var(--line-2)}
+.qa summary{display:grid;grid-template-columns:38px 1fr 20px;gap:10px;align-items:baseline;padding:15px 0;font-family:var(--display);font-weight:600;font-size:17px;line-height:1.4}
+.qa summary .q{font-size:14px;font-weight:700;color:var(--indigo);background:var(--indigo-50);border-radius:7px;text-align:center;padding:2px 0}
+.qa summary::after{content:'+';font-size:20px;color:var(--indigo);text-align:right}
+.qa[open] summary::after{content:'−'}
+.qa summary:hover{color:var(--indigo)}
+.qa .body{padding:0 0 16px 48px}
+.qa .body p{font-size:16.5px;margin-bottom:12px}
+.qa .body ul{padding-left:20px;margin-bottom:12px}
+.qa .body li{font-size:16.5px;margin-bottom:4px}
+.qa .dbt{margin:4px 0 14px}
+
+/* Recap */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+
+/* Next */
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.btn{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.btn:hover{background:var(--lagoon-700)}
+
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:1080px){
+  .page{grid-template-columns:minmax(0,700px)}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}
+  .er{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .def{grid-template-columns:1fr;gap:4px}
+  .acid{grid-template-columns:1fr 1fr}
+  .reasons,.pair{grid-template-columns:1fr}
+  .qa .body{padding-left:0}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.deeper,.try{padding:20px}
+  .iv-head,.iv-group{padding-left:18px;padding-right:18px}
+}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px;margin:22px 0;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.copy{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.copy:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14.5px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.code .k{color:#5EE0CB}.code .t{color:#B7B3FF}.code .s{color:#FFC94D}.code .n{color:#FF9AA0}.code .c{color:#8A96B8;font-style:italic}
+.code.out{background:var(--surface);border:1px solid var(--line)}
+.code.out .code-bar{color:var(--ink-3);border-bottom-color:var(--line)}
+.code.out code{color:var(--ink)}
+
+/* ── Prose tables ── */
+.dbt.prose table{font-family:var(--text);font-size:15.5px}
+.dbt.prose th{font-family:var(--display);font-size:13.5px}
+.dbt.prose td{white-space:normal;line-height:1.55}
+.dbt.prose td code{font-size:.85em}
+
+/* ── Diagrams ── */
+.diagram{overflow-x:auto;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--display);font-size:13.5px;color:var(--ink-2);padding:10px 4px 0;min-width:620px}
+.diagram .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ── Family rows ── */
+.fam{display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;padding:22px 0;border-top:1px solid var(--line)}
+.fam:last-of-type{border-bottom:1px solid var(--line)}
+.fam .abbr{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em}
+.fam .abbr small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-top:8px}
+.fam h3{font-size:19px;margin-bottom:4px}
+.fam p{font-size:16.5px;margin-bottom:10px}
+.fam .cmds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fam .cmds code{font-size:13.5px}
+.fam .code{margin:12px 0 0}
+.fam > div{min-width:0}
+.fam.c1 .abbr{color:var(--lagoon)}.fam.c2 .abbr{color:var(--indigo)}.fam.c3 .abbr{color:var(--saffron-800)}.fam.c4 .abbr{color:var(--coral-700)}.fam.c5 .abbr{color:var(--ink-2)}
+
+/* ── Schema diagrams ── */
+.schema .tname{font-family:var(--display);font-weight:700;font-size:15px;fill:#fff}
+.schema .col{font-family:var(--mono);font-size:13px;fill:var(--ink)}
+.schema .pk{fill:var(--saffron-800);font-weight:600}
+.schema .fk{fill:var(--indigo);font-weight:600}
+.schema .dim{fill:var(--ink-3)}
+.schema .ln{fill:none;stroke:var(--indigo);stroke-width:2.2;stroke-linecap:round}
+
+/* ── Hero SQL card ── */
+.sqlcard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.sqlcard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.sqlline{font-family:var(--mono);font-size:16px;line-height:2.2;color:var(--ink)}
+.sqlline span{padding:4px 7px;border-radius:7px;white-space:nowrap}
+.sqlline .p1{background:var(--lagoon-100)}.sqlline .p2{background:var(--indigo-100)}.sqlline .p3{background:var(--saffron-100)}
+.reads{list-style:none;margin-top:14px}
+.reads li{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code,.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+.sqlcard .written{font-family:var(--mono);font-size:14.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){
+  .sqlline span,.reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .sqlline .p1,.reads li:nth-child(1){animation-delay:.3s}
+  .sqlline .p2,.reads li:nth-child(2){animation-delay:.75s}
+  .sqlline .p3,.reads li:nth-child(3){animation-delay:1.2s}
+  .reads li:nth-child(4){animation-delay:1.65s}
+  .reads li:nth-child(5){animation-delay:2.1s}
+}
+@media (max-width:900px){.sqlcard{justify-self:start}}
+/* ── Rail: room for two-digit section numbers ── */
+.rail a .n{min-width:16px;flex-shrink:0}
+
+/* ── Error panels ── */
+.code.err{background:var(--coral-50);border:1px solid #F4C6CA}
+.code.err .code-bar{color:var(--coral-700);border-bottom-color:#F4C6CA}
+.code.err code{color:#7A1E26;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* ── Three-step build order ── */
+.steps.three{grid-template-columns:repeat(3,1fr);margin:26px 0}
+.steps.three .step p code{font-size:13px}
+.steps.five{grid-template-columns:repeat(5,1fr);margin:26px 0}
+.steps.seven{grid-template-columns:repeat(7,1fr);gap:10px;margin:26px 0}
+.steps.seven .step b{font-size:14.5px}
+.steps.seven .step p{font-size:13.5px}
+@media (max-width:640px){.steps.three,.steps.five,.steps.seven{grid-template-columns:1fr}}
+/* ── Checkpoint card ── */
+.checkpoint{background:var(--lagoon-700);color:#fff;border-radius:20px;padding:30px;margin:56px 0 0}
+.checkpoint h2{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-bottom:10px}
+.checkpoint h3{font-family:var(--display);font-size:17px;color:#fff;margin:18px 0 6px}
+.checkpoint p,.checkpoint li{color:#DCEFEB;font-size:16.5px;line-height:1.65}
+.checkpoint ul{padding-left:20px;margin:0}
+.checkpoint li{margin-bottom:6px}
+.checkpoint strong{color:#fff}
+.checkpoint code{background:rgba(255,255,255,.14);color:#fff}
+.checkpoint .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+@media (max-width:640px){.checkpoint{padding:22px}.checkpoint .cols{grid-template-columns:1fr}}
+/* ── Status dots (hero) ── */
+.dots{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;display:block}
+.dots .c{background:var(--lagoon)}.dots .x{background:var(--indigo)}.dots .p{background:var(--saffron)}
+@media (max-width:640px){.fam{grid-template-columns:minmax(0,1fr);gap:6px}.reads li{grid-template-columns:1fr;gap:4px}.sqlline{font-size:14.5px}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Databases &amp; SQL <span>for Analysts</span></a>
+    <div class="where"><span class="day">Day 22 of 23</span><span class="part-pill">Case studies</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Case study 2: retention and churn</h1>
+      <p class="hero-sub">Who stays, who leaves, and who is worth calling back. Monthly cohorts, a churn definition tested against the data, an honest look at what predicts a second order, and a win-back list you can measure.</p>
+      <div class="facts"><span class="fact">38 minute read</span><span class="fact hl">Case study 2</span></div>
+    </div>
+    <div class="sqlcard" role="img" aria-label="Four ideas for retention work: monthly cohorts, a tested churn rule, a customer count that balances, and a holdout group">
+      <p class="hd">Retention, in four ideas</p>
+      <ul class="reads">
+        <li><code>months_later</code><span>Monthly cohorts, and the retention curve</span></li>
+        <li><code>days_silent &gt; 180</code><span>A churn rule tested on past data</span></li>
+        <li><code>start + new + back − lost</code><span>A customer count that balances</span></li>
+        <li><code>MOD(CRC32(id), 5) = 0</code><span>A holdout group, so the campaign can be measured</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="rail" aria-label="In this lesson">
+    <h2>In this lesson</h2>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>The brief</a></li><li><a href="#s2"><span class="n">2</span>Check the data first</a></li><li><a href="#s3"><span class="n">3</span>Monthly cohorts</a></li><li><a href="#s4"><span class="n">4</span>When is a customer lost?</a></li><li><a href="#s5"><span class="n">5</span>How many are we losing?</a></li><li><a href="#s6"><span class="n">6</span>What brings them back?</a></li><li><a href="#s7"><span class="n">7</span>Who to win back</a></li><li><a href="#s8"><span class="n">8</span>Write it up</a></li><li class="gap"></li><li><a href="#try"><span class="n"></span>Try this</a></li><li><a href="#interview"><span class="n"></span>Interview corner</a></li><li><a href="#recap"><span class="n"></span>Quick recap</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<p class="lede">Day 21's review ended with a question it couldn't answer. November's returning customers weren't drifting away, "at least not yet", but whether customers stay over months, not days, was left for today. Day 13 made a promise too: monthly cohorts, and a proper measure of churn. Today's case study does both, for a manager with a decision to make. As on Day 21, there are no big new SQL features, only three small functions (<code>MOD</code>, <code>SQRT</code> and <code>CRC32</code>), each explained where it appears. The skill is in the definitions: what "lost" means, which customers to leave out, and how to tell a real difference from luck.</p>
+<div class="note"><p><strong>Before you start.</strong> Run <code>USE online_store_full;</code>. You'll use the Day 11 clean layer, Day 12's <code>calendar</code>, Day 13's <code>customer_rfm</code> view and Day 21's <code>festive_sale_days</code> view. Today adds two views of its own, in the Build boxes.</p></div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="n">1</span>The brief</h2>
+  <p>Farah Siddiqui, the Head of Marketing (employee 3, reporting to Ritu), sends this:</p>
+  <div class="note"><p><strong>"I have budget for one win-back campaign in January. Before I spend it: how many customers are we losing? Are we getting better or worse at keeping them? What makes someone come back? And who should I contact first?"</strong></p></div>
+  <p>Four questions, and they have to be answered in a sensible order: you can't say who to win back until you've decided what "lost" means. So the sections follow the questions, with one step added at the start, the one Day 21 taught: check the data first.</p>
+  <p>A shop like ours has a problem a phone company doesn't. When someone cancels a phone contract, there's a date and a letter. When someone stops buying from a shop, nothing happens. Think of a regular at a tea stall: one day they just stop coming, and the owner only notices weeks later that they haven't been around. So churn in a shop has to be <em>defined</em>, from silence. Section 4 does that with data, not guesswork.</p>
+  <p>Two settings for the whole day:</p>
+  <ul>
+    <li><strong>"Today" is the end of 24 December 2024</strong>, the last settled day (Day 12, and Day 20's trap 2). Orders from the last few days of December are left out, so nobody looks more active, or more silent, than they really are.</li>
+    <li><strong>A customer is a master customer ID with completed orders</strong>, exactly as in <code>clean_sales</code> (Day 11). Someone with two accounts counts once.</li>
+  </ul>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="n">2</span>Check the data first</h2>
+  <p>Almost every question today needs the same few facts about each order: whose it is, when it was, and which order it was for that customer (first, second, ...), with the dates of the orders either side of it. Day 13 rebuilt this as a CTE again and again. Today, save it once as a view, with Day 9's window functions:</p>
+  <div class="code"><div class="code-bar"><span>Build 1: one row per order, numbered per customer</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> customer_orders <span class="k">AS</span>
+<span class="k">WITH</span> orders <span class="k">AS</span> (
+    <span class="k">SELECT</span> customer_id, order_id,
+           <span class="k">MIN</span>(order_date) <span class="k">AS</span> order_date,
+           <span class="k">SUM</span>(line_total) <span class="k">AS</span> revenue
+    <span class="k">FROM</span> clean_sales
+    <span class="k">WHERE</span> order_date &lt; <span class="s">'2024-12-25'</span>               <span class="c">-- settled data only</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> customer_id, order_id
+)
+<span class="k">SELECT</span> customer_id, order_id, order_date, revenue,
+       <span class="k">ROW_NUMBER</span>()     <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id <span class="k">ORDER</span> <span class="k">BY</span> order_date, order_id) <span class="k">AS</span> order_number,
+       <span class="k">LAG</span>(order_date)  <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id <span class="k">ORDER</span> <span class="k">BY</span> order_date, order_id) <span class="k">AS</span> previous_order_date,
+       <span class="k">LEAD</span>(order_date) <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> customer_id <span class="k">ORDER</span> <span class="k">BY</span> order_date, order_id) <span class="k">AS</span> next_order_date
+<span class="k">FROM</span> orders;</code></pre></div>
+  <p><code>clean_sales</code> has one row per order <em>line</em>, so the CTE first gets back to one row per order (Day 10's grain). <code>order_id</code> breaks ties when two orders share a timestamp (Day 9). A customer's last order has no next order, so its <code>next_order_date</code> is NULL. Keep that in mind: it will matter in section 6.</p>
+  <p>Now a question nobody asked, but everyone should: <strong>do we see each customer's whole history?</strong> Our orders start on 1 January 2023. But some customers signed up before that. Compare them with everyone else:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> c.signup_date &lt; <span class="s">'2023-01-01'</span> <span class="k">THEN</span> <span class="s">'Signed up in 2022'</span>
+            <span class="k">ELSE</span> <span class="s">'Signed up in 2023 or 2024'</span> <span class="k">END</span>              <span class="k">AS</span> signed_up,
+       <span class="k">COUNT</span>(*)                                               <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(DATEDIFF(o.order_date, c.signup_date)))      <span class="k">AS</span> avg_days_to_first_order,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(o.next_order_date <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>), <span class="n">1</span>)     <span class="k">AS</span> ordered_again_pct
+<span class="k">FROM</span> customer_orders o
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+<span class="k">GROUP</span> <span class="k">BY</span> signed_up;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------------+-----------+-------------------------+-------------------+
+| signed_up                 | customers | avg_days_to_first_order | ordered_again_pct |
++---------------------------+-----------+-------------------------+-------------------+
+| Signed up in 2023 or 2024 |      1990 |                       5 |              36.1 |
+| Signed up in 2022         |       119 |                     157 |              82.4 |
++---------------------------+-----------+-------------------------+-------------------+</code></pre></div>
+  <p>Two warning signs. Most customers place their first order within days of signing up (five on average), but the 2022 sign-ups took five months on average. And over 80% of them ordered again, more than twice the usual rate. The simplest explanation: they <em>were</em> buying in 2022, and those orders aren't in our data. Their "first order" in our tables is really a later one, from a customer who was already loyal.</p>
+  <p>It's like walking into a film halfway through. A character you think has just arrived was there all along. Statisticians have names for this. These customers' real first orders are <strong>left-censored</strong>: we only know they happened before 2023, not when. And customers who bought <em>only</em> in 2022 are missing completely, which is called <strong>left truncation</strong>. Both come from the same thing: the data starts in the middle of some customers' stories. It flatters any analysis that starts at the "first" order. How much did it flatter Day 13's cohorts?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">COUNT</span>(*)                            <span class="k">AS</span> first_bought_in_2023_q1,
+       <span class="k">SUM</span>(c.signup_date &lt; <span class="s">'2023-01-01'</span>)   <span class="k">AS</span> signed_up_in_2022
+<span class="k">FROM</span> customer_orders o
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+  <span class="k">AND</span> o.order_date &lt; <span class="s">'2023-04-01'</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------------+-------------------+
+| first_bought_in_2023_q1 | signed_up_in_2022 |
++-------------------------+-------------------+
+|                     243 |                83 |
++-------------------------+-------------------+</code></pre></div>
+  <p>A third of Day 13's 2023-Q1 cohort, the one it called "the best cohort", were these customers. Now we know why it looked best. The fix is simple: <strong>for anything that starts from the first order (cohorts, second orders), leave out customers who signed up before 2023</strong>. This also drops a few genuinely new customers who signed up late in 2022 and first bought in January 2023: a small price for a fair comparison. They're all real customers, though, so they stay in everything else: who's active today, and who to win back.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="n">3</span>Monthly cohorts</h2>
+  <p>Day 13 followed each <em>quarter's</em> new customers. Monthly cohorts are the same idea at a finer grain, and they're what most businesses use. The month number trick is Day 13's, with 12 instead of 4: <code>YEAR * 12 + MONTH</code> puts all months on one line, so "months later" is a subtraction, even across New Year.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> first_months <span class="k">AS</span> (
+    <span class="k">SELECT</span> o.customer_id,
+           DATE_FORMAT(o.order_date, <span class="s">'%Y-%m'</span>)            <span class="k">AS</span> cohort,
+           <span class="t">YEAR</span>(o.order_date) * <span class="n">12</span> + MONTH(o.order_date) <span class="k">AS</span> cohort_index
+    <span class="k">FROM</span> customer_orders o
+    <span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+    <span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+      <span class="k">AND</span> c.signup_date &gt;= <span class="s">'2023-01-01'</span>                <span class="c">-- full history only (section 2)</span>
+),
+activity <span class="k">AS</span> (
+    <span class="k">SELECT</span> f.customer_id, f.cohort, f.cohort_index,
+           <span class="t">YEAR</span>(o.order_date) * <span class="n">12</span> + MONTH(o.order_date) - f.cohort_index <span class="k">AS</span> months_later
+    <span class="k">FROM</span> first_months f
+    <span class="k">JOIN</span> customer_orders o <span class="k">ON</span> o.customer_id = f.customer_id
+),
+cohorts <span class="k">AS</span> (
+    <span class="k">SELECT</span> cohort, cohort_index,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> customer_id)                                       <span class="k">AS</span> customers,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> months_later = <span class="n">1</span>  <span class="k">THEN</span> customer_id <span class="k">END</span>)  <span class="k">AS</span> m1,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> months_later = <span class="n">2</span>  <span class="k">THEN</span> customer_id <span class="k">END</span>)  <span class="k">AS</span> m2,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> months_later = <span class="n">3</span>  <span class="k">THEN</span> customer_id <span class="k">END</span>)  <span class="k">AS</span> m3,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> months_later = <span class="n">6</span>  <span class="k">THEN</span> customer_id <span class="k">END</span>)  <span class="k">AS</span> m6,
+           <span class="k">COUNT</span>(<span class="k">DISTINCT</span> <span class="k">CASE</span> <span class="k">WHEN</span> months_later = <span class="n">12</span> <span class="k">THEN</span> customer_id <span class="k">END</span>)  <span class="k">AS</span> m12
+    <span class="k">FROM</span> activity
+    <span class="k">GROUP</span> <span class="k">BY</span> cohort, cohort_index
+)
+<span class="k">SELECT</span> cohort, customers,
+       <span class="k">CASE</span> <span class="k">WHEN</span> cohort_index + <span class="n">1</span>  &lt;= <span class="n">2024</span> * <span class="n">12</span> + <span class="n">11</span> <span class="k">THEN</span> <span class="k">ROUND</span>(<span class="n">100</span> * m1  / customers) <span class="k">END</span> <span class="k">AS</span> m_plus_1,
+       <span class="k">CASE</span> <span class="k">WHEN</span> cohort_index + <span class="n">2</span>  &lt;= <span class="n">2024</span> * <span class="n">12</span> + <span class="n">11</span> <span class="k">THEN</span> <span class="k">ROUND</span>(<span class="n">100</span> * m2  / customers) <span class="k">END</span> <span class="k">AS</span> m_plus_2,
+       <span class="k">CASE</span> <span class="k">WHEN</span> cohort_index + <span class="n">3</span>  &lt;= <span class="n">2024</span> * <span class="n">12</span> + <span class="n">11</span> <span class="k">THEN</span> <span class="k">ROUND</span>(<span class="n">100</span> * m3  / customers) <span class="k">END</span> <span class="k">AS</span> m_plus_3,
+       <span class="k">CASE</span> <span class="k">WHEN</span> cohort_index + <span class="n">6</span>  &lt;= <span class="n">2024</span> * <span class="n">12</span> + <span class="n">11</span> <span class="k">THEN</span> <span class="k">ROUND</span>(<span class="n">100</span> * m6  / customers) <span class="k">END</span> <span class="k">AS</span> m_plus_6,
+       <span class="k">CASE</span> <span class="k">WHEN</span> cohort_index + <span class="n">12</span> &lt;= <span class="n">2024</span> * <span class="n">12</span> + <span class="n">11</span> <span class="k">THEN</span> <span class="k">ROUND</span>(<span class="n">100</span> * m12 / customers) <span class="k">END</span> <span class="k">AS</span> m_plus_12
+<span class="k">FROM</span> cohorts
+<span class="k">ORDER</span> <span class="k">BY</span> cohort_index;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+-----------+----------+----------+----------+----------+-----------+
+| cohort  | customers | m_plus_1 | m_plus_2 | m_plus_3 | m_plus_6 | m_plus_12 |
++---------+-----------+----------+----------+----------+----------+-----------+
+| 2023-01 |        50 |       10 |       12 |       14 |        8 |        10 |
+| 2023-02 |        45 |       18 |        9 |       16 |       13 |         7 |
+| 2023-03 |        65 |       15 |       17 |       15 |       12 |         5 |
+| 2023-04 |        68 |       13 |       13 |       10 |       19 |         9 |
+| 2023-05 |        78 |        8 |        9 |       10 |       10 |         3 |
+| 2023-06 |        89 |       11 |        9 |       12 |       11 |         6 |
+| 2023-07 |        80 |       18 |       16 |       28 |       13 |         8 |
+| 2023-08 |       101 |       17 |       18 |       19 |        9 |         9 |
+| 2023-09 |        87 |       17 |       22 |       11 |        9 |         7 |
+| 2023-10 |       111 |       25 |       14 |       14 |       10 |        15 |
+| 2023-11 |        96 |       17 |       16 |       10 |        8 |         8 |
+| 2023-12 |       102 |       24 |       16 |       11 |       13 |      NULL |
+| 2024-01 |        45 |       13 |       16 |        9 |        4 |      NULL |
+| 2024-02 |        58 |       12 |       14 |        9 |        9 |      NULL |
+| 2024-03 |        62 |       13 |       15 |       11 |       10 |      NULL |
+| 2024-04 |        88 |       19 |       14 |       13 |       22 |      NULL |
+| 2024-05 |        93 |        9 |        9 |        8 |       13 |      NULL |
+| 2024-06 |        93 |       14 |       14 |       17 |     NULL |      NULL |
+| 2024-07 |        97 |       10 |       12 |       14 |     NULL |      NULL |
+| 2024-08 |       104 |       13 |       18 |       13 |     NULL |      NULL |
+| 2024-09 |        98 |       20 |       19 |     NULL |     NULL |      NULL |
+| 2024-10 |       100 |       24 |     NULL |     NULL |     NULL |      NULL |
+| 2024-11 |       111 |     NULL |     NULL |     NULL |     NULL |      NULL |
+| 2024-12 |        69 |     NULL |     NULL |     NULL |     NULL |      NULL |
++---------+-----------+----------+----------+----------+----------+-----------+</code></pre></div>
+  <p>Each cell answers: "of the customers who first bought in this month, what share bought again exactly <em>k</em> months later?" The NULLs are Day 13's triangle: <code>2024 * 12 + 11</code> is November 2024, the last <em>complete</em> month, since December is only settled to the 24th. A cell for a month we haven't fully seen says "not known yet", never 0%.</p>
+  <p>Three things to notice:</p>
+  <ul>
+    <li><strong>The numbers are small.</strong> Most cells are between about 8% and 20%: only that share of a cohort buys in any <em>single</em> later month. That isn't as bad as it looks. Day 13 found 53 days on average between one order and the next (73 from the first to the second), so loyal customers simply skip some months. A single-month measure suits a phone contract, where people pay every month. For a shop, the wider windows in sections 4 and 6 tell you more.</li>
+    <li><strong>The calendar shows through.</strong> Look for the high cells: October 2023's cohort one month later (November, Diwali), December 2023's one month later (January, with its New Year offer, the <code>NEWYEAR10</code> coupon), July 2023's three months later (October). The May cohorts are weak in both years, because their next few months are the quiet summer. These are the calendar effects Day 13 told you to look for along the diagonals: the month a cohort <em>lands in</em> matters as much as the cohort.</li>
+    <li><strong>Cohorts are small too</strong>, 45 to 111 customers. One extra person moves a cell by about 1 to 2 points, so don't compare single cells. Pool them instead.</li>
+  </ul>
+  <p>Pooling means asking the question once for <em>all</em> customers: "of everyone who has been with us at least <em>k</em> months, what share bought in month <em>k</em>?" That gives the <strong>retention curve</strong>. The <code>ages</code> CTE is a small list of the months to show, and the join keeps only customers old enough for each one:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> first_months <span class="k">AS</span> (
+    <span class="k">SELECT</span> o.customer_id,
+           <span class="t">YEAR</span>(o.order_date) * <span class="n">12</span> + MONTH(o.order_date) <span class="k">AS</span> cohort_index
+    <span class="k">FROM</span> customer_orders o
+    <span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+    <span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+      <span class="k">AND</span> c.signup_date &gt;= <span class="s">'2023-01-01'</span>
+),
+activity <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> f.customer_id,
+           <span class="t">YEAR</span>(o.order_date) * <span class="n">12</span> + MONTH(o.order_date) - f.cohort_index <span class="k">AS</span> months_later
+    <span class="k">FROM</span> first_months f
+    <span class="k">JOIN</span> customer_orders o <span class="k">ON</span> o.customer_id = f.customer_id
+),
+ages <span class="k">AS</span> (
+              <span class="k">SELECT</span> <span class="n">1</span> <span class="k">AS</span> months_later
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">2</span>  <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">3</span> <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">6</span>
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">9</span>  <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">12</span> <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">18</span>
+)
+<span class="k">SELECT</span> a.months_later,
+       <span class="k">COUNT</span>(*)                                       <span class="k">AS</span> customers_old_enough,
+       <span class="k">COUNT</span>(x.customer_id)                           <span class="k">AS</span> bought_that_month,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">COUNT</span>(x.customer_id) / <span class="k">COUNT</span>(*), <span class="n">1</span>) <span class="k">AS</span> retention_pct
+<span class="k">FROM</span> ages a
+<span class="k">JOIN</span> first_months f    <span class="k">ON</span> f.cohort_index + a.months_later &lt;= <span class="n">2024</span> * <span class="n">12</span> + <span class="n">11</span>
+<span class="k">LEFT</span> <span class="k">JOIN</span> activity x   <span class="k">ON</span> x.customer_id = f.customer_id
+                      <span class="k">AND</span> x.months_later = a.months_later
+<span class="k">GROUP</span> <span class="k">BY</span> a.months_later
+<span class="k">ORDER</span> <span class="k">BY</span> a.months_later;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------+----------------------+-------------------+---------------+
+| months_later | customers_old_enough | bought_that_month | retention_pct |
++--------------+----------------------+-------------------+---------------+
+|            1 |                 1810 |               288 |          15.9 |
+|            2 |                 1710 |               249 |          14.6 |
+|            3 |                 1612 |               215 |          13.3 |
+|            6 |                 1318 |               152 |          11.5 |
+|            9 |                 1075 |               118 |          11.0 |
+|           12 |                  870 |                70 |           8.0 |
+|           18 |                  306 |                22 |           7.2 |
++--------------+----------------------+-------------------+---------------+</code></pre></div>
+  <p>The curve has the classic shape: a fall, then a long, slow slide. About 16% of customers buy in the month after their first, 11 to 12% are still buying in a given month half a year later, and 7 to 8% a year and more later. It never reaches zero: there's a loyal core that keeps buying. Every business wants to lift the whole curve, but the early months are where most customers are lost, and so where a campaign can change the most.</p>
+  <p>The <code>LEFT JOIN</code> matters here: customers who <em>didn't</em> buy in month <em>k</em> still have to count in the denominator (Day 7). <code>COUNT(x.customer_id)</code> counts only the matches.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="n">4</span>When is a customer lost?</h2>
+  <p>Every churn number depends on one choice: how long must someone be silent before we call them lost? Teams often pick 90 days, or a year, by habit. A better way is to <strong>test the rule on the past</strong>. Go back to a date where we can see what happened next, and ask: of the customers who had been silent for so many days, how many came back?</p>
+  <p>Our data allows six months of "what happened next" if we stand on 24 June 2024. So: for each customer who had ordered by then, how long had they been silent on that day, and did they order again in the six months to 24 December?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> on_24_june <span class="k">AS</span> (
+    <span class="k">SELECT</span> customer_id,
+           DATEDIFF(<span class="s">'2024-06-24'</span>, <span class="k">MAX</span>(order_date)) <span class="k">AS</span> days_silent,
+           <span class="k">COUNT</span>(*)                                <span class="k">AS</span> orders_so_far
+    <span class="k">FROM</span> customer_orders
+    <span class="k">WHERE</span> order_date &lt; <span class="s">'2024-06-25'</span>
+    <span class="k">GROUP</span> <span class="k">BY</span> customer_id
+),
+came_back <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> customer_id
+    <span class="k">FROM</span> customer_orders
+    <span class="k">WHERE</span> order_date &gt;= <span class="s">'2024-06-25'</span>                   <span class="c">-- the next six months</span>
+)
+<span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> days_silent &lt;= <span class="n">30</span>  <span class="k">THEN</span> <span class="s">'1. Up to 30 days'</span>
+            <span class="k">WHEN</span> days_silent &lt;= <span class="n">90</span>  <span class="k">THEN</span> <span class="s">'2. 31 to 90 days'</span>
+            <span class="k">WHEN</span> days_silent &lt;= <span class="n">120</span> <span class="k">THEN</span> <span class="s">'3. 91 to 120 days'</span>
+            <span class="k">WHEN</span> days_silent &lt;= <span class="n">180</span> <span class="k">THEN</span> <span class="s">'4. 121 to 180 days'</span>
+            <span class="k">WHEN</span> days_silent &lt;= <span class="n">270</span> <span class="k">THEN</span> <span class="s">'5. 181 to 270 days'</span>
+            <span class="k">WHEN</span> days_silent &lt;= <span class="n">365</span> <span class="k">THEN</span> <span class="s">'6. 271 to 365 days'</span>
+            <span class="k">ELSE</span>                         <span class="s">'7. Over a year'</span> <span class="k">END</span>                    <span class="k">AS</span> silent_for,
+       <span class="k">COUNT</span>(*)                                                                  <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(k.customer_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>), <span class="n">1</span>)                            <span class="k">AS</span> came_back_pct,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> orders_so_far = <span class="n">1</span>  <span class="k">THEN</span> k.customer_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> one_order_pct,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> orders_so_far &gt;= <span class="n">2</span> <span class="k">THEN</span> k.customer_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> two_plus_orders_pct
+<span class="k">FROM</span> on_24_june j
+<span class="k">LEFT</span> <span class="k">JOIN</span> came_back k <span class="k">ON</span> k.customer_id = j.customer_id
+<span class="k">GROUP</span> <span class="k">BY</span> silent_for
+<span class="k">ORDER</span> <span class="k">BY</span> silent_for;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+--------------------+-----------+---------------+---------------+---------------------+
+| silent_for         | customers | came_back_pct | one_order_pct | two_plus_orders_pct |
++--------------------+-----------+---------------+---------------+---------------------+
+| 1. Up to 30 days   |       213 |          59.2 |          37.4 |                75.4 |
+| 2. 31 to 90 days   |       273 |          42.5 |          17.3 |                66.4 |
+| 3. 91 to 120 days  |        89 |          27.0 |           8.5 |                47.6 |
+| 4. 121 to 180 days |       169 |          25.4 |          14.1 |                35.2 |
+| 5. 181 to 270 days |       283 |           8.5 |           5.9 |                13.7 |
+| 6. 271 to 365 days |       210 |           2.4 |           2.4 |                 2.3 |
+| 7. Over a year     |       275 |           2.2 |           2.0 |                 3.6 |
++--------------------+-----------+---------------+---------------+---------------------+</code></pre></div>
+  <p>This is the most useful table of the day. Read down <code>came_back_pct</code>: the longer the silence, the less likely a return, with a clear drop after 180 days. Customers silent for up to six months still came back about a quarter of the time or more. After six months, fewer than 1 in 10 did, and after nine months almost nobody. It's like deciding when a missing parcel is lost: wait until the point where parcels almost never turn up afterwards.</p>
+  <p>Now read across. A customer with two or more orders is far more likely to return than a one-time buyer silent for the same time. Silence means different things for different customers. (The <code>CASE</code> without <code>ELSE</code> gives NULL for the other group, and <code>AVG</code> skips it, Day 21's trick.)</p>
+  <p>So, the rule for today, written down where everyone can see it:</p>
+  <div class="dbt prose">
+    <div class="dbt-scroll"><table>
+      <thead><tr><th>Status on 24 Dec 2024</th><th>Rule</th><th>What the past says</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Active</strong></td><td>Ordered in the last 90 days</td><td>About half order again within six months</td></tr>
+        <tr><td><strong>Lapsing</strong></td><td>Silent for 91 to 180 days</td><td>About a quarter come back; more if they've ordered twice</td></tr>
+        <tr><td><strong>Churned</strong></td><td>Silent for more than 180 days</td><td>Fewer than 1 in 10 come back</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>Save it as a view, so every section and every future report uses the same rule:</p>
+  <div class="code"><div class="code-bar"><span>Build 2: each customer's status on 24 December 2024</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> customer_status <span class="k">AS</span>
+<span class="k">SELECT</span> customer_id,
+       <span class="k">MIN</span>(order_date)                         <span class="k">AS</span> first_order_date,
+       <span class="k">MAX</span>(order_date)                         <span class="k">AS</span> last_order_date,
+       <span class="k">COUNT</span>(*)                                <span class="k">AS</span> orders,
+       <span class="k">SUM</span>(revenue)                            <span class="k">AS</span> revenue,
+       DATEDIFF(<span class="s">'2024-12-24'</span>, <span class="k">MAX</span>(order_date)) <span class="k">AS</span> days_silent,
+       <span class="k">CASE</span> <span class="k">WHEN</span> DATEDIFF(<span class="s">'2024-12-24'</span>, <span class="k">MAX</span>(order_date)) &lt;= <span class="n">90</span>  <span class="k">THEN</span> <span class="s">'Active'</span>
+            <span class="k">WHEN</span> DATEDIFF(<span class="s">'2024-12-24'</span>, <span class="k">MAX</span>(order_date)) &lt;= <span class="n">180</span> <span class="k">THEN</span> <span class="s">'Lapsing'</span>
+            <span class="k">ELSE</span> <span class="s">'Churned'</span> <span class="k">END</span>                 <span class="k">AS</span> status
+<span class="k">FROM</span> customer_orders
+<span class="k">GROUP</span> <span class="k">BY</span> customer_id;</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> status,
+       <span class="k">COUNT</span>(*)                                                 <span class="k">AS</span> customers,
+       <span class="k">SUM</span>(orders &gt;= <span class="n">2</span>)                                         <span class="k">AS</span> repeat_buyers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">COUNT</span>(*) / <span class="k">SUM</span>(<span class="k">COUNT</span>(*)) <span class="k">OVER</span> (), <span class="n">1</span>)         <span class="k">AS</span> pct_of_customers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(revenue) / <span class="k">SUM</span>(<span class="k">SUM</span>(revenue)) <span class="k">OVER</span> (), <span class="n">1</span>) <span class="k">AS</span> pct_of_lifetime_revenue
+<span class="k">FROM</span> customer_status
+<span class="k">GROUP</span> <span class="k">BY</span> status
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="k">MIN</span>(days_silent);</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+-----------+---------------+------------------+-------------------------+
+| status  | customers | repeat_buyers | pct_of_customers | pct_of_lifetime_revenue |
++---------+-----------+---------------+------------------+-------------------------+
+| Active  |       665 |           415 |             31.5 |                    51.0 |
+| Lapsing |       270 |            91 |             12.8 |                    10.8 |
+| Churned |      1174 |           310 |             55.7 |                    38.2 |
++---------+-----------+---------------+------------------+-------------------------+</code></pre></div>
+  <p>Day 13's percent-of-total pattern again (<code>SUM(SUM(...)) OVER ()</code>), and <code>ORDER BY MIN(days_silent)</code> puts the statuses in a sensible order without a sorting column. More than half of everyone who has ever bought is churned. That sounds alarming, but remember Day 13: 61% of customers buy once, and most one-time buyers end up here. Notice, though, the 310 churned <em>repeat</em> buyers: people who liked the shop enough to come back, and then stopped. And the 91 lapsing repeat buyers, who haven't gone yet.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="n">5</span>How many are we losing?</h2>
+  <p>Farah's first question needs a rate over time. Think of the active customers as water in a tank. Each month, new customers pour in from one tap, returning customers from another, and some water leaks out as customers pass 180 days of silence. If the taps beat the leak, the tank fills. This is often called <strong>growth accounting</strong>, and it has a lovely property: the numbers must balance, so you can check your own SQL.</p>
+  <p>"Active" here must mean exactly what Build 2 means: silent for 180 days or less, counted with <code>DATEDIFF</code> on a given day. So for each month, measure it on two days: the last day of the previous month (the start) and the month's own last day (the end). For each month, and each customer who had ordered by its end, work out the yes-or-no facts with <code>MAX</code> over their orders (Day 6's 1-and-0 trick):</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> months <span class="k">AS</span> (
+    <span class="k">SELECT</span> cal_date                                      <span class="k">AS</span> month_start,
+           cal_date - INTERVAL <span class="n">1</span> DAY                     <span class="k">AS</span> day_before,   <span class="c">-- "start" of the month</span>
+           cal_date + INTERVAL <span class="n">1</span> MONTH - INTERVAL <span class="n">1</span> DAY  <span class="k">AS</span> last_day      <span class="c">-- "end" of the month</span>
+    <span class="k">FROM</span> calendar
+    <span class="k">WHERE</span> DAY(cal_date) = <span class="n">1</span>
+      <span class="k">AND</span> cal_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> cal_date &lt; <span class="s">'2024-12-01'</span>
+),
+flags <span class="k">AS</span> (
+    <span class="k">SELECT</span> m.month_start, o.customer_id,
+           <span class="k">MAX</span>(o.order_date &lt; m.month_start
+               <span class="k">AND</span> DATEDIFF(m.day_before, o.order_date) &lt;= <span class="n">180</span>) <span class="k">AS</span> active_at_start,
+           <span class="k">MAX</span>(DATEDIFF(m.last_day, o.order_date) &lt;= <span class="n">180</span>)       <span class="k">AS</span> active_at_end,
+           <span class="k">MAX</span>(o.order_date &gt;= m.month_start)                   <span class="k">AS</span> bought_this_month,
+           <span class="k">MIN</span>(o.order_date) &gt;= m.month_start                   <span class="k">AS</span> is_new,
+           <span class="k">COUNT</span>(*)                                             <span class="k">AS</span> orders_so_far
+    <span class="k">FROM</span> months m
+    <span class="k">JOIN</span> customer_orders o <span class="k">ON</span> <span class="t">DATE</span>(o.order_date) &lt;= m.last_day
+    <span class="k">GROUP</span> <span class="k">BY</span> m.month_start, o.customer_id
+)
+<span class="k">SELECT</span> DATE_FORMAT(month_start, <span class="s">'%Y-%m'</span>)                                   <span class="k">AS</span> month,
+       <span class="k">SUM</span>(active_at_start)                                                <span class="k">AS</span> active_at_start,
+       <span class="k">SUM</span>(is_new)                                                         <span class="k">AS</span> new_customers,
+       <span class="k">SUM</span>(bought_this_month <span class="k">AND</span> <span class="k">NOT</span> active_at_start <span class="k">AND</span> <span class="k">NOT</span> is_new)       <span class="k">AS</span> came_back,
+       <span class="k">SUM</span>(active_at_start <span class="k">AND</span> <span class="k">NOT</span> active_at_end)                          <span class="k">AS</span> churned,
+       <span class="k">SUM</span>(active_at_end)                                                  <span class="k">AS</span> active_at_end,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(active_at_start <span class="k">AND</span> <span class="k">NOT</span> active_at_end)
+                 / <span class="k">SUM</span>(active_at_start), <span class="n">1</span>)                                <span class="k">AS</span> churn_rate_pct,
+       <span class="k">SUM</span>(active_at_start <span class="k">AND</span> <span class="k">NOT</span> active_at_end <span class="k">AND</span> orders_so_far = <span class="n">1</span>)    <span class="k">AS</span> churned_after_one_order
+<span class="k">FROM</span> flags
+<span class="k">GROUP</span> <span class="k">BY</span> month_start
+<span class="k">ORDER</span> <span class="k">BY</span> month_start;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+-----------------+---------------+-----------+---------+---------------+----------------+-------------------------+
+| month   | active_at_start | new_customers | came_back | churned | active_at_end | churn_rate_pct | churned_after_one_order |
++---------+-----------------+---------------+-----------+---------+---------------+----------------+-------------------------+
+| 2024-01 |             785 |            47 |         8 |      67 |           773 |            8.5 |                      50 |
+| 2024-02 |             773 |            58 |         5 |      75 |           761 |            9.7 |                      61 |
+| 2024-03 |             761 |            62 |         6 |      81 |           748 |           10.6 |                      62 |
+| 2024-04 |             748 |            88 |         2 |      95 |           743 |           12.7 |                      66 |
+| 2024-05 |             743 |            93 |         6 |     108 |           734 |           14.5 |                      65 |
+| 2024-06 |             734 |            93 |         8 |      87 |           748 |           11.9 |                      57 |
+| 2024-07 |             748 |            97 |         8 |      75 |           778 |           10.0 |                      29 |
+| 2024-08 |             778 |           104 |        13 |      86 |           809 |           11.1 |                      48 |
+| 2024-09 |             809 |            98 |        12 |      63 |           856 |            7.8 |                      36 |
+| 2024-10 |             856 |           100 |        16 |      72 |           900 |            8.4 |                      52 |
+| 2024-11 |             900 |           111 |        13 |      98 |           926 |           10.9 |                      65 |
++---------+-----------------+---------------+-----------+---------+---------------+----------------+-------------------------+</code></pre></div>
+  <p>How it works: the join gives each month every order placed up to its last day, so <code>MIN(order_date)</code> is the customer's first order and <code>COUNT(*)</code> their orders so far. "Churned" means active at the start, not at the end: their 180 days ran out during the month. "Came back" means a customer who had already churned, ordering again. One detail: it's tempting to write the window as <code>order_date &gt;= month_start - INTERVAL 180 DAY</code>, but that is a 179-day rule in <code>DATEDIFF</code> terms, one day different from Build 2. Off-by-one differences like this are why two "churn" numbers from the same data often disagree slightly. Use the same expression everywhere.</p>
+  <p>Now check that it balances, using January: 785 active at the start, plus 47 new, plus 8 who came back, minus 67 churned, gives 773, exactly the number active at the end. Every row balances like this. If yours doesn't, a condition is wrong. That check is worth more than any amount of staring at the query.</p>
+  <p>What the table says:</p>
+  <ul>
+    <li><strong>The tank is filling.</strong> 785 active customers at the start of 2024, 926 by the end of November. The shop loses about 1 in 10 of its active customers each month, and wins more than that back with new customers.</li>
+    <li><strong>Almost all the growth comes from the new-customer tap.</strong> Customers who come back after churning are a trickle, 2 to 16 a month, which is what section 4 predicted.</li>
+    <li><strong>Most of the leak is one-time buyers</strong>: across the year, about two-thirds of those who churned had placed a single order (591 of 907).</li>
+    <li><strong>Churn lags.</strong> A customer is counted as churned 180 days after their last order, so this month's churn is really about six months ago. April and May 2024 have the highest churn of the year: those are customers whose last order was between early October and early December 2023, the festive season. A busy season brings a wave of churn half a year later, simply because it brought a wave of new customers, most of whom buy once. Don't read it as "something went wrong in May".</li>
+  </ul>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="n">6</span>What brings a customer back?</h2>
+  <p>The biggest leak is after the first order, so the obvious next question is: <em>what about the first order</em> predicts a second? Day 20 suggested one idea to check: "did the festive coupon bring in bargain hunters who never return?" Others are easy to imagine. Do customers who used the welcome coupon come back less? Do customers who returned something come back less?</p>
+  <p>Use Day 13's fair measure: a second order within 90 days, only for customers whose first order was at least 90 days before our "today" (before 26 September 2024), and only customers with full history (section 2). Then stack the answers to several questions in one table with <code>UNION ALL</code> (Day 16):</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> firsts <span class="k">AS</span> (
+    <span class="k">SELECT</span> o.customer_id, o.order_id, o.order_date,
+           <span class="k">COALESCE</span>(o.next_order_date &lt; o.order_date + INTERVAL <span class="n">90</span> DAY, <span class="n">0</span>) <span class="k">AS</span> back_within_90
+    <span class="k">FROM</span> customer_orders o
+    <span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+    <span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+      <span class="k">AND</span> o.order_date &lt; <span class="s">'2024-09-26'</span>                <span class="c">-- everyone had 90 days</span>
+      <span class="k">AND</span> c.signup_date &gt;= <span class="s">'2023-01-01'</span>              <span class="c">-- full history</span>
+),
+details <span class="k">AS</span> (
+    <span class="k">SELECT</span> f.customer_id, f.back_within_90,
+           <span class="k">COALESCE</span>(<span class="k">MAX</span>(s.coupon_code), <span class="s">'No coupon'</span>)                      <span class="k">AS</span> coupon,
+           <span class="k">MAX</span>(s.channel)                                                 <span class="k">AS</span> channel,
+           <span class="k">MAX</span>(r.return_id <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>)                                   <span class="k">AS</span> returned_something,
+           <span class="k">SUM</span>(s.line_total)                                              <span class="k">AS</span> order_value,
+           <span class="t">DATE</span>(f.order_date) <span class="k">IN</span> (<span class="k">SELECT</span> sale_day <span class="k">FROM</span> festive_sale_days) <span class="k">AS</span> on_sale_day
+    <span class="k">FROM</span> firsts f
+    <span class="k">JOIN</span> clean_sales s        <span class="k">ON</span> s.order_id = f.order_id
+    <span class="k">LEFT</span> <span class="k">JOIN</span> clean_returns r <span class="k">ON</span> r.order_item_id = s.order_item_id
+    <span class="k">GROUP</span> <span class="k">BY</span> f.customer_id, f.order_date, f.back_within_90
+),
+stacked <span class="k">AS</span> (
+              <span class="k">SELECT</span> <span class="n">0</span> <span class="k">AS</span> q, <span class="s">'All first orders'</span> <span class="k">AS</span> question, <span class="s">'Everyone'</span> <span class="k">AS</span> answer,
+                     <span class="k">COUNT</span>(*) <span class="k">AS</span> customers, <span class="k">AVG</span>(back_within_90) <span class="k">AS</span> rate
+              <span class="k">FROM</span> details
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">1</span>, <span class="s">'Coupon used'</span>, coupon, <span class="k">COUNT</span>(*), <span class="k">AVG</span>(back_within_90)
+              <span class="k">FROM</span> details <span class="k">GROUP</span> <span class="k">BY</span> coupon
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">2</span>, <span class="s">'Ordered on'</span>, channel, <span class="k">COUNT</span>(*), <span class="k">AVG</span>(back_within_90)
+              <span class="k">FROM</span> details <span class="k">GROUP</span> <span class="k">BY</span> channel
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">3</span>, <span class="s">'On a festive sale day'</span>, <span class="k">IF</span>(on_sale_day, <span class="s">'Yes'</span>, <span class="s">'No'</span>) <span class="k">AS</span> a3,
+                     <span class="k">COUNT</span>(*), <span class="k">AVG</span>(back_within_90)
+              <span class="k">FROM</span> details <span class="k">GROUP</span> <span class="k">BY</span> a3
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">4</span>, <span class="s">'Returned something'</span>, <span class="k">IF</span>(returned_something, <span class="s">'Yes'</span>, <span class="s">'No'</span>) <span class="k">AS</span> a4,
+                     <span class="k">COUNT</span>(*), <span class="k">AVG</span>(back_within_90)
+              <span class="k">FROM</span> details <span class="k">GROUP</span> <span class="k">BY</span> a4
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">5</span>, <span class="s">'First order value'</span>,
+                     <span class="k">CASE</span> <span class="k">WHEN</span> order_value &lt; <span class="n">1000</span> <span class="k">THEN</span> <span class="s">'Under 1,000'</span>
+                          <span class="k">WHEN</span> order_value &lt; <span class="n">2500</span> <span class="k">THEN</span> <span class="s">'1,000 to 2,499'</span>
+                          <span class="k">ELSE</span> <span class="s">'2,500 or more'</span> <span class="k">END</span> <span class="k">AS</span> a5,
+                     <span class="k">COUNT</span>(*), <span class="k">AVG</span>(back_within_90)
+              <span class="k">FROM</span> details <span class="k">GROUP</span> <span class="k">BY</span> a5
+    <span class="k">UNION</span> <span class="k">ALL</span> <span class="k">SELECT</span> <span class="n">6</span>, <span class="s">'Customer ID is'</span>, <span class="k">IF</span>(MOD(customer_id, <span class="n">2</span>) = <span class="n">0</span>, <span class="s">'Even'</span>, <span class="s">'Odd'</span>) <span class="k">AS</span> a6,
+                     <span class="k">COUNT</span>(*), <span class="k">AVG</span>(back_within_90)
+              <span class="k">FROM</span> details <span class="k">GROUP</span> <span class="k">BY</span> a6
+)
+<span class="k">SELECT</span> question, answer, customers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * rate, <span class="n">1</span>)                                             <span class="k">AS</span> back_within_90_pct,
+       CAST(<span class="n">200</span> * SQRT(rate * (<span class="n">1</span> - rate) / customers) <span class="k">AS</span> <span class="t">DECIMAL</span>(<span class="n">4</span>,<span class="n">1</span>)) <span class="k">AS</span> give_or_take
+<span class="k">FROM</span> stacked
+<span class="k">ORDER</span> <span class="k">BY</span> q, customers <span class="k">DESC</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------------+----------------+-----------+--------------------+--------------+
+| question              | answer         | customers | back_within_90_pct | give_or_take |
++-----------------------+----------------+-----------+--------------------+--------------+
+| All first orders      | Everyone       |      1677 |               27.9 |          2.2 |
+| Coupon used           | No coupon      |      1262 |               26.9 |          2.5 |
+| Coupon used           | WELCOME10      |       398 |               31.4 |          4.7 |
+| Coupon used           | FESTIVE15      |        13 |               15.4 |         20.0 |
+| Coupon used           | NEWYEAR10      |         4 |               25.0 |         43.3 |
+| Ordered on            | web            |       954 |               27.2 |          2.9 |
+| Ordered on            | app            |       723 |               28.9 |          3.4 |
+| On a festive sale day | No             |      1603 |               27.5 |          2.2 |
+| On a festive sale day | Yes            |        74 |               36.5 |         11.2 |
+| Returned something    | No             |      1516 |               28.2 |          2.3 |
+| Returned something    | Yes            |       161 |               25.5 |          6.9 |
+| First order value     | 1,000 to 2,499 |       664 |               30.7 |          3.6 |
+| First order value     | 2,500 or more  |       528 |               26.5 |          3.8 |
+| First order value     | Under 1,000    |       485 |               25.6 |          4.0 |
+| Customer ID is        | Even           |       843 |               27.4 |          3.1 |
+| Customer ID is        | Odd            |       834 |               28.4 |          3.1 |
++-----------------------+----------------+-----------+--------------------+--------------+</code></pre></div>
+  <p>Two things in this query need explaining. The last question is a deliberate joke: odd or even customer IDs. An ID is just a label, so whether it's odd or even can't possibly affect whether someone comes back. (<code>MOD(x, 2)</code> is the remainder after dividing by 2, so it's 0 for even numbers.) Any difference between odd and even is pure luck. A check like this is called a <strong>placebo test</strong>: it shows you what luck looks like in your own data. Here odd and even differ by 1 point. But that's just one roll of the dice; another split could easily have given 3 or 4 points. To know how big luck can get, you need the next column.</p>
+  <p>That's the <code>give_or_take</code> column, a rough rule from statistics. If a group of <em>n</em> customers came back at rate <em>p</em>, then <code>2 × √(p × (1 − p) ÷ n)</code> is about how far that rate could move by luck alone (roughly a 95% range). Big groups give small ranges, small groups big ones. To compare two groups, combine their ranges: the range for the difference is about <code>√(a² + b²)</code>, where <em>a</em> and <em>b</em> are the two groups' give-or-takes. A difference smaller than that could easily be luck. For the odd and even IDs, that range is about √(3.1² + 3.1²) ≈ 4.4 points, comfortably bigger than the 1-point gap luck happened to give. Two more cautions. The rule needs at least about 10 customers who came back and 10 who didn't in a group; below that, just say "too few to tell". And when you check many groups at once, about 1 gap in 20 will cross the line by luck alone, so one surprising result among many deserves a second look before anyone acts on it.</p>
+  <p>Now read the table with that ruler:</p>
+  <ul>
+    <li><strong>Welcome coupon</strong>: 31.4% against 26.9%, a gap of 4.5 points. The range for the difference is about √(4.7² + 2.5²) ≈ 5.3. So the coupon <em>might</em> help a little, but this data can't tell.</li>
+    <li><strong>Festive sale day</strong>: if anything, the 74 customers who first bought in a sale came back <em>more</em> often, not less. But 74 is a small group (give or take 11 points), so the honest answer to Day 20's idea is "no sign of bargain hunters, and too few to be sure".</li>
+    <li><strong>App or website, a return on the first order, order size</strong>: every gap is inside its range. The <code>FESTIVE15</code> and <code>NEWYEAR10</code> rows are too small to read at all.</li>
+  </ul>
+  <p>This is a perfectly good finding, and an important one: <strong>none of the first-order details we tested clearly predicts a second order</strong>. (That's not the same as "nothing matters": a small effect could hide inside these ranges, and there are details we didn't test.) It saves Farah from building a campaign on a pattern that isn't there. In real work, "we checked, and it doesn't matter" is reported just as plainly as "it matters".</p>
+
+  <h3 style="margin:28px 0 8px">What does predict it: the orders already placed</h3>
+  <p>If the first order's details don't tell you much, what does? The customer's own behaviour. Here's the chance of another order within 90 days, after each order number. The grain is <em>orders</em> now: a customer with six orders appears in several rows.</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> o.order_number = <span class="n">1</span> <span class="k">THEN</span> <span class="s">'1. After the 1st order'</span>
+            <span class="k">WHEN</span> o.order_number = <span class="n">2</span> <span class="k">THEN</span> <span class="s">'2. After the 2nd'</span>
+            <span class="k">WHEN</span> o.order_number = <span class="n">3</span> <span class="k">THEN</span> <span class="s">'3. After the 3rd'</span>
+            <span class="k">WHEN</span> o.order_number = <span class="n">4</span> <span class="k">THEN</span> <span class="s">'4. After the 4th'</span>
+            <span class="k">ELSE</span> <span class="s">'5. After the 5th or later'</span> <span class="k">END</span>                                     <span class="k">AS</span> <span class="k">after</span>,
+       <span class="k">COUNT</span>(*)                                                                      <span class="k">AS</span> orders,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">COALESCE</span>(o.next_order_date &lt; o.order_date + INTERVAL <span class="n">90</span> DAY, <span class="n">0</span>)), <span class="n">1</span>) <span class="k">AS</span> next_within_90_pct
+<span class="k">FROM</span> customer_orders o
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+<span class="k">WHERE</span> o.order_date &lt; <span class="s">'2024-09-26'</span>
+  <span class="k">AND</span> c.signup_date &gt;= <span class="s">'2023-01-01'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> <span class="k">after</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="k">after</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------------------------+--------+--------------------+
+| after                     | orders | next_within_90_pct |
++---------------------------+--------+--------------------+
+| 1. After the 1st order    |   1677 |               27.9 |
+| 2. After the 2nd          |    569 |               62.6 |
+| 3. After the 3rd          |    410 |               62.7 |
+| 4. After the 4th          |    280 |               73.6 |
+| 5. After the 5th or later |    902 |               78.2 |
++---------------------------+--------+--------------------+</code></pre></div>
+  <p>The jump is enormous. After a first order, only 28% come back within 90 days. After a second, 63% do, and after the fifth, nearly 8 in 10. <strong>The second order is the hurdle.</strong> Once a customer has cleared it, they're likely to keep going. That's why so many shops focus their effort on the first 30 to 90 days (Day 13's advice for its "New" segment). One caution in reading it: this doesn't prove that a second order <em>makes</em> people loyal. Partly, the customers who place a second order were the loyal kind all along, and the second order just reveals them. Either way, it's the best signal the shop has of who will stay.</p>
+  <div class="note sun"><p><strong>Why the COALESCE?</strong> It's Day 20's trap 1. A customer's last order has no next order, so <code>next_order_date &lt; ...</code> is NULL, and <code>AVG</code> would skip those orders entirely. Without <code>COALESCE(..., 0)</code>, the first row would say 72% instead of 28%: it would average only over the customers who came back <em>at all</em>. Always ask what a NULL means before you average over it.</p></div>
+
+  <h3 style="margin:28px 0 8px">Are we getting worse at keeping customers?</h3>
+  <p>That was Farah's second question. Compare the fair 90-day rate for customers who first bought in 2023 and in 2024, with and without the customers whose history we can't see:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> firsts <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="t">YEAR</span>(o.order_date)                                              <span class="k">AS</span> first_order_year,
+           c.signup_date &gt;= <span class="s">'2023-01-01'</span>                                   <span class="k">AS</span> full_history,
+           <span class="k">COALESCE</span>(o.next_order_date &lt; o.order_date + INTERVAL <span class="n">90</span> DAY, <span class="n">0</span>) <span class="k">AS</span> back_within_90
+    <span class="k">FROM</span> customer_orders o
+    <span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+    <span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+      <span class="k">AND</span> o.order_date &lt; <span class="s">'2024-09-26'</span>
+)
+<span class="k">SELECT</span> first_order_year,
+       <span class="k">COUNT</span>(*)                                                       <span class="k">AS</span> all_customers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(back_within_90), <span class="n">1</span>)                            <span class="k">AS</span> all_pct,
+       <span class="k">SUM</span>(full_history)                                              <span class="k">AS</span> full_history_customers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(<span class="k">CASE</span> <span class="k">WHEN</span> full_history <span class="k">THEN</span> back_within_90 <span class="k">END</span>), <span class="n">1</span>) <span class="k">AS</span> full_history_pct
+<span class="k">FROM</span> firsts
+<span class="k">GROUP</span> <span class="k">BY</span> first_order_year
+<span class="k">ORDER</span> <span class="k">BY</span> first_order_year;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+------------------+---------------+---------+------------------------+------------------+
+| first_order_year | all_customers | all_pct | full_history_customers | full_history_pct |
++------------------+---------------+---------+------------------------+------------------+
+|             2023 |          1089 |    31.8 |                    972 |             29.3 |
+|             2024 |           707 |    25.9 |                    705 |             26.0 |
++------------------+---------------+---------+------------------------+------------------+</code></pre></div>
+  <p>With everyone included, 2024 looks clearly worse than 2023: about 6 points. With the 2022 sign-ups left out, the gap shrinks to about 3 points. Use the ruler: 2023's give or take is about 2.9 points and 2024's about 3.3, so the range for the difference is about √(2.9² + 3.3²) ≈ 4.4. A 3-point gap is inside it. The honest answer: <strong>part of the apparent decline (about 2.5 of the 6 points) was the data starting mid-story, and what's left is too small to call.</strong> "Too small to call" isn't "no change": keep watching it each quarter, and if the gap persists as more customers come in, the ranges will shrink enough to tell.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="n">7</span>Who to win back</h2>
+  <p>Now Farah's last question. Put sections 4 and 6 together. Customers with two or more orders are the most likely to return, and the chance falls steeply after 180 days of silence and is almost gone after 270. So a sensible plan has four groups:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> status = <span class="s">'Active'</span>                     <span class="k">THEN</span> <span class="s">'0. Active: no campaign needed'</span>
+            <span class="k">WHEN</span> orders &gt;= <span class="n">2</span> <span class="k">AND</span> days_silent &lt;= <span class="n">270</span>     <span class="k">THEN</span> <span class="s">'1. Win back first'</span>
+            <span class="k">WHEN</span> orders = <span class="n">1</span>  <span class="k">AND</span> days_silent &lt;= <span class="n">180</span>     <span class="k">THEN</span> <span class="s">'2. A cheap reminder'</span>
+            <span class="k">ELSE</span>                                             <span class="s">'3. Long shots: leave for now'</span> <span class="k">END</span> <span class="k">AS</span> plan,
+       <span class="k">COUNT</span>(*)                     <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(orders), <span class="n">1</span>)        <span class="k">AS</span> avg_orders,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(revenue))          <span class="k">AS</span> avg_lifetime_spend,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(days_silent))      <span class="k">AS</span> avg_days_silent
+<span class="k">FROM</span> customer_status
+<span class="k">GROUP</span> <span class="k">BY</span> plan
+<span class="k">ORDER</span> <span class="k">BY</span> plan;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------------------------+-----------+------------+--------------------+-----------------+
+| plan                          | customers | avg_orders | avg_lifetime_spend | avg_days_silent |
++-------------------------------+-----------+------------+--------------------+-----------------+
+| 0. Active: no campaign needed |       665 |        4.3 |              10072 |              39 |
+| 1. Win back first             |       169 |        4.8 |              11415 |             173 |
+| 2. A cheap reminder           |       179 |        1.0 |               2465 |             140 |
+| 3. Long shots: leave for now  |      1096 |        1.6 |               3702 |             435 |
++-------------------------------+-----------+------------+--------------------+-----------------+</code></pre></div>
+  <p>The 169 customers in group 1 have bought from the shop almost five times each, and spent over ₹11,000 on average. They're the ones a well-made offer has the best chance of turning around. Group 2's one-time buyers are worth an email, not a discount. Group 3 is the biggest, and section 4 says only about 2 to 6% of customers like these come back: a cheap message at most.</p>
+  <p>That's a different list from Day 13's RFM "At risk" segment. Where are those customers today?</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> r.segment,
+       <span class="k">COUNT</span>(*)                  <span class="k">AS</span> customers,
+       <span class="k">MIN</span>(s.days_silent)        <span class="k">AS</span> least_silent,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(s.days_silent)) <span class="k">AS</span> avg_days_silent
+<span class="k">FROM</span> customer_rfm r
+<span class="k">JOIN</span> customer_status s <span class="k">ON</span> s.customer_id = r.customer_id
+<span class="k">WHERE</span> r.segment = <span class="s">'At risk'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> r.segment;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+-----------+--------------+-----------------+
+| segment | customers | least_silent | avg_days_silent |
++---------+-----------+--------------+-----------------+
+| At risk |       136 |          308 |             414 |
++---------+-----------+--------------+-----------------+</code></pre></div>
+  <p>Every one of them has been silent for over nine months. RFM scores recency <em>relative</em> to other customers (Day 13's <code>NTILE</code>), so "low recency" just means "among the quietest fifth or two". Section 4's test puts an actual number on it: after nine months, hardly anyone returns. Day 13 was right that they were valuable. Today's data says they're mostly gone, and the better bet is the customers <em>slipping</em> now, before they reach that point. Both views are useful: RFM to describe customers, a tested rule to decide whom to spend money on.</p>
+
+  <h3 style="margin:28px 0 8px">Make the campaign measurable</h3>
+  <p>Here's a trap that catches whole marketing teams. Say Farah emails group 1, and 40% of them buy in the next three months. Success? Section 4 says many of them would have come back anyway. To know what the campaign <em>added</em>, you need a <strong>holdout group</strong>: a random slice of the list that gets nothing, and is measured the same way. Doctors do the same when they test a medicine, by comparing against patients who didn't get it.</p>
+  <p>The slice must be random, but repeatable, so that anyone can rebuild it later. A hash does that. <code>CRC32</code> turns any value into a scrambled number, always the same for the same input, and <code>MOD(..., 5)</code> takes the remainder after dividing by 5, which is 0, 1, 2, 3 or 4. So <code>MOD(CRC32(customer_id), 5) = 0</code> picks a fixed, effectively random fifth of the customers:</p>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> s.customer_id,
+       CONCAT(c.first_name, <span class="s">' '</span>, c.last_name)                       <span class="k">AS</span> name,
+       s.orders,
+       <span class="k">ROUND</span>(s.revenue)                                             <span class="k">AS</span> lifetime_spend,
+       s.days_silent,
+       <span class="k">IF</span>(MOD(CRC32(s.customer_id), <span class="n">5</span>) = <span class="n">0</span>, <span class="s">'Hold out'</span>, <span class="s">'Contact'</span>)  <span class="k">AS</span> campaign_group
+<span class="k">FROM</span> customer_status s
+<span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = s.customer_id
+<span class="k">WHERE</span> s.orders &gt;= <span class="n">2</span>
+  <span class="k">AND</span> s.days_silent <span class="k">BETWEEN</span> <span class="n">91</span> <span class="k">AND</span> <span class="n">270</span>
+<span class="k">ORDER</span> <span class="k">BY</span> s.revenue <span class="k">DESC</span>
+<span class="k">LIMIT</span> <span class="n">10</span>;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+----------------+--------+----------------+-------------+----------------+
+| customer_id | name           | orders | lifetime_spend | days_silent | campaign_group |
++-------------+----------------+--------+----------------+-------------+----------------+
+|        1750 | Amit Singh     |     31 |          63502 |         236 | Hold out       |
+|         456 | Isha Qureshi   |     13 |          41996 |         243 | Contact        |
+|        1333 | Dhruv Mishra   |     15 |          39566 |         102 | Contact        |
+|        2289 | Suresh D'Souza |     11 |          38699 |         215 | Contact        |
+|         458 | Sai Krishnan   |     11 |          34682 |         141 | Contact        |
+|        1065 | Aisha Pillai   |     11 |          33129 |         237 | Contact        |
+|        2118 | Omar Smith     |     12 |          32143 |         191 | Contact        |
+|        2267 | Deepa Desai    |     13 |          31801 |         103 | Contact        |
+|        1525 | Krishna Thakur |     10 |          30579 |         206 | Contact        |
+|        1272 | Shaurya Saxena |      5 |          27956 |         167 | Contact        |
++-------------+----------------+--------+----------------+-------------+----------------+</code></pre></div>
+  <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> <span class="k">IF</span>(MOD(CRC32(customer_id), <span class="n">5</span>) = <span class="n">0</span>, <span class="s">'Hold out'</span>, <span class="s">'Contact'</span>) <span class="k">AS</span> campaign_group,
+       <span class="k">COUNT</span>(*)              <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(revenue))   <span class="k">AS</span> avg_lifetime_spend,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(days_silent)) <span class="k">AS</span> avg_days_silent
+<span class="k">FROM</span> customer_status
+<span class="k">WHERE</span> orders &gt;= <span class="n">2</span>
+  <span class="k">AND</span> days_silent <span class="k">BETWEEN</span> <span class="n">91</span> <span class="k">AND</span> <span class="n">270</span>
+<span class="k">GROUP</span> <span class="k">BY</span> campaign_group;</code></pre></div>
+  <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+-----------+--------------------+-----------------+
+| campaign_group | customers | avg_lifetime_spend | avg_days_silent |
++----------------+-----------+--------------------+-----------------+
+| Contact        |       140 |              11140 |             174 |
+| Hold out       |        29 |              12746 |             170 |
++----------------+-----------+--------------------+-----------------+</code></pre></div>
+  <p>The two groups have the same silence on average, as a random split should give. The holdout's average spend is a bit higher, and the top-10 list shows why: the shop's biggest customer on the list, customer 1750, landed in it. With groups this small, one person can do that. And 29 people is a small holdout. Using the section 6 ruler, a return rate of around 35% on 29 people is only good to about ±18 points, so one campaign will only show a big effect clearly. Run the same design for a few months, keep the holdout every time, and the evidence adds up.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="n">8</span>Write it up</h2>
+  <p>Same rules as Day 21: lead with the answer, round the numbers, separate what the data shows from what you suggest, and say what it can't tell you. Here's the reply to Farah:</p>
+  <div class="note"><p><strong>Retention review, as of 24 December 2024</strong></p>
+  <p style="margin-top:8px"><strong>How many are we losing?</strong> About 1 in 10 active customers a month, where "active" means an order in the last 180 days. We win more than that with new customers, so our active base grew from about 790 to about 930 in 2024. About two-thirds of those we lose bought only once.</p>
+  <p style="margin-top:8px"><strong>Better or worse?</strong> No clear change. 2024's new customers came back slightly less often than 2023's, but the gap is within what chance alone would produce. (Part of an apparently bigger gap came from customers who were buying before our data starts.)</p>
+  <p style="margin-top:8px"><strong>What brings people back?</strong> None of the first-order details we tested clearly predicts a second order: not the coupon, the device, a festive sale, a return or the order size. The strongest signal is behaviour. After one order, 28% come back within 90 days; after two, 63%. The second order is the hurdle.</p>
+  <p style="margin-top:8px"><strong>Who to contact first.</strong> 169 customers with two or more orders who have gone quiet for 3 to 9 months: almost five orders and ₹11,000 each, on average. Second, a cheap reminder to 179 one-time buyers quiet for 3 to 6 months. Customers silent for over 9 months rarely come back at all, including Day 13's "At risk" group.</p>
+  <p style="margin-top:8px"><strong>Measuring it.</strong> Keep a random fifth of the list (fixed by customer ID) out of the campaign, and compare. Expect the first campaign to give only a rough answer, because the groups are small.</p>
+  <p style="margin-top:8px"><strong>Notes.</strong> Settled data to 24 December. Customers who signed up before 2023 are left out of cohort and second-order figures. Rebuild the list on the day the campaign goes out.</p></div>
+  <p>That last note matters. The views use a fixed date, <code>'2024-12-24'</code>, so the analysis can be checked and repeated exactly. For a live report, you'd replace it with a moving one, such as <code>CURDATE() - INTERVAL 7 DAY</code> to stay a week behind the unsettled orders, or wrap the queries in a Day 19 procedure that takes the date as an input, like Day 21's scorecard. A procedure also lets you rerun section 4's test from any past date, to check that the 180-day rule still holds.</p>
+</section>
+
+<!-- Try this -->
+<div class="try" id="try">
+  <h2>✏️ Try this before Day 23</h2>
+  <ol style="padding-left:22px">
+    <li>Change section 5's rule from 180 days to 90 days. What happens to the churn rate and to "came back"? Which rule would you report, and why?</li>
+    <li>Of the customers active (by the 180-day rule) on 1 January 2024, what share were still active on 24 December 2024?</li>
+    <li>Do customers from different acquisition channels come back at different rates? Use section 6's fair measure and the give-or-take ruler.</li>
+    <li>Day 13 said Reyansh (customer 1247) is "exactly the kind of customer the shop should be calling". What's his status today, and what does section 4 say about his chances?</li>
+    <li>The campaign goes out on 2 January. Who on the group 1 list should you remove on the day, using only the data you have now?</li>
+  </ol>
+  <details class="reveal">
+    <summary>Show sample answers</summary>
+    <div class="body">
+      <p><strong>1.</strong> Change the two <code>180</code>s to <code>90</code>:</p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> months <span class="k">AS</span> (
+    <span class="k">SELECT</span> cal_date                                      <span class="k">AS</span> month_start,
+           cal_date - INTERVAL <span class="n">1</span> DAY                     <span class="k">AS</span> day_before,
+           cal_date + INTERVAL <span class="n">1</span> MONTH - INTERVAL <span class="n">1</span> DAY  <span class="k">AS</span> last_day
+    <span class="k">FROM</span> calendar
+    <span class="k">WHERE</span> DAY(cal_date) = <span class="n">1</span>
+      <span class="k">AND</span> cal_date &gt;= <span class="s">'2024-01-01'</span> <span class="k">AND</span> cal_date &lt; <span class="s">'2024-12-01'</span>
+),
+flags <span class="k">AS</span> (
+    <span class="k">SELECT</span> m.month_start, o.customer_id,
+           <span class="k">MAX</span>(o.order_date &lt; m.month_start
+               <span class="k">AND</span> DATEDIFF(m.day_before, o.order_date) &lt;= <span class="n">90</span>) <span class="k">AS</span> active_at_start,
+           <span class="k">MAX</span>(DATEDIFF(m.last_day, o.order_date) &lt;= <span class="n">90</span>)       <span class="k">AS</span> active_at_end,
+           <span class="k">MAX</span>(o.order_date &gt;= m.month_start)                  <span class="k">AS</span> bought_this_month,
+           <span class="k">MIN</span>(o.order_date) &gt;= m.month_start                  <span class="k">AS</span> is_new
+    <span class="k">FROM</span> months m
+    <span class="k">JOIN</span> customer_orders o <span class="k">ON</span> <span class="t">DATE</span>(o.order_date) &lt;= m.last_day
+    <span class="k">GROUP</span> <span class="k">BY</span> m.month_start, o.customer_id
+)
+<span class="k">SELECT</span> DATE_FORMAT(month_start, <span class="s">'%Y-%m'</span>)                             <span class="k">AS</span> month,
+       <span class="k">SUM</span>(active_at_start)                                          <span class="k">AS</span> active_at_start,
+       <span class="k">SUM</span>(bought_this_month <span class="k">AND</span> <span class="k">NOT</span> active_at_start <span class="k">AND</span> <span class="k">NOT</span> is_new) <span class="k">AS</span> came_back,
+       <span class="k">SUM</span>(active_at_start <span class="k">AND</span> <span class="k">NOT</span> active_at_end)                    <span class="k">AS</span> churned,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">SUM</span>(active_at_start <span class="k">AND</span> <span class="k">NOT</span> active_at_end)
+                 / <span class="k">SUM</span>(active_at_start), <span class="n">1</span>)                          <span class="k">AS</span> churn_rate_pct
+<span class="k">FROM</span> flags
+<span class="k">GROUP</span> <span class="k">BY</span> month_start
+<span class="k">ORDER</span> <span class="k">BY</span> month_start;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+---------+-----------------+-----------+---------+----------------+
+| month   | active_at_start | came_back | churned | churn_rate_pct |
++---------+-----------------+-----------+---------+----------------+
+| 2024-01 |             550 |        19 |     118 |           21.5 |
+| 2024-02 |             498 |        18 |     118 |           23.7 |
+| 2024-03 |             456 |        19 |     118 |           25.9 |
+| 2024-04 |             419 |        30 |      99 |           23.6 |
+| 2024-05 |             438 |        25 |     106 |           24.2 |
+| 2024-06 |             450 |        30 |      84 |           18.7 |
+| 2024-07 |             489 |        27 |     106 |           21.7 |
+| 2024-08 |             507 |        44 |     125 |           24.7 |
+| 2024-09 |             530 |        37 |     106 |           20.0 |
+| 2024-10 |             559 |        43 |      96 |           17.2 |
+| 2024-11 |             606 |        34 |     113 |           18.6 |
++---------+-----------------+-----------+---------+----------------+</code></pre></div>
+      <p>The active base is smaller, the churn rate roughly doubles, and "came back" is about three times bigger, because a 90-day rule calls people "churned" who are really just between orders, and then counts them as won back when they order again. Same customers, very different story. Report the 180-day rule: section 4 showed that about a quarter of customers silent for 91 to 180 days still came back, so calling them "churned" is premature. Whatever you choose, write the rule next to the number.</p>
+      <p><strong>2.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> active_jan <span class="k">AS</span> (                  <span class="c">-- Build 2's rule, on 31 December 2023</span>
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> customer_id
+    <span class="k">FROM</span> customer_orders
+    <span class="k">WHERE</span> order_date &lt; <span class="s">'2024-01-01'</span>
+      <span class="k">AND</span> DATEDIFF(<span class="s">'2023-12-31'</span>, order_date) &lt;= <span class="n">180</span>
+)
+<span class="k">SELECT</span> <span class="k">COUNT</span>(*)                                         <span class="k">AS</span> active_on_1_jan,
+       <span class="k">SUM</span>(s.status <span class="k">IN</span> (<span class="s">'Active'</span>, <span class="s">'Lapsing'</span>))          <span class="k">AS</span> still_active_24_dec,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(s.status <span class="k">IN</span> (<span class="s">'Active'</span>, <span class="s">'Lapsing'</span>)), <span class="n">1</span>) <span class="k">AS</span> still_active_pct
+<span class="k">FROM</span> active_jan a
+<span class="k">JOIN</span> customer_status s <span class="k">ON</span> s.customer_id = a.customer_id;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-----------------+---------------------+------------------+
+| active_on_1_jan | still_active_24_dec | still_active_pct |
++-----------------+---------------------+------------------+
+|             785 |                 205 |             26.1 |
++-----------------+---------------------+------------------+</code></pre></div>
+      <p>"Active by the 180-day rule" on 24 December means Active or Lapsing in Build 2's terms. Only about a quarter of the customers active at the start of the year were still active at the end. The base still grew, because new customers more than replaced them: section 5's tank again. This is a common way to state yearly retention of the customer base, simple and easy to compare next year, and it shows how much a shop depends on winning new customers.</p>
+      <p><strong>3.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">WITH</span> firsts <span class="k">AS</span> (
+    <span class="k">SELECT</span> <span class="k">COALESCE</span>(c.acquisition_channel, <span class="s">'Not recorded'</span>)                <span class="k">AS</span> channel,
+           <span class="k">COALESCE</span>(o.next_order_date &lt; o.order_date + INTERVAL <span class="n">90</span> DAY, <span class="n">0</span>) <span class="k">AS</span> back_within_90
+    <span class="k">FROM</span> customer_orders o
+    <span class="k">JOIN</span> clean_customers c <span class="k">ON</span> c.customer_id = o.customer_id
+    <span class="k">WHERE</span> o.order_number = <span class="n">1</span>
+      <span class="k">AND</span> o.order_date &lt; <span class="s">'2024-09-26'</span>
+      <span class="k">AND</span> c.signup_date &gt;= <span class="s">'2023-01-01'</span>
+)
+<span class="k">SELECT</span> channel,
+       <span class="k">COUNT</span>(*)                                  <span class="k">AS</span> customers,
+       <span class="k">ROUND</span>(<span class="n">100</span> * <span class="k">AVG</span>(back_within_90), <span class="n">1</span>)       <span class="k">AS</span> back_within_90_pct,
+       CAST(<span class="n">200</span> * SQRT(<span class="k">AVG</span>(back_within_90) * (<span class="n">1</span> - <span class="k">AVG</span>(back_within_90)) / <span class="k">COUNT</span>(*)) <span class="k">AS</span> <span class="t">DECIMAL</span>(<span class="n">4</span>,<span class="n">1</span>)) <span class="k">AS</span> give_or_take
+<span class="k">FROM</span> firsts
+<span class="k">GROUP</span> <span class="k">BY</span> channel
+<span class="k">ORDER</span> <span class="k">BY</span> customers <span class="k">DESC</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+----------------+-----------+--------------------+--------------+
+| channel        | customers | back_within_90_pct | give_or_take |
++----------------+-----------+--------------------+--------------+
+| Organic Search |       456 |               29.4 |          4.3 |
+| Instagram      |       310 |               27.1 |          5.0 |
+| Google Ads     |       302 |               27.5 |          5.1 |
+| Referral       |       198 |               26.8 |          6.3 |
+| Facebook       |       142 |               26.1 |          7.4 |
+| Direct         |       134 |               29.9 |          7.9 |
+| Email          |        80 |               30.0 |         10.2 |
+| Not recorded   |        55 |               23.6 |         11.5 |
++----------------+-----------+--------------------+--------------+</code></pre></div>
+      <p>The rates sit within a few points of each other, and every gap is well inside its give-or-take. So channel doesn't clearly predict a second order either, and the case for one channel over another rests on what a customer costs to win there (Day 14), not on how loyal they are afterwards.</p>
+      <p><strong>4.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> customer_id, orders, <span class="k">ROUND</span>(revenue) <span class="k">AS</span> lifetime_spend, last_order_date, days_silent, status
+<span class="k">FROM</span> customer_status
+<span class="k">WHERE</span> customer_id = <span class="n">1247</span>;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+--------+----------------+---------------------+-------------+---------+
+| customer_id | orders | lifetime_spend | last_order_date     | days_silent | status  |
++-------------+--------+----------------+---------------------+-------------+---------+
+|        1247 |      6 |          10268 | 2023-11-14 17:28:30 |         406 | Churned |
++-------------+--------+----------------+---------------------+-------------+---------+</code></pre></div>
+      <p>Churned, silent for well over a year. Section 4's last row says only a few percent of customers silent that long come back, even repeat buyers. He's valuable, but he's a long shot now: group 3, a cheap message at most. His last order was on 14 November 2023, so Day 13's advice to call him would have been right between mid-February and early August 2024, while he'd been quiet for three to nine months.</p>
+      <p><strong>5.</strong></p>
+      <div class="code"><div class="code-bar"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code><span class="k">SELECT</span> s.customer_id, s.days_silent,
+       <span class="k">MIN</span>(o.order_date) <span class="k">AS</span> ordered_again_on,
+       <span class="k">MIN</span>(o.status)     <span class="k">AS</span> status_now
+<span class="k">FROM</span> customer_status s
+<span class="k">JOIN</span> clean_orders o <span class="k">ON</span> o.customer_id = s.customer_id
+<span class="k">WHERE</span> s.orders &gt;= <span class="n">2</span>
+  <span class="k">AND</span> s.days_silent <span class="k">BETWEEN</span> <span class="n">91</span> <span class="k">AND</span> <span class="n">270</span>
+  <span class="k">AND</span> o.order_date &gt;= <span class="s">'2024-12-25'</span>
+  <span class="k">AND</span> o.is_test = <span class="n">0</span> <span class="k">AND</span> o.is_duplicate = <span class="n">0</span>
+<span class="k">GROUP</span> <span class="k">BY</span> s.customer_id, s.days_silent;</code></pre></div>
+      <div class="code out"><div class="code-bar"><span>Result</span></div><pre><code>+-------------+-------------+---------------------+------------+
+| customer_id | days_silent | ordered_again_on    | status_now |
++-------------+-------------+---------------------+------------+
+|        2485 |         100 | 2024-12-28 19:31:41 | Completed  |
+|        2782 |         101 | 2024-12-27 19:10:35 | Shipped    |
+|         116 |         100 | 2024-12-31 20:47:02 | Pending    |
+|        2858 |         103 | 2024-12-25 16:40:08 | Shipped    |
++-------------+-------------+---------------------+------------+</code></pre></div>
+      <p>Anyone who has placed an order since 24 December, of any status, isn't lapsing any more: take them off the list, or you'll send a "we miss you" email to someone who just bought. Here it's four customers, all of whom had been quiet for just over 90 days. On the day itself, rerun the whole list with the new date, because some customers will also have crossed into group 3. (This query uses <code>clean_orders</code> rather than <code>customer_orders</code>, because the view stops at 24 December and only has completed orders. <code>clean_orders.customer_id</code> is already the master ID, so the join works.)</p>
+    </div>
+  </details>
+</div>
+
+<!-- Interview corner -->
+<div class="interview" id="interview">
+  <div class="iv-head">
+    <h2>🎯 Interview corner</h2>
+    <p>Retention questions are favourites in analyst interviews, because they test definitions and judgment as much as SQL. Expect at least one "how would you define churn?"</p>
+  </div>
+  <div class="iv-group">
+    <h3>Concept questions</h3>
+    <details class="qa"><summary><span class="q">Q1</span>How would you define churn for a shop with no subscriptions?</summary>
+      <div class="body"><p>From silence: no order for a set number of days. Choose the number with data: go back to a past date, group customers by how long they'd been silent, and see what share came back afterwards. Pick the point where returns become rare. Write the rule down next to every churn number, because a different rule gives a different number.</p></div></details>
+    <details class="qa"><summary><span class="q">Q2</span>What's the difference between a repeat rate, cohort retention and a churn rate?</summary>
+      <div class="body"><p>A repeat rate is the share of customers who ever ordered twice (fair only within a fixed window). Cohort retention follows a group who started together and shows what share is still buying 1, 2, 3 ... months later. A churn rate is the share of currently active customers who become inactive in a period. Each answers a different question.</p></div></details>
+    <details class="qa"><summary><span class="q">Q3</span>What are left-censoring and left truncation, and why do they matter for cohorts?</summary>
+      <div class="body"><p>The data starts in the middle of some customers' history. For customers who were already buying, the real first order is left-censored: we know it was before the data starts, not when. Customers who stopped before the data starts are missing entirely: that's left truncation. Either way, the first order in the data isn't the real first order, so long-standing customers look like new customers who are unusually loyal, which inflates early cohorts. Leave out customers you can't see from the start (for example, those who signed up before the data begins).</p></div></details>
+    <details class="qa"><summary><span class="q">Q4</span>Why does a win-back campaign need a holdout group?</summary>
+      <div class="body"><p>Because some customers would have come back anyway. Without a group that received nothing, you can't separate the campaign's effect from normal returns. The holdout must be random (a hash of the customer ID is repeatable), measured the same way, and big enough to show the effect you care about.</p></div></details>
+    <details class="qa"><summary><span class="q">Q5</span>Churn jumped this month. Does that mean something went wrong this month?</summary>
+      <div class="body"><p>Not necessarily. With a silence-based rule, churn is recorded months after the last order, so it reflects who was buying back then. A big season produces a wave of churn later, mostly one-time buyers. Check when the churned customers last ordered before looking for a cause this month.</p></div></details>
+    <details class="qa"><summary><span class="q">Q6</span>A segment comes back at 31% and another at 27%. Is the first better?</summary>
+      <div class="body"><p>Maybe, maybe not. Check whether the gap is bigger than chance: roughly 2 × √(p(1−p)/n) for each group, combined for the difference. A placebo split (such as odd and even IDs) shows what a pure-luck difference looks like in your data, but it's a single example, so use the formula for the size. With small groups, say "can't tell" rather than picking a winner.</p></div></details>
+  </div>
+  <div class="iv-group">
+    <h3>Practical questions</h3>
+    <details class="qa"><summary><span class="q">P1</span>Sketch the SQL for a monthly cohort retention table.</summary>
+      <div class="body"><p>Find each customer's first order month. Join back to all their orders and compute <code>months_later</code> as <code>(YEAR*12 + MONTH)</code> of the order minus that of the first order. Group by cohort, with <code>COUNT(DISTINCT CASE WHEN months_later = k THEN customer_id END)</code> for each <em>k</em>, divided by the cohort size. Return NULL for cells beyond the last complete month.</p></div></details>
+    <details class="qa"><summary><span class="q">P2</span>Your query says 72% of customers order again within 90 days. It seems high. What would you check?</summary>
+      <div class="body"><p>Whether customers with no next order are being dropped. If the "next order" is NULL for them, a comparison gives NULL and <code>AVG</code> skips them, so the average covers only customers who came back at some point. Wrap the condition in <code>COALESCE(..., 0)</code>. Also check the fair window: only customers with at least 90 days of history should count.</p></div></details>
+    <details class="qa"><summary><span class="q">P3</span>The win-back email went to 1,000 customers and 30% bought within a month. The holdout of 250 bought at 26%. What do you report?</summary>
+      <div class="body"><p>The campaign's effect is the difference, about 4 points (around 40 extra customers), not 30%. Then check it against chance: about ±2.9 points for the 1,000 and ±5.5 for the 250, so about ±6 for the difference. A 4-point gap is within that, so the effect isn't proven yet. Report it as "possibly positive, needs another round".</p></div></details>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="recap" id="recap">
+  <h2>Quick recap</h2>
+  <ul>
+    <li>Check whether you see each customer's whole history. Customers who were buying before the data starts look like unusually loyal new customers (left-censoring): leave them out of anything that starts from the first order.</li>
+    <li>Monthly cohorts use <code>YEAR * 12 + MONTH</code>, NULL for months not yet seen, and are small and noisy for a shop this size. Pool them into a retention curve.</li>
+    <li>For a shop, churn is defined by silence. Test the rule on the past: here, after 180 days fewer than 1 in 10 came back. Save the rule as a view.</li>
+    <li>Growth accounting (start + new + came back − churned = end) must balance, which checks your SQL. Churn lags its cause by the length of the rule.</li>
+    <li>None of the first-order details we tested clearly predicted a second order here. Use a placebo split and a give-or-take of 2 × √(p(1−p)/n) before believing a gap. The orders already placed are the strong signal: the second order is the hurdle.</li>
+    <li>Target customers who are slipping now, not those long gone, and keep a random, repeatable holdout (<code>MOD(CRC32(id), 5)</code>) so the campaign can be measured.</li>
+  </ul>
+</div>
+
+<div class="next"><div><small>Coming up next</small><h3>Day 23: Case study 3, products, categories and the funnel</h3><p>The last case study: which products and categories really drive the business, what sells together, and where shoppers drop out between looking and buying.</p></div><a class="btn" href="Day23_Case_Study_Product_Funnel.html">Read Day 23</a></div>
+  </article>
+</div>
+
+<footer><b>Databases &amp; SQL for Analysts</b>, a 23-day series from first concepts to real case studies.</footer>
+
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function prog(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  var links=[].slice.call(document.querySelectorAll('.rail a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-35% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+  }
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.closest('.code').querySelector('code').innerText;
+      function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);}
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}
+      function fallback(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+    });
+  });
+})();
+</script>
+</body>
+</html>
